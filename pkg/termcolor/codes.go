@@ -40,4 +40,6 @@ type Color struct {
 	Foreground string
 	Background string
 	Effects    []string
+	FGParams   []int
+	BGParams   []int
 }
