@@ -39,13 +39,13 @@ func formatCodes(codes []int) string {
 //
 // The order of codes is:
 //   - effects (in the order they appear)
-//   - foreground color
-//   - background color
+//   - foreground color (FGParams if set, otherwise named foreground)
+//   - background color (BGParams if set, otherwise named background)
 //
-// If the Color has no valid foreground, background, or effects, or if none
-// of them map to known ANSI codes, an empty string is returned.
+// If the Color has no valid foreground, background, effects,
+// FGParams, or BGParams, an empty string is returned.
 func (c *Color) String() string {
-	if c.Foreground == "" && c.Background == "" && len(c.Effects) == 0 {
+	if c.Foreground == "" && c.Background == "" && len(c.Effects) == 0 && len(c.FGParams) == 0 && len(c.BGParams) == 0 {
 		return ""
 	}
 
@@ -55,10 +55,16 @@ func (c *Color) String() string {
 			codes = append(codes, code)
 		}
 	}
-	if fg, ok := foregroundCodes[c.Foreground]; ok {
+
+	if len(c.FGParams) > 0 {
+		codes = append(codes, c.FGParams...)
+	} else if fg, ok := foregroundCodes[c.Foreground]; ok {
 		codes = append(codes, fg)
 	}
-	if bg, ok := backgroundCodes[c.Background]; ok {
+
+	if len(c.BGParams) > 0 {
+		codes = append(codes, c.BGParams...)
+	} else if bg, ok := backgroundCodes[c.Background]; ok {
 		codes = append(codes, bg)
 	}
 

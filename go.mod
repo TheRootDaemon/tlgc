@@ -3,6 +3,7 @@ module github.com/TheRootDaemon/tlgc
 go 1.26.1
 
 require (
+	github.com/BurntSushi/toml v1.6.0
 	github.com/stretchr/testify v1.11.1
 	golang.org/x/term v0.41.0
 )

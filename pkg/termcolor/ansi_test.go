@@ -183,6 +183,56 @@ func TestColorString(t *testing.T) {
 			color:    Color{Effects: []string{"invalid"}, Background: "on_cyan"},
 			expected: "\x1B[46m",
 		},
+		{
+			name:     "fg 256-color",
+			color:    Color{FGParams: []int{38, 5, 208}},
+			expected: "\x1B[38;5;208m",
+		},
+		{
+			name:     "bg 256-color",
+			color:    Color{BGParams: []int{48, 5, 208}},
+			expected: "\x1B[48;5;208m",
+		},
+		{
+			name:     "fg RGB",
+			color:    Color{FGParams: []int{38, 2, 255, 0, 0}},
+			expected: "\x1B[38;2;255;0;0m",
+		},
+		{
+			name:     "bg RGB",
+			color:    Color{BGParams: []int{48, 2, 0, 255, 0}},
+			expected: "\x1B[48;2;0;255;0m",
+		},
+		{
+			name:     "effects with fg 256-color",
+			color:    Color{Effects: []string{"bold"}, FGParams: []int{38, 5, 208}},
+			expected: "\x1B[1;38;5;208m",
+		},
+		{
+			name:     "fg 256-color with bg RGB",
+			color:    Color{FGParams: []int{38, 5, 208}, BGParams: []int{48, 2, 255, 0, 0}},
+			expected: "\x1B[38;5;208;48;2;255;0;0m",
+		},
+		{
+			name:     "FGParams takes priority over named fg",
+			color:    Color{Foreground: "red", FGParams: []int{38, 5, 208}},
+			expected: "\x1B[38;5;208m",
+		},
+		{
+			name:     "BGParams takes priority over named bg",
+			color:    Color{Background: "on_red", BGParams: []int{48, 5, 208}},
+			expected: "\x1B[48;5;208m",
+		},
+		{
+			name:     "empty FGParams falls back to named fg",
+			color:    Color{FGParams: []int{}, Foreground: "green"},
+			expected: "\x1B[32m",
+		},
+		{
+			name:     "empty BGParams falls back to named bg",
+			color:    Color{BGParams: []int{}, Background: "on_blue"},
+			expected: "\x1B[44m",
+		},
 	}
 
 	for _, tt := range tests {

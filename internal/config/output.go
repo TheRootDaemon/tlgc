@@ -1,23 +1,23 @@
 package config
 
-type OptionStyle int
+type OptionStyle string
 
 const (
-	OptionStyleShort OptionStyle = iota
-	OptionStyleLong
-	OptionStyleCombined
+	OptionStyleShort    OptionStyle = "short"
+	OptionStyleLong     OptionStyle = "long"
+	OptionStyleCombined OptionStyle = "both"
 )
 
 type OutputConfig struct {
-	ShowTitle     bool
-	PlatformTitle bool
-	ShowHyphens   bool
-	EditLink      bool
-	ExamplePrefix string
-	LineLength    int
-	Compact       bool
-	OptionStyle   OptionStyle
-	RawMarkdown   bool
+	ShowTitle     bool        `toml:"show_title"`
+	PlatformTitle bool        `toml:"platform_title"`
+	ShowHyphens   bool        `toml:"show_hyphens"`
+	EditLink      bool        `toml:"edit_link"`
+	ExamplePrefix string      `toml:"example_prefix"`
+	LineLength    int         `toml:"line_length"`
+	Compact       bool        `toml:"compact"`
+	OptionStyle   OptionStyle `toml:"option_style"`
+	RawMarkdown   bool        `toml:"raw_markdown"`
 }
 
 func DefaultOutputConfig() OutputConfig {
