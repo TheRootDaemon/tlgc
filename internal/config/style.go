@@ -3,23 +3,23 @@ package config
 import "github.com/TheRootDaemon/tlgc/pkg/termcolor"
 
 type OutputStyle struct {
-	Color         OutputColor
-	Background    OutputColor
-	Bold          bool
-	Underline     bool
-	Italic        bool
-	Dim           bool
-	Strikethrough bool
+	Color         OutputColor `toml:"color"`
+	Background    OutputColor `toml:"background"`
+	Bold          bool        `toml:"bold"`
+	Underline     bool        `toml:"underline"`
+	Italic        bool        `toml:"italic"`
+	Dim           bool        `toml:"dim"`
+	Strikethrough bool        `toml:"strikethrough"`
 }
 
 type StyleConfig struct {
-	Title       OutputStyle
-	Description OutputStyle
-	Bullet      OutputStyle
-	Example     OutputStyle
-	URL         OutputStyle
-	InlineCode  OutputStyle
-	Placeholder OutputStyle
+	Title       OutputStyle `toml:"title"`
+	Description OutputStyle `toml:"description"`
+	Bullet      OutputStyle `toml:"bullet"`
+	Example     OutputStyle `toml:"example"`
+	URL         OutputStyle `toml:"url"`
+	InlineCode  OutputStyle `toml:"inline_code"`
+	Placeholder OutputStyle `toml:"placeholder"`
 }
 
 func DefaultStyleConfig() StyleConfig {
@@ -68,13 +68,13 @@ func (o OutputStyle) ToTermColor() *termcolor.Color {
 
 	switch o.Background.Kind {
 	case ColorKindNamed:
-		if o.Color.Named != ColorDefault {
-			c.Background = string(o.Color.Named)
+		if o.Background.Named != ColorDefault {
+			c.Background = "on_" + string(o.Background.Named)
 		}
 	case ColorKindColor256:
-		c.BGParams = []int{38, 5, int(o.Color.Color256)}
+		c.BGParams = []int{48, 5, int(o.Background.Color256)}
 	case ColorKindRGB:
-		c.BGParams = []int{38, 2, int(o.Color.RGB[0]), int(o.Color.RGB[1]), int(o.Color.RGB[2])}
+		c.BGParams = []int{48, 2, int(o.Background.RGB[0]), int(o.Background.RGB[1]), int(o.Background.RGB[2])}
 	}
 
 	if o.Bold {

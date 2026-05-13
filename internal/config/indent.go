@@ -1,10 +1,10 @@
 package config
 
 type IndentConfig struct {
-	Title       int
-	Description int
-	Bullet      int
-	Example     int
+	Title       int `toml:"title"`
+	Description int `toml:"description"`
+	Bullet      int `toml:"bullet"`
+	Example     int `toml:"example"`
 }
 
 func DefaultIndentConfig() IndentConfig {

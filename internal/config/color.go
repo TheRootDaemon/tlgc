@@ -50,6 +50,22 @@ func DefaultColor() OutputColor {
 	}
 }
 
+func (c OutputColor) MarshalText() ([]byte, error) {
+	switch c.Kind {
+	case ColorKindNamed:
+		if c.Named == "" || c.Named == ColorDefault {
+			return []byte("default"), nil
+		}
+		return []byte(c.Named), nil
+	case ColorKindColor256:
+		return fmt.Appendf(nil, "color256:%d", c.Color256), nil
+	case ColorKindRGB:
+		return fmt.Appendf(nil, "rgb:%d,%d,%d", c.RGB[0], c.RGB[1], c.RGB[2]), nil
+	default:
+		return []byte("default"), nil
+	}
+}
+
 func (c *OutputColor) UnmarshalText(text []byte) error {
 	s := string(text)
 
