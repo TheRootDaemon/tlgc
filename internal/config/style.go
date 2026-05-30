@@ -2,6 +2,12 @@ package config
 
 import "github.com/TheRootDaemon/tlgc/pkg/termcolor"
 
+// OutputStyle defines the visual style
+// for a section of a rendered page.
+//
+// It combines a foreground color,
+// a background color,
+// and optional text effects (bold, italic, etc.).
 type OutputStyle struct {
 	Color         OutputColor `toml:"color"`
 	Background    OutputColor `toml:"background"`
@@ -12,6 +18,8 @@ type OutputStyle struct {
 	Strikethrough bool        `toml:"strikethrough"`
 }
 
+// StyleConfig defines the visual style
+// for each semantic section of a rendered page.
 type StyleConfig struct {
 	Title       OutputStyle `toml:"title"`
 	Description OutputStyle `toml:"description"`
@@ -22,36 +30,63 @@ type StyleConfig struct {
 	Placeholder OutputStyle `toml:"placeholder"`
 }
 
+// DefaultStyleConfig returns
+// the default style settings.
+//
+// These are the defaults:
+//   - title:        magenta + bold
+//   - description:  magenta
+//   - bullet:       green
+//   - example:      cyan
+//   - url:          red + italic
+//   - inline_code:  yellow + italic
+//   - placeholder:  red + italic
 func DefaultStyleConfig() StyleConfig {
+	defBg := DefaultColor()
+
 	return StyleConfig{
 		Title: OutputStyle{
-			Color: OutputColor{Kind: ColorKindNamed, Named: ColorMagenta},
-			Bold:  true,
+			Color:      OutputColor{Kind: ColorKindNamed, Named: ColorMagenta},
+			Background: defBg,
+			Bold:       true,
 		},
 		Description: OutputStyle{
-			Color: OutputColor{Kind: ColorKindNamed, Named: ColorMagenta},
+			Color:      OutputColor{Kind: ColorKindNamed, Named: ColorMagenta},
+			Background: defBg,
 		},
 		Bullet: OutputStyle{
-			Color: OutputColor{Kind: ColorKindNamed, Named: ColorGreen},
+			Color:      OutputColor{Kind: ColorKindNamed, Named: ColorGreen},
+			Background: defBg,
 		},
 		Example: OutputStyle{
-			Color: OutputColor{Kind: ColorKindNamed, Named: ColorCyan},
+			Color:      OutputColor{Kind: ColorKindNamed, Named: ColorCyan},
+			Background: defBg,
 		},
 		URL: OutputStyle{
-			Color:  OutputColor{Kind: ColorKindNamed, Named: ColorRed},
-			Italic: true,
+			Color:      OutputColor{Kind: ColorKindNamed, Named: ColorRed},
+			Background: defBg,
+			Italic:     true,
 		},
 		InlineCode: OutputStyle{
-			Color:  OutputColor{Kind: ColorKindNamed, Named: ColorYellow},
-			Italic: true,
+			Color:      OutputColor{Kind: ColorKindNamed, Named: ColorYellow},
+			Background: defBg,
+			Italic:     true,
 		},
 		Placeholder: OutputStyle{
-			Color:  OutputColor{Kind: ColorKindNamed, Named: ColorRed},
-			Italic: true,
+			Color:      OutputColor{Kind: ColorKindNamed, Named: ColorRed},
+			Background: defBg,
+			Italic:     true,
 		},
 	}
 }
 
+// ToTermColor converts the OutputStyle
+// to a termcolor.Color value
+// that can be used for ANSI rendering.
+//
+// Named colors are mapped directly,
+// extended colors (256/RGB) are passed
+// via FGParams and BGParams.
 func (o OutputStyle) ToTermColor() *termcolor.Color {
 	c := &termcolor.Color{}
 
@@ -68,7 +103,7 @@ func (o OutputStyle) ToTermColor() *termcolor.Color {
 
 	switch o.Background.Kind {
 	case ColorKindNamed:
-		if o.Background.Named != ColorDefault {
+		if o.Background.Named != ColorDefault && o.Background.Named != "" {
 			c.Background = "on_" + string(o.Background.Named)
 		}
 	case ColorKindColor256:
