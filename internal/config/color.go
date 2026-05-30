@@ -6,14 +6,20 @@ import (
 	"strings"
 )
 
+// ColorKind distinguishes the different
+// ways a color can be specified in config.
 type ColorKind int
 
 const (
+	// ColorKindNamed is a standard named ANSI color.
 	ColorKindNamed ColorKind = iota
+	// ColorKindColor256 is an 8-bit (256-color) palette index.
 	ColorKindColor256
+	// ColorKindRGB is an explicit RGB true color.
 	ColorKindRGB
 )
 
+// ColorName is a named ANSI terminal color.
 type ColorName string
 
 const (
@@ -36,6 +42,12 @@ const (
 	ColorDefault       ColorName = "default"
 )
 
+// OutputColor represents a color value
+// that can be specified in a config file.
+//
+// It supports named ANSI colors,
+// 8-bit palette indexes, and RGB colors.
+// Hex colors are parsed as RGB at load time.
 type OutputColor struct {
 	Kind     ColorKind
 	Named    ColorName
@@ -43,6 +55,8 @@ type OutputColor struct {
 	RGB      [3]uint8
 }
 
+// DefaultColor returns the default OutputColor
+// which means "use the terminal's default color".
 func DefaultColor() OutputColor {
 	return OutputColor{
 		Kind:  ColorKindNamed,
@@ -50,6 +64,12 @@ func DefaultColor() OutputColor {
 	}
 }
 
+// MarshalText converts the color
+// to its TOML string representation.
+//
+// Named colors are output as-is,
+// 256-color as "color256:N",
+// and RGB as "rgb:R,G,B".
 func (c OutputColor) MarshalText() ([]byte, error) {
 	switch c.Kind {
 	case ColorKindNamed:
@@ -66,6 +86,14 @@ func (c OutputColor) MarshalText() ([]byte, error) {
 	}
 }
 
+// UnmarshalText parses a color
+// from its TOML string representation.
+//
+// Supported formats:
+//   - Named colors: "magenta", "bright-red", "default"
+//   - Hex: "#ff0000" or "#f00"
+//   - 256-color: "color256:208" or "256:208"
+//   - RGB: "rgb:255,0,0"
 func (c *OutputColor) UnmarshalText(text []byte) error {
 	s := string(text)
 
@@ -131,6 +159,11 @@ func (c *OutputColor) UnmarshalText(text []byte) error {
 	return fmt.Errorf("%w: %v", ErrUnknownColor, s)
 }
 
+// parseHexToRGB converts a hex color string
+// to an RGB triple.
+//
+// It accepts "#RRGGBB", "#RGB",
+// "RRGGBB", and "RGB" formats.
 func parseHexToRGB(hex string) ([3]uint8, error) {
 	hex = strings.TrimPrefix(hex, "#")
 
