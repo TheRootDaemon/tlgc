@@ -1,6 +1,6 @@
 package config
 
-import "github.com/TheRootDaemon/tlgc/pkg/termcolor"
+import "github.com/TheRootDaemon/tlgc/termcolor"
 
 // OutputStyle defines the visual style
 // for a section of a rendered page.

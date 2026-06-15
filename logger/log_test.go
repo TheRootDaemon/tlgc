@@ -20,7 +20,7 @@ func TestTrace(t *testing.T) {
 
 	output := buf.String()
 
-	assert.Contains(t, output, "trace:")
+	assert.Contains(t, output, "TRACE")
 	assert.Contains(t, output, "hello world")
 	assert.True(t, strings.HasSuffix(output, "\n"))
 }
@@ -50,7 +50,7 @@ func TestDebug(t *testing.T) {
 
 	output := buf.String()
 
-	assert.Contains(t, output, "debug:")
+	assert.Contains(t, output, "DEBUG")
 	assert.Contains(t, output, "hello world")
 	assert.True(t, strings.HasSuffix(output, "\n"))
 }
@@ -80,7 +80,7 @@ func TestInfo(t *testing.T) {
 
 	output := buf.String()
 
-	assert.Contains(t, output, "info:")
+	assert.Contains(t, output, "INFO")
 	assert.Contains(t, output, "hello world")
 	assert.True(t, strings.HasSuffix(output, "\n"))
 }
@@ -110,7 +110,7 @@ func TestWarn(t *testing.T) {
 
 	output := buf.String()
 
-	assert.Contains(t, output, "warning:")
+	assert.Contains(t, output, "WARNING")
 	assert.Contains(t, output, "hello world")
 	assert.True(t, strings.HasSuffix(output, "\n"))
 }
@@ -140,7 +140,7 @@ func TestError(t *testing.T) {
 
 	output := buf.String()
 
-	assert.Contains(t, output, "error:")
+	assert.Contains(t, output, "ERROR")
 	assert.Contains(t, output, "hello world")
 	assert.True(t, strings.HasSuffix(output, "\n"))
 }
@@ -157,7 +157,7 @@ func TestLog(t *testing.T) {
 
 	output := buf.String()
 
-	assert.Contains(t, output, "info:")
+	assert.Contains(t, output, "INFO")
 	assert.Contains(t, output, "hello world")
 	assert.True(t, strings.HasSuffix(output, "\n"))
 }
