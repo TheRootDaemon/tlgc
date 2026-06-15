@@ -3,7 +3,7 @@ package config
 import (
 	"testing"
 
-	"github.com/TheRootDaemon/tlgc/pkg/termcolor"
+	"github.com/TheRootDaemon/tlgc/termcolor"
 	"github.com/stretchr/testify/assert"
 )
 

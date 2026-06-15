@@ -28,11 +28,11 @@ var levelColors = map[Level]string{
 
 // levelLabels maps log levels to their display labels.
 var levelLabels = map[Level]string{
-	LevelTrace: "trace:",
-	LevelDebug: "debug:",
-	LevelInfo:  "info:",
-	LevelWarn:  "warning:",
-	LevelError: "error:",
+	LevelTrace: "TRACE",
+	LevelDebug: "DEBUG",
+	LevelInfo:  "INFO",
+	LevelWarn:  "WARNING",
+	LevelError: "ERROR",
 }
 
 // Logger writes leveled log messages to a writer.

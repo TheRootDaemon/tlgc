@@ -3,7 +3,7 @@ package logger
 import (
 	"fmt"
 
-	"github.com/TheRootDaemon/tlgc/pkg/termcolor"
+	"github.com/TheRootDaemon/tlgc/termcolor"
 )
 
 // log formats and writes a message if the level is enabled.
@@ -17,7 +17,7 @@ func (l *Logger) log(level Level, format string, args []any) {
 
 	prefix := termcolor.Sprint(levelColors[level], levelLabels[level])
 	msg := fmt.Sprintf(format, args...)
-	fmt.Fprintf(l.writer, "%s: %s\n", prefix, msg)
+	_, _ = fmt.Fprintf(l.writer, "%s: %s\n", prefix, msg)
 }
 
 // Trace logs a message at LevelTrace.
@@ -69,7 +69,7 @@ func (l *Logger) InfoStart(format string, args ...any) {
 
 	prefix := termcolor.Sprint(levelColors[LevelInfo], levelLabels[LevelInfo])
 	msg := fmt.Sprintf(format, args...)
-	fmt.Fprintf(l.writer, "%s %s", prefix, msg)
+	_, _ = fmt.Fprintf(l.writer, "%s %s", prefix, msg)
 }
 
 // InfoEnd writes the trailing part of a status message
@@ -86,5 +86,5 @@ func (l *Logger) InfoEnd(format string, args ...any) {
 	defer l.mu.Unlock()
 
 	msg := fmt.Sprintf(format, args...)
-	fmt.Fprintf(l.writer, "%s\n", msg)
+	_, _ = fmt.Fprintf(l.writer, "%s\n", msg)
 }
