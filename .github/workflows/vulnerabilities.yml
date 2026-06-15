@@ -1,0 +1,30 @@
+name: Code Vulnerabilities
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+
+    env:
+      GO111MODULE: on
+
+    steps:
+      - name: Checkout Source
+        uses: actions/checkout@v6
+
+      - name: Setup go
+        uses: actions/setup-go@v6
+        with:
+          go-version: "1.26.3"
+
+      - name: Run security scans
+        run: |
+          go install github.com/securego/gosec/v2/cmd/gosec@latest
+          gosec -exclude-generated ./...
