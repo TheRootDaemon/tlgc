@@ -9,11 +9,11 @@ import (
 // For "/path/to/pages.en/common/some-page.md" it returns "some-page".
 // Returns the empty string if the path has no file stem.
 func PageName(path string) string {
-	if path == "" || filepath.Dir(path) == path {
+	base := filepath.Base(path)
+	if base == "." || base == "/" || base == "\\" {
 		return ""
 	}
 
-	base := filepath.Base(path)
 	return strings.TrimSuffix(base, filepath.Ext(base))
 }
 
