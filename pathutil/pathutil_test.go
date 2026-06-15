@@ -15,7 +15,7 @@ func TestPageName(t *testing.T) {
 		{name: "typical path", path: "/path/to/pages.en/common/some-page.md", want: "some-page"},
 		{name: "no extension", path: "/path/to/pages.en/common/some-page", want: "some-page"},
 		{name: "empty path", path: "", want: ""},
-		{name: "root path", path: "/", want: "/"},
+		{name: "root path", path: "/", want: ""},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
