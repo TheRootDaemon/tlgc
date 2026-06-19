@@ -1,4 +1,4 @@
-package duration
+package format
 
 import (
 	"fmt"

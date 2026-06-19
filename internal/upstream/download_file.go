@@ -9,49 +9,9 @@ import (
 	"os"
 	"time"
 
-	"github.com/TheRootDaemon/tlgc/duration"
+	"github.com/TheRootDaemon/tlgc/format"
 	"github.com/TheRootDaemon/tlgc/logger"
 )
-
-func (c *Client) DownloadBytes(ctx context.Context, url, sha256hex string) ([]byte, error) {
-	logger.Info("downloading from %s...", url)
-	start := time.Now()
-
-	resp, err := c.execute(ctx, url)
-	if err != nil {
-		logger.InfoEnd("failed: %s", err)
-		return nil, err
-	}
-
-	defer func() {
-		_ = resp.Body.Close()
-	}()
-
-	data, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, fmt.Errorf("read body: %s", err)
-	}
-
-	if c.maxBodySize > 0 && int64(len(data)) > c.maxBodySize {
-		return nil, fmt.Errorf("body %d exceeds limit %d", len(data), c.maxBodySize)
-	}
-
-	if sha256hex != "" {
-		if err := verifySHA256(data, sha256hex); err != nil {
-			return nil, err
-		}
-	}
-
-	logger.InfoEnd(
-		"done (%s in %s)",
-		humanizeBytes(
-			int64(len(data)),
-		),
-		duration.DurationFmt(time.Since(start)),
-	)
-
-	return data, nil
-}
 
 func (c *Client) DownloadFile(ctx context.Context, url, sha256hex, destination string) error {
 	logger.Info("downloading from %s...", url)
@@ -99,10 +59,10 @@ func (c *Client) DownloadFile(ctx context.Context, url, sha256hex, destination s
 
 	logger.InfoEnd(
 		"done (%s in %s)",
-		humanizeBytes(
+		format.BytesFmt(
 			int64(n),
 		),
-		duration.DurationFmt(time.Since(start)),
+		format.DurationFmt(time.Since(start)),
 	)
 
 	return nil
@@ -151,31 +111,4 @@ func (c *Client) transfer(
 	}
 
 	return n, nil
-}
-
-func humanizeBytes(bytes int64) string {
-	const unit = 1024
-	if bytes < 1024 {
-		return fmt.Sprintf("%d B", bytes)
-	}
-
-	div, exp := int64(1), 0
-	units := []string{
-		"B",
-		"KiB",
-		"MiB",
-		"GiB",
-		"TiB",
-	}
-
-	for bytes >= div*unit && exp < len(units) {
-		div *= unit
-		exp++
-	}
-
-	return fmt.Sprintf(
-		"%.1f %s",
-		float64(bytes)/float64(div),
-		units[exp],
-	)
 }
