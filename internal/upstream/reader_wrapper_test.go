@@ -76,7 +76,9 @@ func TestProgressReader_Read(t *testing.T) {
 					mu.Unlock()
 				},
 			}
-			defer pr.Close()
+			defer func() {
+				_ = pr.Close()
+			}()
 
 			buf := make([]byte, tt.readSize)
 			var result strings.Builder
@@ -108,7 +110,9 @@ func TestProgressReader_NilFn(t *testing.T) {
 		reader: io.NopCloser(strings.NewReader("hello")),
 		total:  5,
 	}
-	defer pr.Close()
+	defer func() {
+		_ = pr.Close()
+	}()
 
 	buf := make([]byte, 64)
 	require.NotPanics(t, func() {
@@ -163,7 +167,9 @@ func TestLimitedBody_Read(t *testing.T) {
 				closer: io.NopCloser(strings.NewReader("")),
 				limit:  tt.limit,
 			}
-			defer lb.Close()
+			defer func() {
+				_ = lb.Close()
+			}()
 
 			data, err := io.ReadAll(lb)
 			require.NoError(t, err)

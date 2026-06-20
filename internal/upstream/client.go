@@ -19,16 +19,21 @@ const (
 type Client struct {
 	// client is the underlying HTTP client used to make requests.
 	client *http.Client
+
 	// connectionTimeout is the timeout for dialing a TCP connection.
 	connectionTimeout time.Duration
+
 	// timeout is the overall timeout for an HTTP request.
 	timeout time.Duration
+
 	// userAgent is the value sent in the User-Agent header.
 	userAgent string
+
 	// maxBodySize is the maximum number of bytes read from the response body.
 	maxBodySize int64
-	// progress is an optional callback invoked periodically with download progress.
-	progress func(done, total int64)
+
+	// progressCallback is an optional callback invoked periodically.
+	progressCallback func(done, total int64)
 }
 
 // Option configures a Client.
@@ -72,7 +77,7 @@ func WithUserAgent(userAgent string) Option {
 // WithProgressFunc sets a callback that is invoked periodically with download progress.
 func WithProgressFunc(fn func(done, total int64)) Option {
 	return func(c *Client) {
-		c.progress = fn
+		c.progressCallback = fn
 	}
 }
 

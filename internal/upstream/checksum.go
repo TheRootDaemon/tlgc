@@ -7,8 +7,10 @@ import (
 	"strings"
 )
 
-// verifySHA256hex verifies data against a hex-encoded SHA256 hash.
-// It accepts raw 64-char hex and the "<hash>  filename" format.
+// verifySHA256hex verifies got against an expected SHA256 checksum.
+//
+// Expected may be either a raw 64-character hexadecimal SHA256 hash
+// or a checksum-file entry in the form "<hash> <filename>".
 func verifySHA256hex(got, expected string) error {
 	expected = strings.TrimSpace(expected)
 	if expected == "" {
@@ -37,6 +39,8 @@ func verifySHA256hex(got, expected string) error {
 	return fmt.Errorf("sha256 mismatch: expected %s, got %s", expected, got)
 }
 
+// verifySHA256 computes the SHA256 checksum of data
+// and verifies it against expected.
 func verifySHA256(data []byte, expected string) error {
 	sum := sha256.Sum256(data)
 
@@ -46,6 +50,8 @@ func verifySHA256(data []byte, expected string) error {
 	)
 }
 
+// verifySHA256Hash verifies the SHA256 checksum
+// represented by h against expected.
 func verifySHA256Hash(h hash.Hash, expected string) error {
 	return verifySHA256hex(
 		fmt.Sprintf("%x", h.Sum(nil)),
