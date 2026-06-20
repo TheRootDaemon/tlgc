@@ -13,6 +13,18 @@ import (
 	"github.com/TheRootDaemon/tlgc/logger"
 )
 
+// DownloadFile downloads the content at url and writes it to destination.
+//
+// The download is subject to the client's configured limits and timeouts.
+//
+// If sha256hex is non-empty,
+// the downloaded content must match the expected SHA256 checksum
+// or an error is returned.
+//
+// If the download fails,
+// the checksum does not match,
+// or the size limit is exceeded,
+// any partially written file is removed.
 func (c *Client) DownloadFile(ctx context.Context, url, sha256hex, destination string) error {
 	logger.Info("downloading from %s...", url)
 	start := time.Now()
@@ -68,6 +80,14 @@ func (c *Client) DownloadFile(ctx context.Context, url, sha256hex, destination s
 	return nil
 }
 
+// transfer copies data from source to destination.
+//
+// If expectedSHA256 is non-empty, a SHA256 checksum is computed
+// while copying and verified against the expected value after the copy completes.
+//
+// When a maximum body size is configured,
+// transfer returns an error
+// if the copied data exceeds the limit.
 func (c *Client) transfer(
 	destination io.Writer,
 	source io.Reader,

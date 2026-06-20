@@ -10,6 +10,13 @@ import (
 	"github.com/TheRootDaemon/tlgc/logger"
 )
 
+// DownloadBytes downloads the content at url into memory
+// and returns it as a byte slice.
+//
+// The download is subject to the client's configured limits and timeouts.
+//
+// If sha256hex is non-empty, the downloaded content must match
+// the expected SHA256 checksum or an error is returned.
 func (c *Client) DownloadBytes(ctx context.Context, url, sha256hex string) ([]byte, error) {
 	logger.Info("downloading from %s...", url)
 	start := time.Now()
