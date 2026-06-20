@@ -7,6 +7,7 @@ import (
 	"net/http"
 )
 
+// newRequest creates an HTTP GET request with the configured User-Agent.
 func (c *Client) newRequest(ctx context.Context, url string) (*http.Request, error) {
 	req, err := http.NewRequestWithContext(
 		ctx,
@@ -23,6 +24,7 @@ func (c *Client) newRequest(ctx context.Context, url string) (*http.Request, err
 	return req, nil
 }
 
+// send executes req using the configured HTTP client.
 func (c *Client) send(req *http.Request) (*http.Response, error) {
 	resp, err := c.client.Do(req)
 	if err != nil {
@@ -32,6 +34,9 @@ func (c *Client) send(req *http.Request) (*http.Response, error) {
 	return resp, nil
 }
 
+// validateResponse returns an error,
+// if resp does not contain a successful 2xx status code.
+// The response body is closed on failure.
 func (c *Client) validateResponse(resp *http.Response) error {
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		_ = resp.Body.Close()
@@ -41,6 +46,8 @@ func (c *Client) validateResponse(resp *http.Response) error {
 	return nil
 }
 
+// wrapBody decorates body with configured size limiting
+// and progress reporting readers.
 func (c *Client) wrapBody(
 	body io.ReadCloser,
 	contentLength int64,
@@ -64,6 +71,8 @@ func (c *Client) wrapBody(
 	return body
 }
 
+// execute performs an HTTP GET request, validates the response, and wraps
+// the response body with any configured limits and progress reporting.
 func (c *Client) execute(ctx context.Context, url string) (*http.Response, error) {
 	req, err := c.newRequest(ctx, url)
 	if err != nil {
