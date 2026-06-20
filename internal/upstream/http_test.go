@@ -280,7 +280,7 @@ func TestWrapBody(t *testing.T) {
 
 		body := io.NopCloser(strings.NewReader("hello"))
 		c := &Client{
-			progress: func(d, t int64) {
+			progressCallback: func(d, t int64) {
 				mu.Lock()
 				done = d
 				total = t
@@ -312,7 +312,7 @@ func TestWrapBody(t *testing.T) {
 		body := io.NopCloser(strings.NewReader("hello world this is a long body"))
 		c := &Client{
 			maxBodySize: 10,
-			progress: func(d, t int64) {
+			progressCallback: func(d, t int64) {
 				mu.Lock()
 				done = d
 				total = t
@@ -375,7 +375,7 @@ func TestWrapBody(t *testing.T) {
 			ReadCloser: io.NopCloser(strings.NewReader("hello")),
 		}
 		c := &Client{
-			progress: func(d, t int64) {},
+			progressCallback: func(d, t int64) {},
 		}
 
 		wrapped := c.wrapBody(body, 5)
@@ -393,8 +393,8 @@ func TestWrapBody(t *testing.T) {
 			ReadCloser: io.NopCloser(strings.NewReader("hello world this is long")),
 		}
 		c := &Client{
-			maxBodySize: 10,
-			progress:    func(d, t int64) {},
+			maxBodySize:      10,
+			progressCallback: func(d, t int64) {},
 		}
 
 		wrapped := c.wrapBody(body, 25)
@@ -568,7 +568,7 @@ func TestProgressCallback_WithContentLength(t *testing.T) {
 	c := &Client{
 		client:    ts.Client(),
 		userAgent: defaultUserAgent,
-		progress: func(done, total int64) {
+		progressCallback: func(done, total int64) {
 			mu.Lock()
 			capturedDone = done
 			capturedTotal = total
@@ -613,7 +613,7 @@ func TestProgressCallback_WithUnknownContentLength(t *testing.T) {
 	c := &Client{
 		client:    ts.Client(),
 		userAgent: defaultUserAgent,
-		progress: func(done, total int64) {
+		progressCallback: func(done, total int64) {
 			mu.Lock()
 			capturedDone = done
 			capturedTotal = total

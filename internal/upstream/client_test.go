@@ -17,7 +17,7 @@ func TestNew(t *testing.T) {
 		assert.Equal(t, defaultConnectionTimeout, c.connectionTimeout)
 		assert.Equal(t, defaultUserAgent, c.userAgent)
 		assert.Equal(t, int64(defaultMaxBodySize), c.maxBodySize)
-		assert.Nil(t, c.progress)
+		assert.Nil(t, c.progressCallback)
 		assert.NotNil(t, c.client)
 		assert.Equal(t, defaultTimeout, c.client.Timeout)
 	})
@@ -64,14 +64,14 @@ func TestWithOptions(t *testing.T) {
 			name: "WithProgressFunc",
 			opts: []Option{WithProgressFunc(func(done, total int64) {})},
 			check: func(t *testing.T, c *Client) {
-				assert.NotNil(t, c.progress)
+				assert.NotNil(t, c.progressCallback)
 
 				var called bool
 				fn := func(done, total int64) {
 					called = true
 				}
-				c.progress = fn
-				c.progress(100, 200)
+				c.progressCallback = fn
+				c.progressCallback(100, 200)
 				assert.True(t, called)
 			},
 		},
