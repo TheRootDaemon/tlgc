@@ -62,9 +62,9 @@ func (c *Client) wrapBody(
 
 	if c.progress != nil {
 		body = &progressReader{
-			reader: body,
-			total:  contentLength,
-			fn:     c.progress,
+			reader:           body,
+			total:            contentLength,
+			progressCallback: c.progress,
 		}
 	}
 
