@@ -7,7 +7,6 @@ import (
 	"sort"
 	"strings"
 	"sync/atomic"
-	"time"
 
 	"github.com/TheRootDaemon/tlgc/internal/config"
 	"github.com/TheRootDaemon/tlgc/slice"
@@ -35,29 +34,6 @@ func (c *Cache) Dir() string {
 func (c *Cache) subDirExists(name string) bool {
 	fi, err := os.Stat(filepath.Join(c.dir, name))
 	return err == nil && fi.IsDir()
-}
-
-// Age returns the cache age based on the checksum file's mtime.
-// Falls back to the cache directory mtime
-// if the checksum file does not exist.
-func (c *Cache) Age() (time.Duration, error) {
-	sumfile := filepath.Join(c.dir, checksumFile)
-	fi, err := os.Stat(sumfile)
-	if err != nil {
-		fi, err = os.Stat(c.dir)
-		if err != nil {
-			return 0, err
-		}
-	}
-
-	mod := fi.ModTime()
-	age := time.Since(mod)
-
-	if age < 0 {
-		return 0, fmt.Errorf("cache mtime is in the future: clock issue")
-	}
-
-	return age, nil
 }
 
 // getPlatforms discovers available platforms
