@@ -40,7 +40,7 @@ func (c *Cache) subDirExists(name string) bool {
 // by reading directories under pages.en/.
 // Results are cached after first load.
 func (c *Cache) getPlatforms() ([]string, error) {
-	if p, ok := c.platforms.Load().([]string); ok {
+	if p, ok := c.platforms.Load().([]string); ok && p != nil {
 		return p, nil
 	}
 

@@ -52,3 +52,9 @@ func Indent() IndentConfig {
 func Output() OutputConfig {
 	return C().Output
 }
+
+// ResetForTesting clears the global config singleton.
+// This function is only intended for use by tests.
+func ResetForTesting() {
+	currentConfig.Store(nil)
+}
