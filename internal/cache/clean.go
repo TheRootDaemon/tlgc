@@ -3,6 +3,7 @@ package cache
 import (
 	"bufio"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -10,7 +11,10 @@ import (
 	"github.com/TheRootDaemon/tlgc/logger"
 )
 
-func (c *Cache) Clean() error {
+// Clean removes all cached entries after prompting for confirmation
+// from r. If the cache directory does not exist or is empty,
+// Clean returns without modifying anything.
+func (c *Cache) Clean(r io.Reader) error {
 	entries, err := getEntries(c.dir)
 	if err != nil {
 		return err
@@ -33,7 +37,7 @@ func (c *Cache) Clean() error {
 		log.String(),
 	)
 
-	cleanCache := parseInput(bufio.NewReader(os.Stdin))
+	cleanCache := parseInput(bufio.NewReader(r))
 	if !cleanCache {
 		logger.InfoEnd("aborted")
 		return nil
@@ -60,6 +64,9 @@ func (c *Cache) Clean() error {
 	return nil
 }
 
+// getEntries returns the entries in path.
+// If path does not exist or contains no entries,
+// it returns nil, nil.
 func getEntries(path string) ([]os.DirEntry, error) {
 	entries, err := os.ReadDir(path)
 	if err != nil {
@@ -77,6 +84,13 @@ func getEntries(path string) ([]os.DirEntry, error) {
 	return entries, nil
 }
 
+// parseInput reads a confirmation response from reader.
+//
+// An empty response, "yes",
+// and any response beginning with 'y' or 'Y'
+// are treated as confirmation.
+// Any other response, or a read error,
+// is treated as a rejection.
 func parseInput(reader *bufio.Reader) bool {
 	input, err := reader.ReadString('\n')
 	if err != nil {
