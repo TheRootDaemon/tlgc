@@ -51,7 +51,7 @@ func (c *Cache) Update(
 		return nil
 	}
 
-	c.platforms.Store(nil)
+	c.platforms.Store([]string(nil))
 	return nil
 }
 
