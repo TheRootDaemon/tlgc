@@ -50,8 +50,8 @@ func (c *Cache) Find(query, platform string, languages []string) (*FindResult, e
 		languageDirectories,
 	)
 	fallbacks := c.fallbackMatches(
-		platform,
 		file,
+		platform,
 		platforms,
 		languageDirectories,
 	)
