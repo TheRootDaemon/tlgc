@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 
@@ -167,6 +168,38 @@ func TestGetEntries(t *testing.T) {
 				f := filepath.Join(d, "file.txt")
 				require.NoError(t, os.WriteFile(f, nil, 0o644))
 				return f
+			},
+			wantErr: true,
+		},
+		{
+			name: "stat_returns_non_not_exist_error",
+			setup: func(t *testing.T) string {
+				if runtime.GOOS == "windows" {
+					t.Skip("permission-based test not applicable on Windows")
+				}
+
+				d := t.TempDir()
+				sub := filepath.Join(d, "sub")
+				require.NoError(t, os.MkdirAll(sub, 0o755))
+				require.NoError(t, os.Chmod(sub, 0o000))
+				t.Cleanup(func() { _ = os.Chmod(sub, 0o755) })
+				return filepath.Join(sub, "file.txt")
+			},
+			wantErr: true,
+		},
+		{
+			name: "readdir_returns_error",
+			setup: func(t *testing.T) string {
+				if runtime.GOOS == "windows" {
+					t.Skip("permission-based test not applicable on Windows")
+				}
+
+				d := t.TempDir()
+				sub := filepath.Join(d, "sub")
+				require.NoError(t, os.MkdirAll(sub, 0o755))
+				require.NoError(t, os.Chmod(sub, 0o000))
+				t.Cleanup(func() { _ = os.Chmod(sub, 0o755) })
+				return sub
 			},
 			wantErr: true,
 		},
