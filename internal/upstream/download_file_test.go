@@ -116,11 +116,13 @@ func TestTransfer(t *testing.T) {
 func TestDownloadFile(t *testing.T) {
 	t.Parallel()
 	tests := []struct {
-		name        string
-		handler     http.HandlerFunc
-		sha256hex   string
-		wantErr     bool
-		wantContent string
+		name         string
+		handler      http.HandlerFunc
+		sha256hex    string
+		useNilRoot   bool
+		useEmptyDest bool
+		wantErr      bool
+		wantContent  string
 	}{
 		{
 			name: "creates_file_with_correct_content",
@@ -147,6 +149,18 @@ func TestDownloadFile(t *testing.T) {
 			},
 			wantErr: true,
 		},
+		{
+			name:       "nil_root",
+			handler:    func(w http.ResponseWriter, r *http.Request) { w.WriteHeader(200) },
+			useNilRoot: true,
+			wantErr:    true,
+		},
+		{
+			name:         "empty_destination",
+			handler:      func(w http.ResponseWriter, r *http.Request) { w.WriteHeader(200) },
+			useEmptyDest: true,
+			wantErr:      true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -155,22 +169,39 @@ func TestDownloadFile(t *testing.T) {
 			ts := httptest.NewServer(tt.handler)
 			defer ts.Close()
 
-			dest := filepath.Join(t.TempDir(), "test.out")
+			dir := t.TempDir()
+			root, err := os.OpenRoot(dir)
+			require.NoError(t, err)
+			defer func() {
+				_ = root.Close()
+			}()
+
+			r := root
+			if tt.useNilRoot {
+				r = nil
+			}
+
+			dest := "test.out"
+			if tt.useEmptyDest {
+				dest = ""
+			}
 
 			c := New(WithHTTPClient(ts.Client()))
 
 			ctx := context.Background()
-			err := c.DownloadFile(ctx, ts.URL, tt.sha256hex, dest)
+			err = c.DownloadFile(ctx, ts.URL, tt.sha256hex, r, dest)
 
 			if tt.wantErr {
 				require.Error(t, err)
-				_, statErr := os.Stat(dest)
-				assert.True(t, os.IsNotExist(statErr))
+				if dest != "" {
+					_, statErr := os.Stat(filepath.Join(dir, dest))
+					assert.True(t, os.IsNotExist(statErr))
+				}
 				return
 			}
 
 			require.NoError(t, err)
-			data, err := os.ReadFile(dest)
+			data, err := os.ReadFile(filepath.Join(dir, dest))
 			require.NoError(t, err)
 			assert.Equal(t, tt.wantContent, string(data))
 		})

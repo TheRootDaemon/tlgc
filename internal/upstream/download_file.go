@@ -3,6 +3,7 @@ package upstream
 import (
 	"context"
 	"crypto/sha256"
+	"errors"
 	"fmt"
 	"hash"
 	"io"
@@ -25,7 +26,21 @@ import (
 // the checksum does not match,
 // or the size limit is exceeded,
 // any partially written file is removed.
-func (c *Client) DownloadFile(ctx context.Context, url, sha256hex, destination string) error {
+func (c *Client) DownloadFile(
+	ctx context.Context,
+	url,
+	sha256hex string,
+	root *os.Root,
+	destination string,
+) error {
+	if root == nil {
+		return errors.New("root must not be nil")
+	}
+
+	if destination == "" {
+		return errors.New("destination must not be empty")
+	}
+
 	logger.Info("downloading from %s...", url)
 	start := time.Now()
 
@@ -39,8 +54,7 @@ func (c *Client) DownloadFile(ctx context.Context, url, sha256hex, destination s
 		_ = resp.Body.Close()
 	}()
 
-	// #nosec G304 TODO (Use os.OpenRoot with the cache directory, after the cache package is implemented)
-	f, err := os.OpenFile(
+	f, err := root.OpenFile(
 		destination,
 		os.O_CREATE|os.O_WRONLY|os.O_EXCL,
 		0o600,
@@ -54,7 +68,7 @@ func (c *Client) DownloadFile(ctx context.Context, url, sha256hex, destination s
 	defer func() {
 		_ = f.Close()
 		if cleanup {
-			_ = os.Remove(destination)
+			_ = root.Remove(destination)
 		}
 	}()
 
