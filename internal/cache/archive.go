@@ -9,18 +9,18 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/TheRootDaemon/tlgc/internal/config"
 	"github.com/TheRootDaemon/tlgc/internal/upstream"
 	"github.com/TheRootDaemon/tlgc/logger"
 )
 
-// downloadArchive downloads the named language archive from the configured mirror.
+// downloadArchive downloads the named archive from the given mirror
+// and verifies it against the provided hash.
 func downloadArchive(
 	ctx context.Context,
 	client *upstream.Client,
+	mirror string,
 	archiveName, hash string,
 ) ([]byte, error) {
-	mirror := config.Cache().Mirror
 	url := mirror + "/" + archiveName
 	return client.DownloadBytes(ctx, url, hash)
 }

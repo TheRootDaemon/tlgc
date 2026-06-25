@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/TheRootDaemon/tlgc/internal/config"
 	"github.com/TheRootDaemon/tlgc/internal/upstream"
 	"github.com/TheRootDaemon/tlgc/logger"
 )
@@ -77,7 +78,13 @@ func (c *Cache) updateLanguage(
 	}
 
 	hash := newChecksums[archiveName]
-	data, err := downloadArchive(ctx, client, archiveName, hash)
+	data, err := downloadArchive(
+		ctx,
+		client,
+		config.Cache().Mirror,
+		archiveName,
+		hash,
+	)
 	if err != nil {
 		return false, fmt.Errorf("downloading %s: %w", archiveName, err)
 	}
