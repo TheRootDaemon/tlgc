@@ -1,13 +1,18 @@
 package cache
 
 import (
+	"context"
 	"fmt"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/TheRootDaemon/tlgc/internal/upstream"
 )
 
 func TestLoadChecksums(t *testing.T) {
@@ -253,6 +258,72 @@ func TestSaveChecksums(t *testing.T) {
 		got := c.loadChecksums()
 		assert.Equal(t, original, got)
 	})
+}
+
+func TestDownloadChecksum(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name    string
+		handler http.HandlerFunc
+		wantErr bool
+		want    string
+	}{
+		{
+			name: "successful_download",
+			handler: func(w http.ResponseWriter, r *http.Request) {
+				assert.Equal(t, "/"+checksumFile, r.URL.Path)
+				_, _ = w.Write([]byte("hash  en.zip\n"))
+			},
+			want: "hash  en.zip\n",
+		},
+		{
+			name: "empty_response",
+			handler: func(w http.ResponseWriter, r *http.Request) {
+				_, _ = w.Write(nil)
+			},
+			want: "",
+		},
+		{
+			name: "server_error",
+			handler: func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusInternalServerError)
+			},
+			wantErr: true,
+		},
+		{
+			name: "not_found",
+			handler: func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusNotFound)
+			},
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ts := httptest.NewServer(tt.handler)
+			defer ts.Close()
+
+			client := upstream.New(
+				upstream.WithHTTPClient(ts.Client()),
+			)
+
+			got, err := downloadChecksum(
+				context.Background(),
+				client,
+				ts.URL,
+			)
+
+			if tt.wantErr {
+				assert.Error(t, err)
+				return
+			}
+
+			require.NoError(t, err)
+			assert.Equal(t, tt.want, string(got))
+		})
+	}
 }
 
 func TestParseChecksum(t *testing.T) {

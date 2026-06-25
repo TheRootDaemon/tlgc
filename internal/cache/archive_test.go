@@ -10,6 +10,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"runtime"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -295,4 +296,39 @@ func TestExtractFile(t *testing.T) {
 			assert.Equal(t, tt.content, string(got))
 		})
 	}
+}
+
+func TestExtractArchive_MkdirAllError(t *testing.T) {
+	dir := t.TempDir()
+	filePath := filepath.Join(dir, "notadir")
+	require.NoError(t, os.WriteFile(filePath, nil, 0o644))
+
+	c := &Cache{dir: filePath}
+	err := c.extractArchive("pages.en", createEmptyZip(t))
+	assert.Error(t, err)
+}
+
+func TestExtractFile_OpenFileError(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("chmod 0o500 does not prevent file creation on Windows")
+	}
+
+	dir := t.TempDir()
+	require.NoError(t, os.Chmod(dir, 0o500))
+	t.Cleanup(func() { _ = os.Chmod(dir, 0o755) })
+
+	root, err := os.OpenRoot(dir)
+	require.NoError(t, err)
+	defer func() {
+		_ = root.Close()
+	}()
+
+	zipData := createTestZip(t, map[string]string{"test.md": "content"})
+	zipReader, err := zip.NewReader(bytes.NewReader(zipData), int64(len(zipData)))
+	require.NoError(t, err)
+	require.Len(t, zipReader.File, 1)
+
+	f := zipReader.File[0]
+	err = extractFile(root, f)
+	assert.Error(t, err)
 }

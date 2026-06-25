@@ -6,7 +6,6 @@ import (
 	"os"
 	"strings"
 
-	"github.com/TheRootDaemon/tlgc/internal/config"
 	"github.com/TheRootDaemon/tlgc/internal/upstream"
 )
 
@@ -65,8 +64,8 @@ func (c *Cache) saveChecksums(checksums map[string]string) error {
 func downloadChecksum(
 	ctx context.Context,
 	client *upstream.Client,
+	mirror string,
 ) ([]byte, error) {
-	mirror := config.Cache().Mirror
 	checksumURL := mirror + "/" + checksumFile
 	return client.DownloadBytes(ctx, checksumURL, "")
 }
