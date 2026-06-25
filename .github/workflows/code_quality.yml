@@ -1,4 +1,4 @@
-name: CI
+name: Code Quality
 
 on:
   push:
@@ -55,14 +55,17 @@ jobs:
 
     strategy:
       matrix:
-        os:
-          [
-            ubuntu-latest,
-            windows-latest,
-            macos-latest,
-            ubuntu-24.04-arm,
-            windows-11-arm,
-          ]
+        include:
+          - os: ubuntu-latest
+            race: true
+          - os: windows-latest
+            race: true
+          - os: macos-latest
+            race: true
+          - os: ubuntu-24.04-arm
+            race: true
+          - os: windows-11-arm
+            race: false
 
     steps:
       - uses: actions/checkout@v6
@@ -73,4 +76,9 @@ jobs:
           go-version: "1.26"
 
       - name: Run tests
-        run: go test -v ./...
+        if: ${{ !matrix.race }}
+        run: go test ./...
+
+      - name: Run tests with concurrency checks
+        if: ${{ matrix.race }}
+        run: go test -race ./...
