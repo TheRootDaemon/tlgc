@@ -17,7 +17,7 @@ func (c *Cache) Update(
 	languages []string,
 	client *upstream.Client,
 ) error {
-	checksums, err := downloadChecksum(ctx, client)
+	checksums, err := downloadChecksum(ctx, client, config.Cache().Mirror)
 	if err != nil {
 		return fmt.Errorf("downloading checksum: %s", err)
 	}
