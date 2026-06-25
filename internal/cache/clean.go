@@ -68,12 +68,20 @@ func (c *Cache) Clean(r io.Reader) error {
 // If path does not exist or contains no entries,
 // it returns nil, nil.
 func getEntries(path string) ([]os.DirEntry, error) {
-	entries, err := os.ReadDir(path)
+	fi, err := os.Stat(path)
 	if err != nil {
 		if os.IsNotExist(err) {
 			return nil, nil
 		}
+		return nil, err
+	}
 
+	if !fi.IsDir() {
+		return nil, fmt.Errorf("%q is not a directory", path)
+	}
+
+	entries, err := os.ReadDir(path)
+	if err != nil {
 		return nil, err
 	}
 
