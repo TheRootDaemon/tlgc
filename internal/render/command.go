@@ -8,18 +8,28 @@ import (
 	"github.com/TheRootDaemon/tlgc/text"
 )
 
+// mappedWord pairs a single word from a command
+// with the index of its originating Segment,
+// so that the segment's style can be applied
+// during line-by-line rendering.
 type mappedWord struct {
 	text         string
 	segmentIndex int
 }
 
-func (r *Renderer) renderCommand(w io.Writer, segments []Segment) {
+// renderCommand writes a styled, wrapped command to w.
+//
+// It decomposes segments into word-level mappings,
+// wraps the combined text to fit r.output.LineLength,
+// and renders each wrapped line with per-word
+// segment styling via renderCommandLine.
+func (r *Renderer) renderCommand(w io.Writer, segments []Segment) error {
 	mappedWords := mapWords(segments, r.output.OptionStyle)
 	if len(mappedWords) == 0 {
-		return
+		return nil
 	}
 
-	displayText := displayText(mappedWords)
+	displayText := commandText(mappedWords)
 	exampleIndent := strings.Repeat(" ", r.indent.Example)
 	lines := wrapLines(
 		r.output.LineLength,
@@ -35,17 +45,25 @@ func (r *Renderer) renderCommand(w io.Writer, segments []Segment) {
 			continue
 		}
 
-		r.renderCommandLine(
+		if err := r.renderCommandLine(
 			w,
 			words,
 			mappedWords,
 			segments,
 			exampleIndent,
 			&wordOffset,
-		)
+		); err != nil {
+			return err
+		}
 	}
+
+	return nil
 }
 
+// renderCommandLine writes one indented line of a command,
+// applying the style of each word's originating Segment.
+// wordOffset tracks the current position in mappedWords
+// across multi-line rendering.
 func (r *Renderer) renderCommandLine(
 	w io.Writer,
 	words []string,
@@ -53,8 +71,11 @@ func (r *Renderer) renderCommandLine(
 	segments []Segment,
 	indent string,
 	wordOffset *int,
-) {
-	io.WriteString(w, indent)
+) error {
+	_, err := io.WriteString(w, indent)
+	if err != nil {
+		return err
+	}
 
 	for j, word := range words {
 		if *wordOffset >= len(mappedWords) {
@@ -64,24 +85,31 @@ func (r *Renderer) renderCommandLine(
 		mapped := mappedWords[*wordOffset]
 		segment := segments[mapped.segmentIndex]
 
-		io.WriteString(
+		if _, err := io.WriteString(
 			w,
 			r.applyStyle(
 				r.styleForSegment(&segment),
 				word,
 			),
-		)
+		); err != nil {
+			return err
+		}
 
 		if j < len(words)-1 {
-			io.WriteString(w, " ")
+			_, err := io.WriteString(w, " ")
+			if err != nil {
+				return err
+			}
 		}
 
 		*wordOffset++
 	}
 
-	io.WriteString(w, "\n")
+	_, err = io.WriteString(w, "\n")
+	return err
 }
 
+// mapWords flattens each Segment's DisplayText into individual words.
 func mapWords(segments []Segment, optionStyle config.OptionStyle) []mappedWord {
 	var mappedWords []mappedWord
 	for i, segment := range segments {
@@ -100,7 +128,9 @@ func mapWords(segments []Segment, optionStyle config.OptionStyle) []mappedWord {
 	return mappedWords
 }
 
-func displayText(words []mappedWord) string {
+// commandText joins the text fields of mapped words back
+// into a single space-separated string, suitable for text wrapping.
+func commandText(words []mappedWord) string {
 	var b strings.Builder
 
 	for i, word := range words {
@@ -113,16 +143,19 @@ func displayText(words []mappedWord) string {
 	return b.String()
 }
 
+// wrapLines wraps displayText to fit within width columns.
+// Continuation lines are prefixed with indent.
+// If width ≤ 0 the text is returned as a single-element slice (no wrapping).
 func wrapLines(
 	width int,
 	indent,
-	displayTest string,
+	displayText string,
 ) []string {
 	var wrapped string
 	if width <= 0 {
-		return []string{displayTest}
+		return []string{displayText}
 	}
 
-	wrapped = text.Wrap(displayTest, width, indent)
+	wrapped = text.Wrap(displayText, width, indent)
 	return strings.Split(wrapped, "\n")
 }
