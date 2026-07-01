@@ -11,12 +11,26 @@ const Mirror string = "https://github.com/tldr-pages/tldr/releases/latest/downlo
 
 // CacheConfig configures the page cache.
 type CacheConfig struct {
-	Dir             string   `toml:"dir"`
-	Mirror          string   `toml:"mirror"`
-	AutoUpdate      bool     `toml:"auto_update"`
-	DeferAutoUpdate bool     `toml:"defer_auto_update"`
-	MaxAge          uint64   `toml:"max_age"`
-	Languages       []string `toml:"languages"`
+	// Dir is the path to the local directory where downloaded pages are cached.
+	Dir string `toml:"dir"`
+
+	// Mirror is the URL used to download tldr-pages archives.
+	Mirror string `toml:"mirror"`
+
+	// AutoUpdate controls whether the cache is refreshed automatically on startup.
+	AutoUpdate bool `toml:"auto_update"`
+
+	// DeferAutoUpdate controls whether auto-updates run in the background
+	// instead of blocking startup.
+	DeferAutoUpdate bool `toml:"defer_auto_update"`
+
+	// MaxAge is the maximum age of cached pages, in hours, before they are
+	// re-downloaded.
+	MaxAge uint64 `toml:"max_age"`
+
+	// Languages is the list of preferred page languages.
+	// When empty the language is auto-detected from the environment.
+	Languages []string `toml:"languages"`
 }
 
 // DefaultCacheConfig returns the default cache settings.

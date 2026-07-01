@@ -9,24 +9,50 @@ import "github.com/TheRootDaemon/tlgc/termcolor"
 // a background color,
 // and optional text effects (bold, italic, etc.).
 type OutputStyle struct {
-	Color         OutputColor `toml:"color"`
-	Background    OutputColor `toml:"background"`
-	Bold          bool        `toml:"bold"`
-	Underline     bool        `toml:"underline"`
-	Italic        bool        `toml:"italic"`
-	Dim           bool        `toml:"dim"`
-	Strikethrough bool        `toml:"strikethrough"`
+	// Color is the foreground colour used for this element.
+	Color OutputColor `toml:"color"`
+
+	// Background is the background colour used for this element.
+	Background OutputColor `toml:"background"`
+
+	// Bold controls whether the text is rendered in bold.
+	Bold bool `toml:"bold"`
+
+	// Underline controls whether the text is underlined.
+	Underline bool `toml:"underline"`
+
+	// Italic controls whether the text is rendered in italic.
+	Italic bool `toml:"italic"`
+
+	// Dim controls whether the text is rendered with reduced intensity.
+	Dim bool `toml:"dim"`
+
+	// Strikethrough controls whether the text has a strikethrough line.
+	Strikethrough bool `toml:"strikethrough"`
 }
 
 // StyleConfig defines the visual style
 // for each semantic section of a rendered page.
 type StyleConfig struct {
-	Title       OutputStyle `toml:"title"`
+	// Title is the style applied to the page title.
+	Title OutputStyle `toml:"title"`
+
+	// Description is the style applied to description lines.
 	Description OutputStyle `toml:"description"`
-	Bullet      OutputStyle `toml:"bullet"`
-	Example     OutputStyle `toml:"example"`
-	URL         OutputStyle `toml:"url"`
-	InlineCode  OutputStyle `toml:"inline_code"`
+
+	// Bullet is the style applied to bullet items (example descriptions).
+	Bullet OutputStyle `toml:"bullet"`
+
+	// Example is the style applied to command examples.
+	Example OutputStyle `toml:"example"`
+
+	// URL is the style applied to the "More information" URL line.
+	URL OutputStyle `toml:"url"`
+
+	// InlineCode is the style applied to inline code spans inside descriptions.
+	InlineCode OutputStyle `toml:"inline_code"`
+
+	// Placeholder is the style applied to user-supplied placeholder values.
 	Placeholder OutputStyle `toml:"placeholder"`
 }
 

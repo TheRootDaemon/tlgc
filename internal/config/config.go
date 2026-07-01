@@ -13,10 +13,17 @@ import (
 // Each field maps to a TOML section
 // in the config file.
 type Config struct {
-	Cache  CacheConfig  `toml:"cache"`
+	// Cache configures the page cache directory, mirror URL, and update behaviour.
+	Cache CacheConfig `toml:"cache"`
+
+	// Indent controls the number of spaces used to indent each page section.
 	Indent IndentConfig `toml:"indent"`
+
+	// Output controls which elements are displayed and how they are formatted.
 	Output OutputConfig `toml:"output"`
-	Style  StyleConfig  `toml:"style"`
+
+	// Style defines the ANSI colour and text-effect style for each page element.
+	Style StyleConfig `toml:"style"`
 }
 
 // Default returns a Config

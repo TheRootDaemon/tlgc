@@ -3,10 +3,17 @@ package config
 // IndentConfig controls indentation
 // for each section of a rendered page.
 type IndentConfig struct {
-	Title       int `toml:"title"`
+	// Title is the number of spaces used to indent the page title.
+	Title int `toml:"title"`
+
+	// Description is the number of spaces used to indent description lines.
 	Description int `toml:"description"`
-	Bullet      int `toml:"bullet"`
-	Example     int `toml:"example"`
+
+	// Bullet is the number of spaces used to indent bullet items (example descriptions).
+	Bullet int `toml:"bullet"`
+
+	// Example is the number of spaces used to indent command example blocks.
+	Example int `toml:"example"`
 }
 
 // DefaultIndentConfig returns

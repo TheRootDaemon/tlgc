@@ -13,8 +13,10 @@ type ColorKind int
 const (
 	// ColorKindNamed is a standard named ANSI color.
 	ColorKindNamed ColorKind = iota
+
 	// ColorKindColor256 is an 8-bit (256-color) palette index.
 	ColorKindColor256
+
 	// ColorKindRGB is an explicit RGB true color.
 	ColorKindRGB
 )
@@ -49,10 +51,17 @@ const (
 // 8-bit palette indexes, and RGB colors.
 // Hex colors are parsed as RGB at load time.
 type OutputColor struct {
-	Kind     ColorKind
-	Named    ColorName
+	// Kind selects the colour representation: named, 256-colour, or RGB.
+	Kind ColorKind
+
+	// Named is the colour name used when Kind is ColorKindNamed.
+	Named ColorName
+
+	// Color256 is the 8-bit palette index used when Kind is ColorKindColor256.
 	Color256 uint8
-	RGB      [3]uint8
+
+	// RGB is the 24-bit RGB triple used when Kind is ColorKindRGB.
+	RGB [3]uint8
 }
 
 // DefaultColor returns the default OutputColor
