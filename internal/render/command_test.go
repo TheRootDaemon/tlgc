@@ -10,14 +10,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-type errorWriter struct {
-	err error
-}
-
-func (w *errorWriter) Write(p []byte) (int, error) {
-	return 0, w.err
-}
-
 func TestRenderCommand(t *testing.T) {
 	t.Parallel()
 
