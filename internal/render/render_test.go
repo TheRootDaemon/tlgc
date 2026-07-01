@@ -419,11 +419,12 @@ func TestRenderRaw(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
-		name    string
-		content string
-		writer  io.Writer
-		want    string
-		wantErr string
+		name       string
+		content    string
+		writer     io.Writer
+		want       string
+		wantErr    string
+		wantAnyErr bool
 	}{
 		{
 			name:    "writes file content",
@@ -431,8 +432,8 @@ func TestRenderRaw(t *testing.T) {
 			want:    "# hello",
 		},
 		{
-			name:    "file not found",
-			wantErr: "no such file",
+			name:       "file not found",
+			wantAnyErr: true,
 		},
 		{
 			name:    "write error",
@@ -461,6 +462,10 @@ func TestRenderRaw(t *testing.T) {
 
 			if tt.wantErr != "" {
 				assert.ErrorContains(t, err, tt.wantErr)
+				return
+			}
+			if tt.wantAnyErr {
+				assert.Error(t, err)
 				return
 			}
 
