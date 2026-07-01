@@ -16,11 +16,11 @@ import (
 // Renderer renders parsed tldr pages to a writer
 // with optional ANSI color and configurable styles, indentation, and output settings.
 type Renderer struct {
-	useColor bool
-	w        io.Writer
-	style    config.StyleConfig
-	output   config.OutputConfig
-	indent   config.IndentConfig
+	useColor bool                // whether ANSI color output is enabled
+	w        io.Writer           // destination for rendered output
+	style    config.StyleConfig  // style configuration for each page element
+	output   config.OutputConfig // output visibility and formatting options
+	indent   config.IndentConfig // indentation per section
 }
 
 // RenderOption configures a Renderer.

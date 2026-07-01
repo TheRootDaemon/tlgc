@@ -7,6 +7,8 @@ import (
 	"github.com/TheRootDaemon/tlgc/termcolor"
 )
 
+// applyStyle applies the ANSI styling defined by s to the text t.
+// When the renderer's useColor is false, t is returned unchanged.
 func (r *Renderer) applyStyle(s config.OutputStyle, t string) string {
 	if !r.useColor {
 		return t
@@ -15,6 +17,10 @@ func (r *Renderer) applyStyle(s config.OutputStyle, t string) string {
 	return termcolor.Sprint(styleString(s), t)
 }
 
+// styleForSegment returns the OutputStyle
+// that should be used for a given Segment kind.
+// Text segments use the Example style;
+// Placeholder and Option segments use the Placeholder style.
 func (r *Renderer) styleForSegment(s *Segment) config.OutputStyle {
 	switch s.Kind {
 	case Text:
@@ -28,6 +34,10 @@ func (r *Renderer) styleForSegment(s *Segment) config.OutputStyle {
 	}
 }
 
+// styleString converts an OutputStyle into a space-separated string
+// of style directives (e.g. "bold red on_blue") suitable for termcolor.Sprint.
+// Named foreground and background colors are included
+// only when they differ from the default and are non-empty.
 func styleString(s config.OutputStyle) string {
 	var parts []string
 	if s.Bold {
