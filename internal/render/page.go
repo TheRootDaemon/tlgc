@@ -8,18 +8,33 @@ import (
 )
 
 var (
+	// placeholderPattern matches tldr placeholder tokens like {{archive.tar}}
+	// and captures the inner content (the text between the braces).
 	placeholderPattern = regexp.MustCompile(`\{\{(.*?)\}\}`)
-	optionPattern      = regexp.MustCompile(`^\[(.+)\|(.+)\]$`)
+
+	// optionPattern matches the option syntax embedded inside a placeholder,
+	// e.g. [-s|--long]. It captures the short form and the long form.
+	optionPattern = regexp.MustCompile(`^\[(.+)\|(.+)\]$`)
 )
 
+// Kind represents the type of a parsed command segment.
 type Kind int
 
 const (
+	// Text is a plain literal segment that should be rendered as-is.
 	Text Kind = iota
+
+	// Placeholder is a user-supplied value wrapped in {{...}}.
 	Placeholder
+
+	// Option is a command-line flag embedded in {{[...|...]}} syntax.
 	Option
 )
 
+// Segment holds a parsed piece of a command string.
+// A segment is either literal text,
+// a user-supplied placeholder value,
+// or a command-line option with short and long forms.
 type Segment struct {
 	Kind  Kind
 	Text  string
@@ -27,11 +42,19 @@ type Segment struct {
 	Long  string
 }
 
+// Example is a single tldr example
+// consisting of a description
+// and the associated command text.
 type Example struct {
 	Description string
 	Command     string
 }
 
+// Page is a parsed tldr page containing a title,
+// zero or more description lines,
+// an optional "More information" URL,
+// the filesystem path to the source file,
+// and a list of examples.
 type Page struct {
 	Title       string
 	URL         string
@@ -40,6 +63,15 @@ type Page struct {
 	Examples    []Example
 }
 
+// Parse parses a raw markdown tldr page string into a Page.
+//
+// It recognises the following markdown structure:
+//   - # Title
+//   - > Description lines (with optional "More information: <url>" extraction)
+//   - - Example descriptions (optionally ending with a colon)
+//   - `command` lines (associated with the preceding example)
+//
+// Nil and empty content produce a Page with zero-valued fields.
 func Parse(content string) *Page {
 	p := &Page{}
 	lines := strings.SplitSeq(content, "\n")
@@ -88,6 +120,12 @@ func Parse(content string) *Page {
 	return p
 }
 
+// ParseCommand splits a raw command string into a slice of Segments.
+//
+// Placeholder tokens wrapped in {{...}} are extracted
+// as either Placeholder or Option segments depending on their inner content.
+// Text outside of placeholders becomes Text segments.
+// An empty string returns nil.
 func ParseCommand(raw string) []Segment {
 	if raw == "" {
 		return nil
@@ -144,6 +182,16 @@ func ParseCommand(raw string) []Segment {
 	return segments
 }
 
+// DisplayText returns the text
+// that should be displayed for the segment,
+// taking the option display style into account.
+//
+// For Option segments the return value depends on style:
+//   - OptionStyleShort returns the short form (e.g. "-s")
+//   - OptionStyleLong returns the long form (e.g. "--long")
+//   - OptionStyleCombined returns both (e.g. "[-s|--long]")
+//
+// All other kinds return the Text field unchanged.
 func (s Segment) DisplayText(style config.OptionStyle) string {
 	switch s.Kind {
 	case Option:
@@ -162,6 +210,9 @@ func (s Segment) DisplayText(style config.OptionStyle) string {
 	}
 }
 
+// parseURL extracts the URL from a "More information" description line.
+// It expects the URL to be wrapped in angle brackets like <https://example.org>.
+// Returns the empty string if no valid URL is found.
 func parseURL(body string) string {
 	if !strings.Contains(body, "More information: <") {
 		return ""
@@ -176,6 +227,12 @@ func parseURL(body string) string {
 	return ""
 }
 
+// parseInnerPlaceholders parses the inner content of a {{...}} placeholder.
+//
+// If the inner content matches the option pattern [short|long],
+// an Option segment is returned with the short and long forms correctly
+// identified regardless of their order.
+// Otherwise a plain Placeholder segment is returned.
 func parseInnerPlaceholders(inner string) Segment {
 	if options := optionPattern.FindStringSubmatch(inner); len(options) == 3 {
 		left, right := options[1], options[2]
