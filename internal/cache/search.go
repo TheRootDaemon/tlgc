@@ -11,8 +11,13 @@ import (
 
 // SearchResult represents a matching page from a search.
 type SearchResult struct {
-	Page     string
+	// Page is the page name (filename without the .md extension).
+	Page string
+
+	// Language is the language of the page (e.g. "en").
 	Language string
+
+	// Platform is the platform of the page (e.g. "linux", "common").
 	Platform string
 }
 

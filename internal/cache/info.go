@@ -11,17 +11,33 @@ import (
 	"github.com/TheRootDaemon/tlgc/internal/config"
 )
 
+// LanguageInfo contains cache statistics for a single language.
 type LanguageInfo struct {
-	Pages    int
+	// Pages is the number of cached pages for this language.
+	Pages int
+
+	// Language is the language name (e.g. "en", "pt", "es").
 	Language string
 }
 
+// InfoResult contains information about the current cache state.
 type InfoResult struct {
-	AutoUpdate    bool
-	TotalPages    int
-	MaxAge        uint64
-	CacheDir      string
-	Age           string
+	// AutoUpdate indicates whether automatic cache updates are enabled.
+	AutoUpdate bool
+
+	// TotalPages is the total number of cached pages across all languages.
+	TotalPages int
+
+	// MaxAge is the maximum cache age in seconds before a refresh is due.
+	MaxAge uint64
+
+	// CacheDir is the absolute path to the cache directory.
+	CacheDir string
+
+	// Age is a human-readable string representing the cache age.
+	Age string
+
+	// LanguageStats contains per-language page statistics.
 	LanguageStats []LanguageInfo
 }
 

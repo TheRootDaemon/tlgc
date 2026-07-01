@@ -13,7 +13,11 @@ import (
 //
 // Fallbacks contains pages found only in other platforms.
 type FindResult struct {
-	Matches   []string
+	// Matches contains pages found in the requested platform
+	// and/or the common platform.
+	Matches []string
+
+	// Fallbacks contains pages found only in other platforms.
 	Fallbacks []string
 }
 
