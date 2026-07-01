@@ -1,6 +1,7 @@
 package termcolor
 
 var (
+	// foregroundCodes maps foreground color names to ANSI SGR codes.
 	foregroundCodes = map[string]int{
 		"black":   30,
 		"red":     31,
@@ -13,6 +14,7 @@ var (
 		"grey":    90,
 	}
 
+	// backgroundCodes maps background color names to ANSI SGR codes.
 	backgroundCodes = map[string]int{
 		"on_black":   40,
 		"on_red":     41,
@@ -24,6 +26,7 @@ var (
 		"on_white":   47,
 	}
 
+	// effectCodes maps text effect names to ANSI SGR codes.
 	effectCodes = map[string]int{
 		"bold":          1,
 		"dim":           2,
@@ -36,10 +39,20 @@ var (
 	}
 )
 
+// Color represents an ANSI terminal color and text attributes.
 type Color struct {
+	// Foreground is the foreground color name.
 	Foreground string
+
+	// Background is the background color name.
 	Background string
-	Effects    []string
-	FGParams   []int
-	BGParams   []int
+
+	// Effects lists the text effects to apply.
+	Effects []string
+
+	// FGParams contains the ANSI SGR parameters for the foreground color.
+	FGParams []int
+
+	// BGParams contains the ANSI SGR parameters for the background color.
+	BGParams []int
 }

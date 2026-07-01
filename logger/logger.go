@@ -10,10 +10,19 @@ import (
 type Level int
 
 const (
+	// LevelTrace enables the most detailed diagnostic logging.
 	LevelTrace Level = iota - 2
+
+	// LevelDebug enables verbose logging intended for debugging.
 	LevelDebug
+
+	// LevelInfo enables informational logging about normal operation.
 	LevelInfo
+
+	// LevelWarn enables logging for unexpected but recoverable conditions.
 	LevelWarn
+
+	// LevelError enables logging for errors that prevent an operation from succeeding.
 	LevelError
 )
 

@@ -39,6 +39,8 @@ func Error(format string, args ...any) {
 	defaultLogger.Error(format, args...)
 }
 
+// Exit logs the message at LevelError via the default logger
+// and terminates the program with exit status 1.
 func Exit(format string, args ...any) {
 	defaultLogger.Error(format, args...)
 	exit(1)
