@@ -64,6 +64,9 @@ func (c *Cache) Age() (time.Duration, error) {
 	return age, nil
 }
 
+// Info returns a snapshot of the current cache state,
+// including its location, age, configuration,
+// per-language page counts, and total page count.
 func (c *Cache) Info() (*InfoResult, error) {
 	fi, err := os.Stat(c.dir)
 	if err != nil {
@@ -108,6 +111,9 @@ func (c *Cache) Info() (*InfoResult, error) {
 	}, nil
 }
 
+// languageStats counts cached pages for each language and
+// returns the per-language statistics
+// along with the total page count.
 func (c *Cache) languageStats(
 	platforms,
 	languageDirectories []string,
