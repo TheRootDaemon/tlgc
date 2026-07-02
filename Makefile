@@ -2,16 +2,18 @@
 PKGS = $(shell go list ./...)
 PKGS_WITH_TESTS := $(shell go list -f '{{if .TestGoFiles}}{{.ImportPath}}{{end}}' ./...)
 
+VERSION := $(shell git describe --tags --dirty --always 2>/dev/null || echo "dev")
+
 #
 # Build targets
 #
 
 .PHONY: build
-build-server:
+build:
 	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
 	go build \
 		-trimpath \
-		-ldflags="-s -w" \
+		-ldflags="-s -w -X github.com/TheRootDaemon/tlgc/version.Version=$(VERSION)" \
 		-o bin/tldr \
 		./main.go
 
