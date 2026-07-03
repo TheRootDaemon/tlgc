@@ -4,10 +4,12 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/TheRootDaemon/tlgc/cmd"
 	"github.com/TheRootDaemon/tlgc/internal/cache"
 	"github.com/TheRootDaemon/tlgc/internal/config"
+	"github.com/TheRootDaemon/tlgc/internal/render"
 	"github.com/TheRootDaemon/tlgc/internal/upstream"
 	"github.com/TheRootDaemon/tlgc/locale"
 	"github.com/TheRootDaemon/tlgc/logger"
@@ -50,6 +52,35 @@ func resolvePlatform(flagPlatform string) string {
 		return platform.Resolve(flagPlatform)
 	}
 	return platform.Default()
+}
+
+func renderOptions(cli *cmd.CLI) []render.RenderOption {
+	opts := []render.RenderOption{render.WithWriter(os.Stdout)}
+
+	switch cli.Color {
+	case "always":
+		opts = append(opts, render.WithColor(true))
+	case "never":
+		opts = append(opts, render.WithColor(false))
+	}
+
+	output := config.Output()
+	switch {
+	case cli.Compact:
+		output.Compact = true
+	case cli.Raw:
+		output.RawMarkdown = true
+	case cli.Edit:
+		output.EditLink = true
+	case cli.ShortOptions:
+		output.OptionStyle = config.OptionStyleShort
+	case cli.LongOptions:
+		output.OptionStyle = config.OptionStyleLong
+	}
+
+	opts = append(opts, render.WithOutput(output))
+
+	return opts
 }
 
 func run(cli *cmd.CLI) int {
@@ -205,6 +236,45 @@ func run(cli *cmd.CLI) int {
 	case cli.ConfigPath:
 		path := config.ConfigPath()
 		fmt.Println(path)
+		return 0
+
+	case len(cli.Page) > 0:
+		if err := config.Initialize(); err != nil {
+			logger.Error("failed to load config: %v", err)
+			return 1
+		}
+
+		p := resolvePlatform(cli.Platform)
+		langs := resolveLanguages(cli.Languages)
+		c := cache.New()
+
+		query := strings.Join(cli.Page, "-")
+		result, err := c.Find(query, p, langs)
+		if err != nil {
+			logger.Error("failed to find page: %v", err)
+			return 1
+		}
+
+		if len(result.Matches) == 0 {
+			logger.Error("page not found, try running tldr --update")
+			return 1
+		}
+
+		data, err := os.ReadFile(result.Matches[0])
+		if err != nil {
+			logger.Error("failed to read page: %v", err)
+			return 1
+		}
+
+		page := render.Parse(string(data))
+		page.Path = result.Matches[0]
+
+		renderer := render.New(os.Stdout, renderOptions(cli)...)
+		if err := renderer.Render(p, page); err != nil {
+			logger.Error("failed to render page: %v", err)
+			return 1
+		}
+
 		return 0
 
 	default:
