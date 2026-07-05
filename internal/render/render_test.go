@@ -208,10 +208,10 @@ func TestRender(t *testing.T) {
 		"  archive utility.\n" +
 		"  More information: https://example.org.\n" +
 		"\n" +
-		"  create archive\n" +
+		"  create archive\n\n" +
 		"    tar cf archive.tar\n" +
 		"\n" +
-		"  extract\n" +
+		"  extract\n\n" +
 		"    tar xf archive.tar\n"
 
 	tests := []struct {
@@ -738,27 +738,27 @@ func TestRenderExample(t *testing.T) {
 			name:   "description and command non-compact",
 			ex:     Example{Description: "create archive", Command: "tar cf archive.tar"},
 			indent: config.IndentConfig{Bullet: 2, Example: 4},
-			want:   "  create archive\n    tar cf archive.tar\n",
+			want:   "  create archive\n\n    tar cf archive.tar\n",
 		},
 		{
 			name:   "description only no command",
 			ex:     Example{Description: "just a description"},
 			indent: config.IndentConfig{Bullet: 2, Example: 4},
-			want:   "  just a description\n",
+			want:   "  just a description\n\n",
 		},
 		{
 			name:   "hyphens enabled",
 			ex:     Example{Description: "create archive", Command: "tar cf archive.tar"},
 			indent: config.IndentConfig{Bullet: 2, Example: 4},
 			output: config.OutputConfig{ShowHyphens: true, ExamplePrefix: "- "},
-			want:   "  - create archive\n    tar cf archive.tar\n",
+			want:   "  - create archive\n\n    tar cf archive.tar\n",
 		},
 		{
 			name:   "compact mode no blank line",
 			ex:     Example{Description: "create archive", Command: "tar cf archive.tar"},
 			indent: config.IndentConfig{Bullet: 2, Example: 4},
 			output: config.OutputConfig{Compact: true},
-			want:   "  create archive    tar cf archive.tar\n",
+			want:   "  create archive\n    tar cf archive.tar\n",
 		},
 		{
 			name:    "write error",

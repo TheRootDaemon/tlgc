@@ -268,6 +268,11 @@ func (r *Renderer) renderExample(w io.Writer, ex Example) error {
 		}
 	}
 
+	_, err := io.WriteString(w, "\n")
+	if err != nil {
+		return err
+	}
+
 	if ex.Command != "" {
 		segments := ParseCommand(ex.Command)
 		if err := r.renderCommand(w, segments); err != nil {
