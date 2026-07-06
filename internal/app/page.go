@@ -3,6 +3,7 @@ package app
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/TheRootDaemon/tlgc/cmd"
@@ -37,13 +38,17 @@ func (a *App) lookupAndRenderPage(cli *cmd.CLI) int {
 		return 1
 	}
 
-	root, err := os.OpenRoot(pagePath)
+	root, err := os.OpenRoot(
+		filepath.Dir(pagePath),
+	)
 	if err != nil {
 		logger.Error("%v", err)
 		return 1
 	}
 
-	data, err := root.ReadFile(pagePath)
+	data, err := root.ReadFile(
+		filepath.Base(pagePath),
+	)
 	if err != nil {
 		logger.Error("failed to read page: %v", err)
 		return 1
@@ -56,6 +61,43 @@ func (a *App) lookupAndRenderPage(cli *cmd.CLI) int {
 	renderer := render.New(a.Stdout, a.renderOptions(cli)...)
 	if err := renderer.Render(renderPlatform, page); err != nil {
 		logger.Error("failed to render page: %v", err)
+		return 1
+	}
+	return 0
+}
+
+// renderLocalFile reads a local tldr markdown file, validates it,
+// and renders it to the terminal.
+// Returns 0 on success, 1 on error.
+func (a *App) renderLocalFile(cli *cmd.CLI) int {
+	root, err := os.OpenRoot(
+		filepath.Dir(cli.Render),
+	)
+	if err != nil {
+		logger.Error("%v", err)
+		return 1
+	}
+
+	data, err := root.ReadFile(
+		filepath.Base(cli.Render),
+	)
+	if err != nil {
+		logger.Error("failed to read file: %v", err)
+		return 1
+	}
+
+	page := render.Parse(string(data))
+	if page.Title == "" {
+		logger.Error("not a valid tldr page: %s", cli.Render)
+		return 1
+	}
+
+	page.Path = cli.Render
+	page.RawContent = string(data)
+
+	renderer := render.New(a.Stdout, a.renderOptions(cli)...)
+	if err := renderer.Render("", page); err != nil {
+		logger.Error("failed to render: %v", err)
 		return 1
 	}
 	return 0

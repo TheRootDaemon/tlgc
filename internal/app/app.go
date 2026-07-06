@@ -89,6 +89,8 @@ func (a *App) Run(cli *cmd.CLI) int {
 		return a.listLanguages()
 	case cli.Info:
 		return a.cacheInfo()
+	case cli.Render != "":
+		return a.renderLocalFile(cli)
 	case cli.GenConfig:
 		return a.genConfig()
 	case cli.ConfigPath:
