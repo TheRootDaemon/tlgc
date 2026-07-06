@@ -159,6 +159,13 @@ func (r *Renderer) renderEditLink(w io.Writer, url string) error {
 // renderRaw reads the raw markdown file at p.Path and
 // writes it to the Renderer's writer.
 func (r *Renderer) renderRaw(p *Page) error {
+	if p.RawContent != "" {
+		_, err := r.w.Write(
+			[]byte(p.RawContent),
+		)
+		return err
+	}
+
 	data, err := os.ReadFile(p.Path)
 	if err != nil {
 		return err

@@ -59,6 +59,7 @@ type Page struct {
 	Title       string
 	URL         string
 	Path        string
+	RawContent  string
 	Description []string
 	Examples    []Example
 }

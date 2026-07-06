@@ -278,9 +278,9 @@ func TestRender(t *testing.T) {
 			},
 		},
 		{
-			name:     "raw markdown mode writes file content",
+			name:     "raw markdown mode writes content from RawContent",
 			renderer: &Renderer{output: config.OutputConfig{RawMarkdown: true}},
-			page:     &Page{},
+			page:     &Page{RawContent: "# test page\n\n> description.\n"},
 			want:     "# test page\n\n> description.\n",
 		},
 		{
@@ -327,12 +327,6 @@ func TestRender(t *testing.T) {
 			var buf strings.Builder
 			if tt.renderer.w == nil {
 				tt.renderer.w = &buf
-			}
-
-			if tt.renderer.output.RawMarkdown && tt.want != "" {
-				path := filepath.Join(t.TempDir(), "page.md")
-				require.NoError(t, os.WriteFile(path, []byte(tt.want), 0o644))
-				tt.page.Path = path
 			}
 
 			err := tt.renderer.Render(tt.platform, tt.page)
@@ -420,6 +414,8 @@ func TestRenderRaw(t *testing.T) {
 
 	tests := []struct {
 		name       string
+		rawContent string
+		path       string
 		content    string
 		writer     io.Writer
 		want       string
@@ -427,25 +423,39 @@ func TestRenderRaw(t *testing.T) {
 		wantAnyErr bool
 	}{
 		{
-			name:    "writes file content",
-			content: "# hello",
-			want:    "# hello",
+			name:       "uses RawContent when set",
+			rawContent: "# hello from content",
+			want:       "# hello from content",
 		},
 		{
-			name:       "file not found",
+			name:       "RawContent takes precedence over Path",
+			rawContent: "from content",
+			path:       "/some/nonexistent/path.md",
+			want:       "from content",
+		},
+		{
+			name:       "falls back to file when RawContent is empty",
+			rawContent: "",
+			content:    "# file content",
+			want:       "# file content",
+		},
+		{
+			name:       "file not found when RawContent empty and path invalid",
+			rawContent: "",
+			path:       "/nonexistent/file.md",
 			wantAnyErr: true,
 		},
 		{
-			name:    "write error",
-			content: "data",
-			writer:  &errorWriter{err: errors.New("write error")},
-			wantErr: "write error",
+			name:       "write error",
+			rawContent: "data",
+			writer:     &errorWriter{err: errors.New("write error")},
+			wantErr:    "write error",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			path := "/nonexistent/file.md"
+			path := tt.path
 			if tt.content != "" {
 				path = filepath.Join(t.TempDir(), "page.md")
 				require.NoError(t, os.WriteFile(path, []byte(tt.content), 0o644))
@@ -458,7 +468,7 @@ func TestRenderRaw(t *testing.T) {
 			}
 
 			r := &Renderer{w: w}
-			err := r.renderRaw(&Page{Path: path})
+			err := r.renderRaw(&Page{RawContent: tt.rawContent, Path: path})
 
 			if tt.wantErr != "" {
 				assert.ErrorContains(t, err, tt.wantErr)

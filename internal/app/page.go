@@ -37,7 +37,13 @@ func (a *App) lookupAndRenderPage(cli *cmd.CLI) int {
 		return 1
 	}
 
-	data, err := os.ReadFile(pagePath)
+	root, err := os.OpenRoot(pagePath)
+	if err != nil {
+		logger.Error("%v", err)
+		return 1
+	}
+
+	data, err := root.ReadFile(pagePath)
 	if err != nil {
 		logger.Error("failed to read page: %v", err)
 		return 1
@@ -45,6 +51,7 @@ func (a *App) lookupAndRenderPage(cli *cmd.CLI) int {
 
 	page := render.Parse(string(data))
 	page.Path = pagePath
+	page.RawContent = string(data)
 
 	renderer := render.New(a.Stdout, a.renderOptions(cli)...)
 	if err := renderer.Render(renderPlatform, page); err != nil {
@@ -70,7 +77,7 @@ func (a *App) selectPage(
 
 		for i, f := range results.Fallbacks {
 			platform := pathutil.PagePlatform(f)
-			fmt.Fprintf(
+			_, err := fmt.Fprintf(
 				a.Stderr,
 				"%d. %s (tldr --platform %s %s)\n",
 				i+1,
@@ -78,6 +85,9 @@ func (a *App) selectPage(
 				platform,
 				query,
 			)
+			if err != nil {
+				return "", "", err
+			}
 		}
 	}
 
