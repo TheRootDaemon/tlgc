@@ -3,6 +3,8 @@ package config
 import (
 	"os"
 	"sync/atomic"
+
+	"github.com/TheRootDaemon/tlgc/logger"
 )
 
 // currentConfig represents the singleton
@@ -14,12 +16,16 @@ var currentConfig atomic.Pointer[Config]
 // and no error is returned. It is safe to call from multiple goroutines.
 func Initialize() error {
 	path := ConfigPath()
+	logger.Debug("config path: %s", path)
+
 	if _, err := os.Stat(path); err != nil {
 		if os.IsNotExist(err) {
+			logger.Info("config file not found, using defaults")
 			d := Default()
 			currentConfig.Store(&d)
 			return nil
 		}
+		logger.Warn("config stat failed: %v", err)
 		return err
 	}
 
@@ -29,6 +35,7 @@ func Initialize() error {
 	}
 
 	currentConfig.Store(cfg)
+	logger.Info("config loaded from %s", path)
 	return nil
 }
 

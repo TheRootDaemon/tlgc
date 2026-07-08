@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/BurntSushi/toml"
+	"github.com/TheRootDaemon/tlgc/logger"
 )
 
 // Config is the top-level configuration structure.
@@ -57,6 +58,7 @@ func DefaultConfig() (string, error) {
 //   - Windows: %AppData%/tlgc/config.toml
 func ConfigPath() string {
 	if p := os.Getenv("TLGC_CONFIG"); p != "" {
+		logger.Trace("config path from TLGC_CONFIG=%s", p)
 		return p
 	}
 
@@ -74,6 +76,7 @@ func ConfigPath() string {
 // Fields not present in the file
 // retain their default values.
 func LoadConfig(path string) (*Config, error) {
+	logger.Trace("loading config from %s", path)
 	cfg := Default()
 	_, err := toml.DecodeFile(path, &cfg)
 	if err != nil {
