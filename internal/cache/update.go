@@ -17,6 +17,8 @@ func (c *Cache) Update(
 	languages []string,
 	client *upstream.Client,
 ) error {
+	logger.Info("updating cache...")
+
 	checksums, err := downloadChecksum(ctx, client, config.Cache().Mirror)
 	if err != nil {
 		return fmt.Errorf("downloading checksum: %s", err)
@@ -24,6 +26,8 @@ func (c *Cache) Update(
 
 	oldChecksums := c.loadChecksums()
 	newChecksums := parseChecksum(checksums)
+
+	logger.Debug("checking %d languages for updates", len(languages))
 
 	var downloaded int
 	for _, language := range languages {
@@ -53,6 +57,7 @@ func (c *Cache) Update(
 	}
 
 	c.platforms.Store([]string(nil))
+	logger.Info("cache updated successfully")
 	return nil
 }
 
@@ -74,9 +79,11 @@ func (c *Cache) updateLanguage(
 		oldChecksums,
 		newChecksums,
 	) {
+		logger.Debug("language %q: up to date, skipped", language)
 		return false, nil
 	}
 
+	logger.Debug("language %q: downloading", language)
 	hash := newChecksums[archiveName]
 	data, err := downloadArchive(
 		ctx,

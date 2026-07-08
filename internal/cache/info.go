@@ -9,6 +9,7 @@ import (
 
 	"github.com/TheRootDaemon/tlgc/format"
 	"github.com/TheRootDaemon/tlgc/internal/config"
+	"github.com/TheRootDaemon/tlgc/logger"
 )
 
 // LanguageInfo contains cache statistics for a single language.
@@ -48,6 +49,11 @@ func (c *Cache) Age() (time.Duration, error) {
 	sumfile := filepath.Join(c.dir, checksumFile)
 	fi, err := os.Stat(sumfile)
 	if err != nil {
+		logger.Debug(
+			"cache age: stat failed for %s, falling back to %s",
+			sumfile,
+			c.dir,
+		)
 		fi, err = os.Stat(c.dir)
 		if err != nil {
 			return 0, err
@@ -58,6 +64,7 @@ func (c *Cache) Age() (time.Duration, error) {
 	age := time.Since(mod)
 
 	if age < 0 {
+		logger.Warn("cache mtime is in the future: clock may be wrong")
 		return 0, fmt.Errorf("cache mtime is in the future: clock issue")
 	}
 
@@ -68,6 +75,8 @@ func (c *Cache) Age() (time.Duration, error) {
 // including its location, age, configuration,
 // per-language page counts, and total page count.
 func (c *Cache) Info() (*InfoResult, error) {
+	logger.Debug("cache dir=%q", c.dir)
+
 	fi, err := os.Stat(c.dir)
 	if err != nil {
 		return nil, fmt.Errorf("cache directory %q: %s", c.dir, err)

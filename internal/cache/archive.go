@@ -62,6 +62,10 @@ func (c *Cache) extractArchive(
 	var extracted int
 	for _, f := range zipReader.File {
 		if strings.Contains(f.Name, "..") {
+			logger.Warn(
+				"skipping zip entry with '..': %s",
+				f.Name,
+			)
 			continue
 		}
 

@@ -9,6 +9,7 @@ import (
 	"sync/atomic"
 
 	"github.com/TheRootDaemon/tlgc/internal/config"
+	"github.com/TheRootDaemon/tlgc/logger"
 	"github.com/TheRootDaemon/tlgc/slice"
 )
 
@@ -20,8 +21,10 @@ type Cache struct {
 
 // New creates a Cache using the cache directory from the config singleton.
 func New() *Cache {
+	dir := config.Cache().Dir
+	logger.Debug("cache dir: %s", dir)
 	return &Cache{
-		dir: config.Cache().Dir,
+		dir: dir,
 	}
 }
 
@@ -62,6 +65,11 @@ func (c *Cache) getPlatforms() ([]string, error) {
 
 	sort.Strings(platforms)
 	c.platforms.Store(platforms)
+	logger.Debug(
+		"discovered %d platforms from %s",
+		len(platforms),
+		englishDirectory,
+	)
 	return platforms, nil
 }
 

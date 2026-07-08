@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/TheRootDaemon/tlgc/internal/upstream"
+	"github.com/TheRootDaemon/tlgc/logger"
 )
 
 // loadChecksums reads the cached checksum file from disk
@@ -14,6 +15,7 @@ import (
 func (c *Cache) loadChecksums() map[string]string {
 	root, err := os.OpenRoot(c.dir)
 	if err != nil {
+		logger.Trace("no existing checksums file")
 		return nil
 	}
 	defer func() {
@@ -22,10 +24,13 @@ func (c *Cache) loadChecksums() map[string]string {
 
 	checksumBytes, err := root.ReadFile(checksumFile)
 	if err != nil {
+		logger.Trace("no existing checksums file")
 		return nil
 	}
 
-	return parseChecksum(checksumBytes)
+	checksums := parseChecksum(checksumBytes)
+	logger.Debug("loaded %d checksums", len(checksums))
+	return checksums
 }
 
 // saveChecksums writes the checksum map to disk in sha256sum format.
@@ -67,6 +72,7 @@ func downloadChecksum(
 	mirror string,
 ) ([]byte, error) {
 	checksumURL := mirror + "/" + checksumFile
+	logger.Debug("fetching checksums from %s", checksumURL)
 	return client.DownloadBytes(ctx, checksumURL, "")
 }
 

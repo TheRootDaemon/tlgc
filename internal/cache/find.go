@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+
+	"github.com/TheRootDaemon/tlgc/logger"
 )
 
 // FindResult contains the pages found for a command lookup.
@@ -30,6 +32,13 @@ type FindResult struct {
 //
 // Language directories are searched in the order provided by languages.
 func (c *Cache) Find(query, platform string, languages []string) (*FindResult, error) {
+	logger.Debug(
+		"find: query=%q, platform=%q, languages=%v",
+		query,
+		platform,
+		languages,
+	)
+
 	languageDirectories := c.languagesToDirectories(languages, false)
 	if len(languageDirectories) == 0 {
 		return nil, fmt.Errorf("no matching language directories found in cache")
@@ -58,6 +67,12 @@ func (c *Cache) Find(query, platform string, languages []string) (*FindResult, e
 		platform,
 		platforms,
 		languageDirectories,
+	)
+
+	logger.Debug(
+		"primary matches: %d, fallbacks: %d",
+		len(matches),
+		len(fallbacks),
 	)
 
 	return &FindResult{

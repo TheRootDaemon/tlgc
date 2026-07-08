@@ -29,6 +29,8 @@ type SearchResult struct {
 // that platform and common are searched.
 // Results are returned sorted by page name.
 func (c *Cache) Search(query, platform string, languages []string) ([]SearchResult, error) {
+	logger.Debug("query=%q, platform=%q, languages=%v", query, platform, languages)
+
 	platforms, err := c.resolvePlatforms(platform)
 	if err != nil {
 		return nil, err
@@ -84,10 +86,13 @@ func (c *Cache) resolvePlatforms(platform string) ([]string, error) {
 
 	switch {
 	case platform == "common":
+		logger.Debug("resolved platforms: [common]")
 		return []string{"common"}, nil
 	case platform != "":
+		logger.Debug("resolved platforms: [%s, common]", platform)
 		return []string{platform, "common"}, nil
 	default:
+		logger.Debug("resolved platforms: %v", platforms)
 		return platforms, nil
 	}
 }

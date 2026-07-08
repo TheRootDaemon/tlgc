@@ -6,11 +6,13 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/TheRootDaemon/tlgc/logger"
 	"github.com/TheRootDaemon/tlgc/slice"
 )
 
 // ListFor returns all page names in the give platform (plus common).
 func (c *Cache) ListFor(platform string) ([]string, error) {
+	logger.Debug("platform=%q", platform)
 	if _, err := c.getPlatforms(); err != nil {
 		return nil, err
 	}
@@ -36,6 +38,7 @@ func (c *Cache) ListFor(platform string) ([]string, error) {
 // ListAll returns all page names across all platforms in English.
 func (c *Cache) ListAll() ([]string, error) {
 	platforms, err := c.getPlatforms()
+	logger.Debug("%d platforms", len(platforms))
 	if err != nil {
 		return nil, err
 	}
@@ -62,6 +65,7 @@ func (c *Cache) ListPlatforms() ([]string, error) {
 // ListLanguages returns the installed language codes (without the "pages." prefix).
 func (c *Cache) ListLanguages() ([]string, error) {
 	directories, err := c.getLanguageDirectories()
+	logger.Debug("found %d languages", len(directories))
 	if err != nil {
 		return nil, err
 	}
