@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+
+	"github.com/TheRootDaemon/tlgc/logger"
 )
 
 // newRequest creates an HTTP GET request with the configured User-Agent.
@@ -38,6 +40,7 @@ func (c *Client) send(req *http.Request) (*http.Response, error) {
 // if resp does not contain a successful 2xx status code.
 // The response body is closed on failure.
 func (c *Client) validateResponse(resp *http.Response) error {
+	logger.Trace("response: %d", resp.StatusCode)
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		_ = resp.Body.Close()
 		return fmt.Errorf("unexpected status: %d", resp.StatusCode)
@@ -74,6 +77,7 @@ func (c *Client) wrapBody(
 // execute performs an HTTP GET request, validates the response, and wraps
 // the response body with any configured limits and progress reporting.
 func (c *Client) execute(ctx context.Context, url string) (*http.Response, error) {
+	logger.Debug("GET %s", url)
 	req, err := c.newRequest(ctx, url)
 	if err != nil {
 		return nil, err

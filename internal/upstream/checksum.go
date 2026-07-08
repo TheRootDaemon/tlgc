@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"hash"
 	"strings"
+
+	"github.com/TheRootDaemon/tlgc/logger"
 )
 
 // verifySHA256hex verifies got against an expected SHA256 checksum.
@@ -12,6 +14,7 @@ import (
 // Expected may be either a raw 64-character hexadecimal SHA256 hash
 // or a checksum-file entry in the form "<hash> <filename>".
 func verifySHA256hex(got, expected string) error {
+	logger.Trace("verifying sha256: expected %.16s...", expected)
 	expected = strings.TrimSpace(expected)
 	if expected == "" {
 		return nil
@@ -64,6 +67,7 @@ func verifySHA256Hash(h hash.Hash, expected string) error {
 // Returns the hash and filename.
 // Returns an error for empty lines.
 func ParseChecksum(line string) (hash, filename string, err error) {
+	logger.Trace("parsing checksum: %s", line)
 	line = strings.TrimSpace(line)
 	if line == "" {
 		return "", "", fmt.Errorf("empty checksum line")
