@@ -70,7 +70,13 @@ func (c *Cache) extractArchive(
 		}
 
 		if f.FileInfo().IsDir() {
-			if err := root.MkdirAll(f.Name, 0o750); err != nil {
+			if err := root.MkdirAll(
+				strings.TrimSuffix(
+					f.Name,
+					"/",
+				),
+				0o750,
+			); err != nil {
 				return fmt.Errorf("creating directory %s: %w", f.Name, err)
 			}
 
