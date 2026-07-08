@@ -41,12 +41,30 @@ func TestInitialize_and_C(t *testing.T) {
 	assert.Equal(t, DefaultCacheConfig(), cfg.Cache)
 }
 
-func TestInitialize_Error(t *testing.T) {
+func TestInitialize_MissingFileDefaults(t *testing.T) {
 	resetCurrentConfig()
 	defer resetCurrentConfig()
 
 	t.Setenv("TLGC_CONFIG", "/nonexistent/path/config.toml")
 	err := Initialize()
+	require.NoError(t, err)
+
+	cfg := C()
+	require.NotNil(t, cfg)
+	assert.Equal(t, Default(), *cfg)
+}
+
+func TestInitialize_MalformedFile(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "config.toml")
+	err := os.WriteFile(path, []byte("invalid toml content {{{"), 0o644)
+	require.NoError(t, err)
+
+	resetCurrentConfig()
+	defer resetCurrentConfig()
+
+	t.Setenv("TLGC_CONFIG", path)
+	err = Initialize()
 	require.Error(t, err)
 }
 

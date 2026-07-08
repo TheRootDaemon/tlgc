@@ -1,6 +1,7 @@
 package config
 
 import (
+	"os"
 	"sync/atomic"
 )
 
@@ -8,11 +9,21 @@ import (
 // of the current client configuration.
 var currentConfig atomic.Pointer[Config]
 
-// Initialize loads a TOML config file and sets it as the global singleton.
-// It is safe to call from multiple goroutines.
-// Subsequent calls replace the current singleton.
+// Initialize loads the TOML config file and sets the global singleton.
+// If the config file does not exist, the singleton is set to defaults
+// and no error is returned. It is safe to call from multiple goroutines.
 func Initialize() error {
-	cfg, err := LoadConfig(ConfigPath())
+	path := ConfigPath()
+	if _, err := os.Stat(path); err != nil {
+		if os.IsNotExist(err) {
+			d := Default()
+			currentConfig.Store(&d)
+			return nil
+		}
+		return err
+	}
+
+	cfg, err := LoadConfig(path)
 	if err != nil {
 		return err
 	}
