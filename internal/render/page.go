@@ -1,6 +1,7 @@
 package render
 
 import (
+	"fmt"
 	"regexp"
 	"strings"
 
@@ -63,6 +64,38 @@ type Page struct {
 	RawContent  string
 	Description []string
 	Examples    []Example
+}
+
+// Validate checks that every non-empty line in content
+// starts with a valid tldr prefix (#, >, -, or `).
+// Returns nil if the content is valid,
+// or an error describing the first invalid line.
+func Validate(content string) error {
+	lines := strings.SplitSeq(content, "\n")
+	lineNum := 0
+
+	for line := range lines {
+		lineNum++
+		trimmed := strings.TrimSpace(line)
+		if trimmed == "" {
+			continue
+		}
+
+		if strings.HasPrefix(line, "# ") ||
+			strings.HasPrefix(line, "> ") ||
+			strings.HasPrefix(line, "- ") ||
+			(strings.HasPrefix(line, "`") && strings.HasSuffix(line, "`")) {
+			continue
+		}
+
+		return fmt.Errorf(
+			"line %d: %q does not start with a valid prefix "+
+				"(must begin with '# ', '> ', '- ', or '`')",
+			lineNum, trimmed,
+		)
+	}
+
+	return nil
 }
 
 // Parse parses a raw markdown tldr page string into a Page.

@@ -54,6 +54,11 @@ func (a *App) lookupAndRenderPage(cli *cmd.CLI) int {
 		return 1
 	}
 
+	if err := render.Validate(string(data)); err != nil {
+		logger.Error("not a valid tldr page: %s\n\n%v", pagePath, err)
+		return 1
+	}
+
 	page := render.Parse(string(data))
 	page.Path = pagePath
 	page.RawContent = string(data)
@@ -83,6 +88,11 @@ func (a *App) renderLocalFile(cli *cmd.CLI) int {
 	)
 	if err != nil {
 		logger.Error("failed to read file: %v", err)
+		return 1
+	}
+
+	if err := render.Validate(string(data)); err != nil {
+		logger.Error("not a valid tldr page: %s\n\n%v", cli.Render, err)
 		return 1
 	}
 

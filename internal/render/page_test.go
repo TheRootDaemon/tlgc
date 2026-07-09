@@ -8,6 +8,77 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestValidate(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name    string
+		content string
+		wantErr string
+	}{
+		{
+			name:    "valid page",
+			content: "# tar\n\n> archive utility.\n\n- create:\n\n`tar cf archive.tar`\n",
+		},
+		{
+			name:    "title only",
+			content: "# tar\n",
+		},
+		{
+			name:    "description only with URL",
+			content: "# tar\n\n> archive utility.\n> More information: <https://example.org>.\n",
+		},
+		{
+			name:    "command without description",
+			content: "# tar\n\n`tar --help`\n",
+		},
+		{
+			name:    "empty content",
+			content: "",
+		},
+		{
+			name:    "blank lines only",
+			content: "\n\n\n",
+		},
+		{
+			name:    "invalid line at start",
+			content: "some random text\n",
+			wantErr: `line 1: "some random text" does not start with a valid tldr prefix`,
+		},
+		{
+			name:    "invalid line after title",
+			content: "# tar\n\nThis is not valid.\n",
+			wantErr: `line 3: "This is not valid." does not start with a valid tldr prefix`,
+		},
+		{
+			name:    "multiple lines, first invalid",
+			content: "bad\n# tar\n",
+			wantErr: `line 1: "bad" does not start with a valid tldr prefix`,
+		},
+		{
+			name:    "hash without space",
+			content: "#wrong\n",
+			wantErr: `line 1: "#wrong" does not start with a valid tldr prefix`,
+		},
+		{
+			name:    "dash without space",
+			content: "-wrong\n",
+			wantErr: `line 1: "-wrong" does not start with a valid tldr prefix`,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := Validate(tt.content)
+			if tt.wantErr != "" {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}
+
 func TestParse(t *testing.T) {
 	t.Parallel()
 
