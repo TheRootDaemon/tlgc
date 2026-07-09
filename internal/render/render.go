@@ -80,6 +80,8 @@ func New(w io.Writer, options ...RenderOption) *Renderer {
 		option(r)
 	}
 
+	logger.Debug("useColor=%t", r.useColor)
+
 	return r
 }
 
@@ -88,8 +90,20 @@ func New(w io.Writer, options ...RenderOption) *Renderer {
 // Nil pages are silently ignored.
 func (r *Renderer) Render(platform string, p *Page) error {
 	if p == nil {
+		logger.Trace("nil page, skipped")
 		return nil
 	}
+
+	logger.Debug(
+		"title=%q platform=%q raw=%t compact=%t edit=%d descs=%d examples=%d",
+		p.Title,
+		platform,
+		r.output.RawMarkdown,
+		r.output.Compact,
+		r.output.EditLink,
+		len(p.Description),
+		len(p.Examples),
+	)
 
 	if r.output.EditLink {
 		if url := buildEditURL(p.Path, p.URL); url != "" {
@@ -115,7 +129,7 @@ func (r *Renderer) Render(platform string, p *Page) error {
 
 		_, err := io.WriteString(r.w, "\n\n")
 		if err != nil {
-			return nil
+			return err
 		}
 	}
 
@@ -143,6 +157,7 @@ func (r *Renderer) Render(platform string, p *Page) error {
 // unless output is in compact mode.
 func (r *Renderer) renderEditLink(w io.Writer, url string) error {
 	logger.Info("edit this page on GitHub")
+	logger.Trace("url=%q compact=%t", url, r.output.Compact)
 	_, err := io.WriteString(w, url)
 	if err != nil {
 		return err
@@ -160,12 +175,14 @@ func (r *Renderer) renderEditLink(w io.Writer, url string) error {
 // writes it to the Renderer's writer.
 func (r *Renderer) renderRaw(p *Page) error {
 	if p.RawContent != "" {
+		logger.Trace("using RawContent (%d bytes)", len(p.RawContent))
 		_, err := r.w.Write(
 			[]byte(p.RawContent),
 		)
 		return err
 	}
 
+	logger.Trace("reading from path=%s", p.Path)
 	data, err := os.ReadFile(p.Path)
 	if err != nil {
 		return err
@@ -180,6 +197,7 @@ func (r *Renderer) renderRaw(p *Page) error {
 // indented by r.indent.Title spaces.
 func (r *Renderer) renderTitle(w io.Writer, title string) error {
 	indent := strings.Repeat(" ", r.indent.Title)
+	logger.Trace("title=%q indent=%d", title, r.indent.Title)
 
 	_, err := io.WriteString(
 		w,
@@ -195,6 +213,7 @@ func (r *Renderer) renderTitle(w io.Writer, title string) error {
 // styled with r.style.Description, indented,
 // and followed by a newline.
 func (r *Renderer) renderDescriptionLine(w io.Writer, text, indent string) error {
+	logger.Trace("text=%q", text)
 	_, err := io.WriteString(
 		w,
 		r.applyStyle(
@@ -219,6 +238,8 @@ func (r *Renderer) renderDescriptions(w io.Writer, descs []string, url string) e
 		return nil
 	}
 
+	logger.Trace("count=%d hasURL=%t", len(descs), url != "")
+
 	indent := strings.Repeat(" ", r.indent.Description)
 
 	for _, d := range descs {
@@ -241,6 +262,7 @@ func (r *Renderer) renderDescriptions(w io.Writer, descs []string, url string) e
 // styled with r.style.Bullet and indented.
 // No trailing newline is added.
 func (r *Renderer) renderBulletLine(w io.Writer, text, indent string) error {
+	logger.Trace("text=%q", text)
 	_, err := io.WriteString(
 		w,
 		r.applyStyle(
@@ -257,6 +279,7 @@ func (r *Renderer) renderBulletLine(w io.Writer, text, indent string) error {
 // followed by the styled command text on the next line.
 // In compact mode the blank line between bullet and command is omitted.
 func (r *Renderer) renderExample(w io.Writer, ex Example) error {
+	logger.Trace("desc=%q hasCmd=%t compact=%t", ex.Description, ex.Command != "", r.output.Compact)
 	indent := strings.Repeat(" ", r.indent.Bullet)
 	desc := ex.Description
 
@@ -295,19 +318,23 @@ func (r *Renderer) renderExample(w io.Writer, ex Example) error {
 // Otherwise the URL is constructed from the page's file path.
 func buildEditURL(path, url string) string {
 	if url != "" {
+		logger.Trace("using custom url=%s", url)
 		return url
 	}
 
 	if path != "" {
 		page := pathutil.PageName(path)
 		platform := pathutil.PagePlatform(path)
-		return fmt.Sprintf(
+		result := fmt.Sprintf(
 			"https://github.com/tldr-pages/tldr/edit/main/pages/%s/%s.md",
 			platform,
 			page,
 		)
+		logger.Trace("path=%s -> %s", path, result)
+		return result
 	}
 
+	logger.Trace("empty path and url")
 	return ""
 }
 
@@ -317,9 +344,20 @@ func buildEditURL(path, url string) string {
 // only the indent is prepended without wrapping.
 func (r *Renderer) wrapText(s, indent string) string {
 	if r.output.LineLength <= 0 || s == "" {
+		logger.Trace(
+			"no wrap (len=%d ll=%d)",
+			len(s),
+			r.output.LineLength,
+		)
 		return indent + s
 	}
 
 	wrapped := text.Wrap(s, r.output.LineLength, indent)
+	logger.Trace(
+		"input=%d ll=%d -> %d chars",
+		len(s),
+		r.output.LineLength,
+		len(wrapped),
+	)
 	return indent + wrapped
 }

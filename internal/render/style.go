@@ -4,6 +4,7 @@ import (
 	"strings"
 
 	"github.com/TheRootDaemon/tlgc/internal/config"
+	"github.com/TheRootDaemon/tlgc/logger"
 	"github.com/TheRootDaemon/tlgc/termcolor"
 )
 
@@ -14,7 +15,9 @@ func (r *Renderer) applyStyle(s config.OutputStyle, t string) string {
 		return t
 	}
 
-	return termcolor.Sprint(styleString(s), t)
+	styled := termcolor.Sprint(styleString(s), t)
+	logger.Trace("len=%d styled=%t", len(t), styled != t)
+	return styled
 }
 
 // styleForSegment returns the OutputStyle
@@ -22,6 +25,7 @@ func (r *Renderer) applyStyle(s config.OutputStyle, t string) string {
 // Text segments use the Example style;
 // Placeholder and Option segments use the Placeholder style.
 func (r *Renderer) styleForSegment(s *Segment) config.OutputStyle {
+	logger.Trace("kind=%d", s.Kind)
 	switch s.Kind {
 	case Text:
 		return r.style.Example
@@ -62,5 +66,7 @@ func styleString(s config.OutputStyle) string {
 		parts = append(parts, "on_"+string(s.Background.Named))
 	}
 
-	return strings.Join(parts, " ")
+	result := strings.Join(parts, " ")
+	logger.Trace("result=%q", result)
+	return result
 }

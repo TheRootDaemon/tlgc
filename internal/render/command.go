@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/TheRootDaemon/tlgc/internal/config"
+	"github.com/TheRootDaemon/tlgc/logger"
 	"github.com/TheRootDaemon/tlgc/text"
 )
 
@@ -26,6 +27,7 @@ type mappedWord struct {
 func (r *Renderer) renderCommand(w io.Writer, segments []Segment) error {
 	mappedWords := mapWords(segments, r.output.OptionStyle)
 	if len(mappedWords) == 0 {
+		logger.Trace("no mapped words, skipped")
 		return nil
 	}
 
@@ -35,6 +37,11 @@ func (r *Renderer) renderCommand(w io.Writer, segments []Segment) error {
 		r.output.LineLength,
 		exampleIndent,
 		displayText,
+	)
+
+	logger.Trace(
+		"segments=%d mappedWords=%d lines=%d",
+		len(segments), len(mappedWords), len(lines),
 	)
 
 	wordOffset := 0
@@ -72,6 +79,7 @@ func (r *Renderer) renderCommandLine(
 	indent string,
 	wordOffset *int,
 ) error {
+	logger.Trace("words=%d offset=%d", len(words), *wordOffset)
 	_, err := io.WriteString(w, indent)
 	if err != nil {
 		return err
@@ -153,9 +161,17 @@ func wrapLines(
 ) []string {
 	var wrapped string
 	if width <= 0 {
+		logger.Trace("no wrap (width=%d)", width)
 		return []string{displayText}
 	}
 
 	wrapped = text.Wrap(displayText, width, indent)
-	return strings.Split(wrapped, "\n")
+	lines := strings.Split(wrapped, "\n")
+	logger.Trace(
+		"width=%d input=%d output=%d lines",
+		width,
+		len(displayText),
+		len(lines),
+	)
+	return lines
 }

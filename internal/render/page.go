@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/TheRootDaemon/tlgc/internal/config"
+	"github.com/TheRootDaemon/tlgc/logger"
 )
 
 var (
@@ -118,6 +119,10 @@ func Parse(content string) *Page {
 		}
 	}
 
+	logger.Debug(
+		"title=%q descs=%d examples=%d url=%s",
+		p.Title, len(p.Description), len(p.Examples), p.URL,
+	)
 	return p
 }
 
@@ -134,6 +139,7 @@ func ParseCommand(raw string) []Segment {
 
 	matches := placeholderPattern.FindAllStringSubmatchIndex(raw, -1)
 	if len(matches) == 0 {
+		logger.Trace("no placeholders, raw=%q", raw)
 		return []Segment{
 			{
 				Kind: Text,
@@ -180,6 +186,7 @@ func ParseCommand(raw string) []Segment {
 		)
 	}
 
+	logger.Trace("raw=%q -> %d segments", raw, len(segments))
 	return segments
 }
 
@@ -243,6 +250,7 @@ func parseInnerPlaceholders(inner string) Segment {
 			short, long = right, left
 		}
 
+		logger.Trace("option short=%q long=%q", short, long)
 		return Segment{
 			Kind:  Option,
 			Long:  long,
@@ -250,6 +258,7 @@ func parseInnerPlaceholders(inner string) Segment {
 		}
 	}
 
+	logger.Trace("placeholder text=%q", inner)
 	return Segment{
 		Kind: Placeholder,
 		Text: inner,
