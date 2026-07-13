@@ -32,8 +32,12 @@ func (r *Renderer) renderDescriptions(w io.Writer, descs []string, url string) e
 		}
 	}
 
-	_, err := io.WriteString(w, "\n")
-	return err
+	if !r.output.Compact {
+		_, err := io.WriteString(w, "\n")
+		return err
+	}
+
+	return nil
 }
 
 // renderDescriptionLine writes one description line,

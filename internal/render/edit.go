@@ -26,6 +26,21 @@ func (r *Renderer) renderEditLink(w io.Writer, url string) error {
 	return nil
 }
 
+// renderPageEditLink renders the edit link
+// for p when edit links are enabled.
+func (r *Renderer) renderPageEditLink(p *Page) error {
+	if !r.output.EditLink {
+		return nil
+	}
+
+	url := buildEditURL(p.Path, p.URL)
+	if url == "" {
+		return nil
+	}
+
+	return r.renderEditLink(r.w, url)
+}
+
 // buildEditURL returns the GitHub edit URL for a tldr page.
 // If url is non-empty it is returned as-is (the page has a custom source).
 // Otherwise the URL is constructed from the page's file path.

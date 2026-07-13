@@ -90,7 +90,7 @@ func (r *Renderer) Render(platform string, p *Page) error {
 	}
 
 	logger.Debug(
-		"title=%q platform=%q raw=%t compact=%t edit=%d descs=%d examples=%d",
+		"title=%q platform=%q raw=%t compact=%t edit=%t descs=%d examples=%d",
 		p.Title,
 		platform,
 		r.output.RawMarkdown,
@@ -100,50 +100,47 @@ func (r *Renderer) Render(platform string, p *Page) error {
 		len(p.Examples),
 	)
 
-	if r.output.EditLink {
-		if url := buildEditURL(p.Path, p.URL); url != "" {
-			if err := r.renderEditLink(r.w, url); err != nil {
-				return err
-			}
+	if !r.output.Compact {
+		if err := r.writeNewline(); err != nil {
+			return err
 		}
+	}
+
+	if err := r.renderPageEditLink(p); err != nil {
+		return err
 	}
 
 	if r.output.RawMarkdown {
 		return r.renderRaw(p)
 	}
 
-	if r.output.ShowTitle && p.Title != "" {
-		title := p.Title
-		if r.output.PlatformTitle && platform != "" {
-			title = platform + " (" + p.Title + ")"
-		}
-
-		if err := r.renderTitle(r.w, title); err != nil {
-			return err
-		}
-
-		_, err := io.WriteString(r.w, "\n\n")
-		if err != nil {
-			return err
-		}
+	if err := r.renderPageTitle(platform, p); err != nil {
+		return err
 	}
 
 	if err := r.renderDescriptions(r.w, p.Description, p.URL); err != nil {
 		return err
 	}
 
-	for i, ex := range p.Examples {
-		if i > 0 && !r.output.Compact {
-			_, err := io.WriteString(r.w, "\n")
-			if err != nil {
-				return err
-			}
-		}
+	if err := r.renderExamples(r.w, p.Examples); err != nil {
+		return err
+	}
 
-		if err := r.renderExample(r.w, ex); err != nil {
+	if !r.output.Compact {
+		if err := r.writeNewline(); err != nil {
 			return err
 		}
 	}
 
 	return nil
+}
+
+func (r *Renderer) writeNewline() error {
+	_, err := io.WriteString(r.w, "\n")
+	return err
+}
+
+func (r *Renderer) writeBlankLine() error {
+	_, err := io.WriteString(r.w, "\n\n")
+	return err
 }

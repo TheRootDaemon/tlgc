@@ -204,7 +204,8 @@ example = 6
 }
 
 func TestRender(t *testing.T) {
-	fullPageWant := "  tar\n\n" +
+	fullPageWant := "\n" +
+		"  tar\n\n" +
 		"  archive utility.\n" +
 		"  More information: https://example.org.\n" +
 		"\n" +
@@ -212,7 +213,8 @@ func TestRender(t *testing.T) {
 		"    tar cf archive.tar\n" +
 		"\n" +
 		"  extract\n\n" +
-		"    tar xf archive.tar\n"
+		"    tar xf archive.tar\n" +
+		"\n"
 
 	tests := []struct {
 		name        string
@@ -233,7 +235,7 @@ func TestRender(t *testing.T) {
 			name:     "empty page with only title",
 			renderer: &Renderer{output: config.OutputConfig{ShowTitle: true}, indent: config.IndentConfig{Title: 2}},
 			page:     &Page{Title: "tar"},
-			want:     "  tar\n\n",
+			want:     "\n  tar\n\n\n",
 		},
 		{
 			name: "full page renders all sections in order",
@@ -260,7 +262,7 @@ func TestRender(t *testing.T) {
 				indent: config.IndentConfig{Title: 2},
 			},
 			page: &Page{Title: "tar"},
-			want: "  linux (tar)\n\n",
+			want: "\n  linux/tar\n\n\n",
 		},
 		{
 			name: "edit link rendered before title",
@@ -274,14 +276,14 @@ func TestRender(t *testing.T) {
 			},
 			contains: []string{
 				"https://github.com/tldr-pages/tldr/edit/main/pages/common/tar.md\n",
-				"  tar\n\n",
+				"\n  tar\n\n\n",
 			},
 		},
 		{
 			name:     "raw markdown mode writes content from RawContent",
 			renderer: &Renderer{output: config.OutputConfig{RawMarkdown: true}},
 			page:     &Page{RawContent: "# test page\n\n> description.\n"},
-			want:     "# test page\n\n> description.\n",
+			want:     "\n# test page\n\n> description.\n",
 		},
 		{
 			name: "compact mode omits blank lines between examples",

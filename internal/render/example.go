@@ -7,6 +7,28 @@ import (
 	"github.com/TheRootDaemon/tlgc/logger"
 )
 
+// renderExamples renders a sequence of examples to w.
+//
+// Each example is rendered using renderExample.
+// In non-compact mode, a blank line is inserted
+// between consecutive examples
+func (r *Renderer) renderExamples(w io.Writer, examples []Example) error {
+	for i, ex := range examples {
+		if i > 0 && !r.output.Compact {
+			_, err := io.WriteString(w, "\n")
+			if err != nil {
+				return err
+			}
+		}
+
+		if err := r.renderExample(r.w, ex); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 // renderExample writes one example,
 // a bullet line for the description (prefixed with ExamplePrefix when ShowHyphens is set)
 // followed by the styled command text on the next line.
