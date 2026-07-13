@@ -7,26 +7,6 @@ import (
 	"github.com/TheRootDaemon/tlgc/logger"
 )
 
-// renderDescriptionLine writes one description line,
-// styled with r.style.Description, indented,
-// and followed by a newline.
-func (r *Renderer) renderDescriptionLine(w io.Writer, text, indent string) error {
-	logger.Trace("text=%q", text)
-	_, err := io.WriteString(
-		w,
-		r.applyStyle(
-			r.style.Description,
-			r.wrapText(text, indent),
-		),
-	)
-	if err != nil {
-		return err
-	}
-
-	_, err = io.WriteString(w, "\n")
-	return err
-}
-
 // renderDescriptions writes all description lines
 // followed by the "More information" URL (if set),
 // each indented by r.indent.Description.
@@ -47,7 +27,7 @@ func (r *Renderer) renderDescriptions(w io.Writer, descs []string, url string) e
 	}
 
 	if url != "" {
-		if err := r.renderDescriptionLine(w, "More information: "+url+".", indent); err != nil {
+		if err := r.renderDescriptionURL(w, url, indent); err != nil {
 			return err
 		}
 	}
@@ -56,18 +36,70 @@ func (r *Renderer) renderDescriptions(w io.Writer, descs []string, url string) e
 	return err
 }
 
+// renderDescriptionLine writes one description line,
+// styled with r.style.Description, indented,
+// and followed by a newline.
+func (r *Renderer) renderDescriptionLine(w io.Writer, text, indent string) error {
+	logger.Trace("text=%q", text)
+	if err := r.renderStyledInline(
+		w,
+		text,
+		indent,
+		r.style.Description,
+		r.style.InlineCode,
+	); err != nil {
+		return err
+	}
+
+	_, err := io.WriteString(w, "\n")
+	return err
+}
+
+// renderDescriptionURL writes the "More information: <url>." line,
+// followed by a newline.
+// The "More information: " prefix and trailing "." use r.style.Description;
+// the URL itself uses r.style.URL.
+// The line is indented and wrapped via wrapText.
+func (r *Renderer) renderDescriptionURL(w io.Writer, url, indent string) error {
+	var text strings.Builder
+	text.WriteString(
+		r.applyStyle(
+			r.style.Description,
+			"More information: ",
+		),
+	)
+	text.WriteString(
+		r.applyStyle(
+			r.style.URL,
+			url,
+		),
+	)
+	text.WriteString(
+		r.applyStyle(
+			r.style.Description,
+			".",
+		),
+	)
+
+	wrappedText := r.wrapText(text.String(), indent)
+
+	_, err := io.WriteString(
+		w,
+		wrappedText+"\n",
+	)
+	return err
+}
+
 // renderBulletLine writes one bullet item line,
 // styled with r.style.Bullet and indented.
 // No trailing newline is added.
 func (r *Renderer) renderBulletLine(w io.Writer, text, indent string) error {
 	logger.Trace("text=%q", text)
-	_, err := io.WriteString(
+	return r.renderStyledInline(
 		w,
-		r.applyStyle(
-			r.style.Bullet,
-			r.wrapText(text, indent),
-		),
+		text,
+		indent,
+		r.style.Bullet,
+		r.style.InlineCode,
 	)
-
-	return err
 }
