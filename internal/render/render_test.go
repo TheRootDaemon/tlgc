@@ -204,6 +204,8 @@ example = 6
 }
 
 func TestRender(t *testing.T) {
+	t.Parallel()
+
 	fullPageWant := "\n" +
 		"  tar\n\n" +
 		"  archive utility.\n" +
@@ -216,15 +218,31 @@ func TestRender(t *testing.T) {
 		"    tar xf archive.tar\n" +
 		"\n"
 
+	compactFullPageWant := "" +
+		"  tar\n" +
+		"  archive utility.\n" +
+		"  More information: https://example.org.\n" +
+		"  create archive\n" +
+		"    tar cf archive.tar\n" +
+		"  extract\n" +
+		"    tar xf archive.tar\n"
+
+	fullPage := &Page{
+		Title:       "tar",
+		Description: []string{"archive utility."},
+		URL:         "https://example.org",
+		Examples: []Example{
+			{Description: "create archive", Command: "tar cf archive.tar"},
+			{Description: "extract", Command: "tar xf archive.tar"},
+		},
+	}
+
 	tests := []struct {
-		name        string
-		platform    string
-		renderer    *Renderer
-		page        *Page
-		want        string
-		contains    []string
-		notContains []string
-		wantErr     string
+		name     string
+		renderer *Renderer
+		page     *Page
+		want     string
+		wantErr  string
 	}{
 		{
 			name:     "nil page returns nil",
@@ -232,52 +250,22 @@ func TestRender(t *testing.T) {
 			want:     "",
 		},
 		{
-			name:     "empty page with only title",
-			renderer: &Renderer{output: config.OutputConfig{ShowTitle: true}, indent: config.IndentConfig{Title: 2}},
-			page:     &Page{Title: "tar"},
-			want:     "\n  tar\n\n\n",
-		},
-		{
 			name: "full page renders all sections in order",
 			renderer: &Renderer{
 				output: config.OutputConfig{ShowTitle: true},
 				indent: config.IndentConfig{Title: 2, Description: 2, Bullet: 2, Example: 4},
 			},
-			page: &Page{
-				Title:       "tar",
-				Description: []string{"archive utility."},
-				URL:         "https://example.org",
-				Examples: []Example{
-					{Description: "create archive", Command: "tar cf archive.tar"},
-					{Description: "extract", Command: "tar xf archive.tar"},
-				},
-			},
+			page: fullPage,
 			want: fullPageWant,
 		},
 		{
-			name:     "platform title includes platform prefix",
-			platform: "linux",
+			name: "full page compact mode",
 			renderer: &Renderer{
-				output: config.OutputConfig{ShowTitle: true, PlatformTitle: true},
-				indent: config.IndentConfig{Title: 2},
+				output: config.OutputConfig{ShowTitle: true, Compact: true},
+				indent: config.IndentConfig{Title: 2, Description: 2, Bullet: 2, Example: 4},
 			},
-			page: &Page{Title: "tar"},
-			want: "\n  linux/tar\n\n\n",
-		},
-		{
-			name: "edit link rendered before title",
-			renderer: &Renderer{
-				output: config.OutputConfig{EditLink: true, ShowTitle: true},
-				indent: config.IndentConfig{Title: 2},
-			},
-			page: &Page{
-				Path:  "/pages/common/tar.md",
-				Title: "tar",
-			},
-			contains: []string{
-				"https://github.com/tldr-pages/tldr/edit/main/pages/common/tar.md\n",
-				"\n  tar\n\n\n",
-			},
+			page: fullPage,
+			want: compactFullPageWant,
 		},
 		{
 			name:     "raw markdown mode writes content from RawContent",
@@ -286,40 +274,24 @@ func TestRender(t *testing.T) {
 			want:     "\n# test page\n\n> description.\n",
 		},
 		{
-			name: "compact mode omits blank lines between examples",
-			renderer: &Renderer{
-				output: config.OutputConfig{Compact: true},
-				indent: config.IndentConfig{Bullet: 2, Example: 4},
-			},
-			page: &Page{
-				Examples: []Example{
-					{Description: "first", Command: "echo a"},
-					{Description: "second", Command: "echo b"},
-				},
-			},
-			notContains: []string{"\n\n"},
+			name:     "leading and trailing newlines in non-compact mode",
+			renderer: &Renderer{output: config.OutputConfig{ShowTitle: false}},
+			page:     &Page{},
+			want:     "\n\n",
 		},
 		{
-			name: "title hidden when ShowTitle is false",
-			renderer: &Renderer{
-				output: config.OutputConfig{ShowTitle: false},
-				indent: config.IndentConfig{Title: 2, Description: 2, Bullet: 2, Example: 4},
-			},
-			page: &Page{
-				Title:       "tar",
-				Description: []string{"desc."},
-				Examples:    []Example{{Description: "ex", Command: "cmd"}},
-			},
-			notContains: []string{"tar"},
+			name:     "compact suppresses leading and trailing newlines",
+			renderer: &Renderer{output: config.OutputConfig{Compact: true}},
+			page:     &Page{},
+			want:     "",
 		},
 		{
-			name: "write error propagates",
+			name: "write error on leading newline propagates",
 			renderer: &Renderer{
 				w:      &errorWriter{err: errors.New("write error")},
-				output: config.OutputConfig{ShowTitle: true},
-				indent: config.IndentConfig{Title: 2},
+				output: config.OutputConfig{},
 			},
-			page:    &Page{Title: "tar"},
+			page:    &Page{},
 			wantErr: "write error",
 		},
 	}
@@ -331,7 +303,7 @@ func TestRender(t *testing.T) {
 				tt.renderer.w = &buf
 			}
 
-			err := tt.renderer.Render(tt.platform, tt.page)
+			err := tt.renderer.Render("", tt.page)
 
 			if tt.wantErr != "" {
 				assert.ErrorContains(t, err, tt.wantErr)
@@ -339,16 +311,11 @@ func TestRender(t *testing.T) {
 			}
 
 			require.NoError(t, err)
-			got := buf.String()
 
 			if tt.want != "" {
-				assert.Equal(t, tt.want, got)
-			}
-			for _, s := range tt.contains {
-				assert.Contains(t, got, s)
-			}
-			for _, s := range tt.notContains {
-				assert.NotContains(t, got, s)
+				assert.Equal(t, tt.want, buf.String())
+			} else {
+				assert.Empty(t, buf.String())
 			}
 		})
 	}

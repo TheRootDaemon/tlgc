@@ -7,6 +7,25 @@ import (
 	"github.com/TheRootDaemon/tlgc/logger"
 )
 
+// renderDescriptionLine writes one description line,
+// styled with r.style.Description, indented,
+// and followed by a newline.
+func (r *Renderer) renderDescriptionLine(w io.Writer, text, indent string) error {
+	logger.Trace("text=%q", text)
+	if err := r.renderStyledInline(
+		w,
+		text,
+		indent,
+		r.style.Description,
+		r.style.InlineCode,
+	); err != nil {
+		return err
+	}
+
+	_, err := io.WriteString(w, "\n")
+	return err
+}
+
 // renderDescriptions writes all description lines
 // followed by the "More information" URL (if set),
 // each indented by r.indent.Description.
@@ -38,25 +57,6 @@ func (r *Renderer) renderDescriptions(w io.Writer, descs []string, url string) e
 	}
 
 	return nil
-}
-
-// renderDescriptionLine writes one description line,
-// styled with r.style.Description, indented,
-// and followed by a newline.
-func (r *Renderer) renderDescriptionLine(w io.Writer, text, indent string) error {
-	logger.Trace("text=%q", text)
-	if err := r.renderStyledInline(
-		w,
-		text,
-		indent,
-		r.style.Description,
-		r.style.InlineCode,
-	); err != nil {
-		return err
-	}
-
-	_, err := io.WriteString(w, "\n")
-	return err
 }
 
 // renderDescriptionURL writes the "More information: <url>." line,

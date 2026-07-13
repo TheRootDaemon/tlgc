@@ -149,6 +149,111 @@ func TestRenderCommand(t *testing.T) {
 	})
 }
 
+func TestRenderCommandLine(t *testing.T) {
+	t.Parallel()
+
+	r := &Renderer{
+		useColor: false,
+	}
+
+	tests := []struct {
+		name        string
+		words       []string
+		mappedWords []mappedWord
+		segments    []Segment
+		indent      string
+		want        string
+		wantOffset  int
+		writer      io.Writer
+		wantErr     string
+	}{
+		{
+			name:  "single word",
+			words: []string{"hello"},
+			mappedWords: []mappedWord{
+				{text: "hello", segmentIndex: 0},
+			},
+			segments: []Segment{
+				{Kind: Text, Text: "hello"},
+			},
+			indent:     "    ",
+			want:       "    hello\n",
+			wantOffset: 1,
+		},
+		{
+			name:  "multiple words",
+			words: []string{"tar", "cf", "archive.tar"},
+			mappedWords: []mappedWord{
+				{text: "tar", segmentIndex: 0},
+				{text: "cf", segmentIndex: 0},
+				{text: "archive.tar", segmentIndex: 0},
+			},
+			segments: []Segment{
+				{Kind: Text, Text: "tar cf archive.tar"},
+			},
+			indent:     "    ",
+			want:       "    tar cf archive.tar\n",
+			wantOffset: 3,
+		},
+		{
+			name:  "break when mapped words exhausted",
+			words: []string{"a", "b", "c"},
+			mappedWords: []mappedWord{
+				{text: "a", segmentIndex: 0},
+			},
+			segments: []Segment{
+				{Kind: Text, Text: "a"},
+			},
+			indent:     "    ",
+			want:       "    a \n",
+			wantOffset: 1,
+		},
+		{
+			name:  "write error",
+			words: []string{"hello"},
+			mappedWords: []mappedWord{
+				{text: "hello", segmentIndex: 0},
+			},
+			segments: []Segment{
+				{Kind: Text, Text: "hello"},
+			},
+			indent:  "    ",
+			writer:  &errorWriter{err: errors.New("write error")},
+			wantErr: "write error",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			offset := 0
+
+			var buf strings.Builder
+			w := io.Writer(&buf)
+			if tt.writer != nil {
+				w = tt.writer
+			}
+
+			err := r.renderCommandLine(
+				w,
+				tt.words,
+				tt.mappedWords,
+				tt.segments,
+				tt.indent,
+				&offset,
+			)
+
+			if tt.wantErr != "" {
+				assert.ErrorContains(t, err, tt.wantErr)
+				return
+			}
+
+			assert.NoError(t, err)
+			assert.Equal(t, tt.wantOffset, offset)
+			assert.Equal(t, tt.want, buf.String())
+		})
+	}
+}
+
 func TestMapWords(t *testing.T) {
 	t.Parallel()
 
@@ -360,111 +465,6 @@ func TestWrapLines(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			got := wrapLines(tt.width, tt.indent, tt.text)
 			assert.Equal(t, tt.want, got)
-		})
-	}
-}
-
-func TestRenderCommandLine(t *testing.T) {
-	t.Parallel()
-
-	r := &Renderer{
-		useColor: false,
-	}
-
-	tests := []struct {
-		name        string
-		words       []string
-		mappedWords []mappedWord
-		segments    []Segment
-		indent      string
-		want        string
-		wantOffset  int
-		writer      io.Writer
-		wantErr     string
-	}{
-		{
-			name:  "single word",
-			words: []string{"hello"},
-			mappedWords: []mappedWord{
-				{text: "hello", segmentIndex: 0},
-			},
-			segments: []Segment{
-				{Kind: Text, Text: "hello"},
-			},
-			indent:     "    ",
-			want:       "    hello\n",
-			wantOffset: 1,
-		},
-		{
-			name:  "multiple words",
-			words: []string{"tar", "cf", "archive.tar"},
-			mappedWords: []mappedWord{
-				{text: "tar", segmentIndex: 0},
-				{text: "cf", segmentIndex: 0},
-				{text: "archive.tar", segmentIndex: 0},
-			},
-			segments: []Segment{
-				{Kind: Text, Text: "tar cf archive.tar"},
-			},
-			indent:     "    ",
-			want:       "    tar cf archive.tar\n",
-			wantOffset: 3,
-		},
-		{
-			name:  "break when mapped words exhausted",
-			words: []string{"a", "b", "c"},
-			mappedWords: []mappedWord{
-				{text: "a", segmentIndex: 0},
-			},
-			segments: []Segment{
-				{Kind: Text, Text: "a"},
-			},
-			indent:     "    ",
-			want:       "    a \n",
-			wantOffset: 1,
-		},
-		{
-			name:  "write error",
-			words: []string{"hello"},
-			mappedWords: []mappedWord{
-				{text: "hello", segmentIndex: 0},
-			},
-			segments: []Segment{
-				{Kind: Text, Text: "hello"},
-			},
-			indent:  "    ",
-			writer:  &errorWriter{err: errors.New("write error")},
-			wantErr: "write error",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			offset := 0
-
-			var buf strings.Builder
-			w := io.Writer(&buf)
-			if tt.writer != nil {
-				w = tt.writer
-			}
-
-			err := r.renderCommandLine(
-				w,
-				tt.words,
-				tt.mappedWords,
-				tt.segments,
-				tt.indent,
-				&offset,
-			)
-
-			if tt.wantErr != "" {
-				assert.ErrorContains(t, err, tt.wantErr)
-				return
-			}
-
-			assert.NoError(t, err)
-			assert.Equal(t, tt.wantOffset, offset)
-			assert.Equal(t, tt.want, buf.String())
 		})
 	}
 }

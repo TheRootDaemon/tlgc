@@ -8,6 +8,7 @@ import (
 
 	"github.com/TheRootDaemon/tlgc/internal/config"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestRenderEditLink(t *testing.T) {
@@ -62,6 +63,83 @@ func TestRenderEditLink(t *testing.T) {
 			}
 
 			assert.NoError(t, err)
+			assert.Equal(t, tt.want, buf.String())
+		})
+	}
+}
+
+func TestRenderPageEditLink(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name     string
+		page     *Page
+		editLink bool
+		compact  bool
+		writer   io.Writer
+		want     string
+		wantErr  string
+	}{
+		{
+			name:     "edit link disabled",
+			editLink: false,
+			page:     &Page{},
+			want:     "",
+		},
+		{
+			name:     "empty path and url",
+			editLink: true,
+			page:     &Page{},
+			want:     "",
+		},
+		{
+			name:     "renders edit link from path",
+			editLink: true,
+			page:     &Page{Path: "/pages/common/tar.md"},
+			want:     "https://github.com/tldr-pages/tldr/edit/main/pages/common/tar.md\n",
+		},
+		{
+			name:     "custom url returned as-is",
+			editLink: true,
+			page:     &Page{URL: "https://custom.com/edit"},
+			want:     "https://custom.com/edit\n",
+		},
+		{
+			name:     "compact mode omits newline",
+			editLink: true,
+			compact:  true,
+			page:     &Page{Path: "/pages/common/tar.md"},
+			want:     "https://github.com/tldr-pages/tldr/edit/main/pages/common/tar.md",
+		},
+		{
+			name:     "write error",
+			editLink: true,
+			page:     &Page{URL: "https://example.com"},
+			writer:   &errorWriter{err: errors.New("write error")},
+			wantErr:  "write error",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var buf strings.Builder
+			r := &Renderer{
+				w:      &buf,
+				output: config.OutputConfig{EditLink: tt.editLink, Compact: tt.compact},
+			}
+
+			if tt.writer != nil {
+				r.w = tt.writer
+			}
+
+			err := r.renderPageEditLink(tt.page)
+
+			if tt.wantErr != "" {
+				assert.ErrorContains(t, err, tt.wantErr)
+				return
+			}
+
+			require.NoError(t, err)
 			assert.Equal(t, tt.want, buf.String())
 		})
 	}
