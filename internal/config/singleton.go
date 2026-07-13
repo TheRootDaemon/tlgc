@@ -20,7 +20,7 @@ func Initialize() error {
 
 	if _, err := os.Stat(path); err != nil {
 		if os.IsNotExist(err) {
-			logger.Info("config file not found, using defaults")
+			logger.Debug("config file not found, using defaults")
 			d := Default()
 			currentConfig.Store(&d)
 			return nil
@@ -35,7 +35,7 @@ func Initialize() error {
 	}
 
 	currentConfig.Store(cfg)
-	logger.Info("config loaded from %s", path)
+	logger.Debug("config loaded from %s", path)
 	return nil
 }
 
