@@ -243,7 +243,7 @@ func TestExtractArchive(t *testing.T) {
 			}
 
 			zipData := tt.buildZip(t)
-			err := c.extractArchive(tt.languageDirectory, zipData)
+			_, _, err := c.extractArchive(tt.languageDirectory, zipData)
 
 			if tt.wantErr {
 				assert.Error(t, err)
@@ -304,7 +304,7 @@ func TestExtractArchive_MkdirAllError(t *testing.T) {
 	require.NoError(t, os.WriteFile(filePath, nil, 0o644))
 
 	c := &Cache{dir: filePath}
-	err := c.extractArchive("pages.en", createEmptyZip(t))
+	_, _, err := c.extractArchive("pages.en", createEmptyZip(t))
 	assert.Error(t, err)
 }
 
@@ -331,4 +331,275 @@ func TestExtractFile_OpenFileError(t *testing.T) {
 	f := zipReader.File[0]
 	err = extractFile(root, f)
 	assert.Error(t, err)
+}
+
+func TestExistingFiles(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name  string
+		setup func(t *testing.T, dir string)
+		want  map[string]struct{}
+	}{
+		{
+			name:  "nonexistent_directory",
+			setup: nil,
+			want:  map[string]struct{}{},
+		},
+		{
+			name: "empty_directory",
+			setup: func(t *testing.T, dir string) {
+				require.NoError(t, os.MkdirAll(dir, 0o750))
+			},
+			want: map[string]struct{}{},
+		},
+		{
+			name: "flat_files",
+			setup: func(t *testing.T, dir string) {
+				require.NoError(t, os.MkdirAll(dir, 0o750))
+				require.NoError(t, os.WriteFile(filepath.Join(dir, "a.md"), nil, 0o644))
+				require.NoError(t, os.WriteFile(filepath.Join(dir, "b.md"), nil, 0o644))
+			},
+			want: map[string]struct{}{
+				"a.md": {},
+				"b.md": {},
+			},
+		},
+		{
+			name: "nested_files",
+			setup: func(t *testing.T, dir string) {
+				require.NoError(t, os.MkdirAll(filepath.Join(dir, "common"), 0o750))
+				require.NoError(t, os.WriteFile(filepath.Join(dir, "common", "git.md"), nil, 0o644))
+			},
+			want: map[string]struct{}{
+				filepath.Join("common", "git.md"): {},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			dir := filepath.Join(t.TempDir(), "subdir")
+			if tt.setup != nil {
+				tt.setup(t, dir)
+			}
+
+			got, err := existingFiles(dir)
+			require.NoError(t, err)
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
+func TestExtractZip(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name        string
+		files       map[string]string
+		rawData     []byte // when set, used instead of building a zip from files
+		preExisting []string
+		wantTotal   int
+		wantNew     int
+		wantErr     bool
+	}{
+		{
+			name: "all_new",
+			files: map[string]string{
+				"common/git.md": "",
+				"common/ls.md":  "",
+			},
+			wantTotal: 2,
+			wantNew:   2,
+		},
+		{
+			name: "all_existing",
+			files: map[string]string{
+				"common/git.md": "",
+			},
+			preExisting: []string{filepath.Clean("common/git.md")},
+			wantTotal:   1,
+			wantNew:     0,
+		},
+		{
+			name: "mixed_new_and_existing",
+			files: map[string]string{
+				"common/git.md": "",
+				"common/ls.md":  "",
+			},
+			preExisting: []string{filepath.Clean("common/git.md")},
+			wantTotal:   2,
+			wantNew:     1,
+		},
+		{
+			name: "directory_entries_not_counted",
+			files: map[string]string{
+				"common/":       "",
+				"common/git.md": "",
+			},
+			wantTotal: 1,
+			wantNew:   1,
+		},
+		{
+			name: "skips_unsafe_entries",
+			files: map[string]string{
+				"../escape.md":  "EVIL",
+				"common/git.md": "",
+			},
+			wantTotal: 1,
+			wantNew:   1,
+		},
+		{
+			name:    "invalid_zip",
+			rawData: []byte("not a zip file"),
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			dir := t.TempDir()
+			root, err := os.OpenRoot(dir)
+			require.NoError(t, err)
+			defer func() { _ = root.Close() }()
+
+			preExisting := make(map[string]struct{}, len(tt.preExisting))
+			for _, p := range tt.preExisting {
+				preExisting[p] = struct{}{}
+			}
+
+			var zipData []byte
+			if tt.rawData != nil {
+				zipData = tt.rawData
+			} else if tt.files != nil {
+				zipData = createTestZip(t, tt.files)
+			} else {
+				zipData = createEmptyZip(t)
+			}
+
+			total, newCount, err := extractZip(root, zipData, preExisting)
+
+			if tt.wantErr {
+				assert.Error(t, err)
+				return
+			}
+
+			require.NoError(t, err)
+			assert.Equal(t, tt.wantTotal, total)
+			assert.Equal(t, tt.wantNew, newCount)
+		})
+	}
+}
+
+func TestRecreateDirectory(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name  string
+		setup func(t *testing.T, dir string)
+		check func(t *testing.T, dir string)
+	}{
+		{
+			name: "creates_new_directory",
+			check: func(t *testing.T, dir string) {
+				assert.DirExists(t, dir)
+			},
+		},
+		{
+			name: "replaces_existing_directory",
+			setup: func(t *testing.T, dir string) {
+				require.NoError(t, os.MkdirAll(filepath.Join(dir, "sub"), 0o750))
+				require.NoError(t, os.WriteFile(filepath.Join(dir, "old.md"), nil, 0o644))
+			},
+			check: func(t *testing.T, dir string) {
+				assert.DirExists(t, dir)
+				entries, err := os.ReadDir(dir)
+				require.NoError(t, err)
+				assert.Empty(t, entries)
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			dir := filepath.Join(t.TempDir(), "dir")
+			if tt.setup != nil {
+				tt.setup(t, dir)
+			}
+			require.NoError(t, recreateDirectory(dir))
+			tt.check(t, dir)
+		})
+	}
+}
+
+func TestExtractZipEntry(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name        string
+		files       map[string]string
+		preExisting map[string]struct{}
+		wantFile    bool
+		wantNew     bool
+		check       func(t *testing.T, dir string)
+	}{
+		{
+			name:     "extracts_file",
+			files:    map[string]string{"common/git.md": "# git\n"},
+			wantFile: true,
+			wantNew:  true,
+			check: func(t *testing.T, dir string) {
+				got, err := os.ReadFile(filepath.Join(dir, "common", "git.md"))
+				require.NoError(t, err)
+				assert.Equal(t, "# git\n", string(got))
+			},
+		},
+		{
+			name:  "existing_file",
+			files: map[string]string{"common/git.md": "# git\n"},
+			preExisting: map[string]struct{}{
+				"common/git.md": {},
+			},
+			wantFile: true,
+			wantNew:  false,
+		},
+		{
+			name:     "directory_entry",
+			files:    map[string]string{"common/": ""},
+			wantFile: false,
+			wantNew:  false,
+			check: func(t *testing.T, dir string) {
+				assert.DirExists(t, filepath.Join(dir, "common"))
+			},
+		},
+		{
+			name:     "unsafe_entry",
+			files:    map[string]string{"../escape.md": "EVIL"},
+			wantFile: false,
+			wantNew:  false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			dir := t.TempDir()
+			root, err := os.OpenRoot(dir)
+			require.NoError(t, err)
+			defer func() { _ = root.Close() }()
+
+			zipData := createTestZip(t, tt.files)
+			zr, err := zip.NewReader(bytes.NewReader(zipData), int64(len(zipData)))
+			require.NoError(t, err)
+			require.Len(t, zr.File, 1)
+
+			isFile, isNew, err := extractZipEntry(root, zr.File[0], tt.preExisting)
+			require.NoError(t, err)
+			assert.Equal(t, tt.wantFile, isFile)
+			assert.Equal(t, tt.wantNew, isNew)
+
+			if tt.check != nil {
+				tt.check(t, dir)
+			}
+		})
+	}
 }
