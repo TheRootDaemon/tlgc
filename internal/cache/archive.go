@@ -65,15 +65,16 @@ func (c *Cache) extractArchive(
 			continue
 		}
 
+		name := filepath.Clean(f.Name)
+
 		if f.FileInfo().IsDir() {
-			if err := root.MkdirAll(f.Name, 0o750); err != nil {
+			if err := root.MkdirAll(name, 0o750); err != nil {
 				return fmt.Errorf("creating directory %s: %w", f.Name, err)
 			}
-
 			continue
 		}
 
-		if err := root.MkdirAll(filepath.Dir(f.Name), 0o750); err != nil {
+		if err := root.MkdirAll(filepath.Dir(name), 0o750); err != nil {
 			return fmt.Errorf("creating directory for %s: %w", f.Name, err)
 		}
 
