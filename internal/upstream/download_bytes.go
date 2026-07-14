@@ -4,10 +4,13 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"path"
+	"strings"
 	"time"
 
 	"github.com/TheRootDaemon/tlgc/format"
 	"github.com/TheRootDaemon/tlgc/logger"
+	"github.com/TheRootDaemon/tlgc/termcolor"
 )
 
 // DownloadBytes downloads the content at url into memory
@@ -18,7 +21,11 @@ import (
 // If sha256hex is non-empty, the downloaded content must match
 // the expected SHA256 checksum or an error is returned.
 func (c *Client) DownloadBytes(ctx context.Context, url, sha256hex string) ([]byte, error) {
-	logger.Info("downloading from %s...", url)
+	filename := path.Base(strings.Split(url, "?")[0])
+	logger.InfoStart(
+		"downloading %s... ",
+		termcolor.Sprint("green", filename),
+	)
 	start := time.Now()
 
 	resp, err := c.execute(ctx, url)
@@ -48,10 +55,8 @@ func (c *Client) DownloadBytes(ctx context.Context, url, sha256hex string) ([]by
 
 	logger.InfoEnd(
 		"done (%s in %s)",
-		format.BytesFmt(
-			int64(len(data)),
-		),
-		format.DurationFmt(time.Since(start)),
+		termcolor.Sprint("bold blue", format.BytesFmt(int64(len(data)))),
+		termcolor.Sprint("bold blue", format.DurationFmt(time.Since(start))),
 	)
 
 	return data, nil
