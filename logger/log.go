@@ -69,7 +69,7 @@ func (l *Logger) InfoStart(format string, args ...any) {
 
 	prefix := termcolor.Sprint(levelColors[LevelInfo], levelLabels[LevelInfo])
 	msg := fmt.Sprintf(format, args...)
-	_, _ = fmt.Fprintf(l.writer, "%s %s", prefix, msg)
+	_, _ = fmt.Fprintf(l.writer, "%s: %s", prefix, msg)
 }
 
 // InfoEnd writes the trailing part of a status message
