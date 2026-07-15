@@ -13,6 +13,9 @@ import (
 
 // App is the main application struct that holds I/O streams and configuration.
 type App struct {
+	// Stdin is the reader for standard input.
+	Stdin io.Reader
+
 	// Stdout is the writer for standard output.
 	Stdout io.Writer
 
@@ -25,6 +28,13 @@ type App struct {
 
 // Option configures the App.
 type Option func(*App)
+
+// WithStdin sets the standard input reader for the App.
+func WithStdin(r io.Reader) Option {
+	return func(a *App) {
+		a.Stdin = r
+	}
+}
 
 // WithStdout sets the standard output writer for the App.
 func WithStdout(w io.Writer) Option {
@@ -48,9 +58,10 @@ func WithConfigPath(path string) Option {
 }
 
 // New creates a new App with the given options.
-// It defaults Stdout to os.Stdout and Stderr to os.Stderr.
+// It defaults Stdin to os.Stdin, Stdout to os.Stdout, and Stderr to os.Stderr.
 func New(opts ...Option) *App {
 	a := &App{
+		Stdin:  os.Stdin,
 		Stdout: os.Stdout,
 		Stderr: os.Stderr,
 	}
@@ -89,6 +100,8 @@ func (a *App) Run(cli *cmd.CLI) int {
 		return a.listLanguages()
 	case cli.Info:
 		return a.cacheInfo()
+	case cli.CleanCache:
+		return a.cleanCache()
 	case cli.Render != "":
 		return a.renderLocalFile(cli)
 	case cli.GenConfig:

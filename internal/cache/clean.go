@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/TheRootDaemon/tlgc/logger"
+	"github.com/TheRootDaemon/tlgc/termcolor"
 )
 
 // Clean removes all cached entries after prompting for confirmation
@@ -26,10 +27,17 @@ func (c *Cache) Clean(r io.Reader) error {
 	}
 
 	var log strings.Builder
-	log.WriteString("removing following files...\n")
+	log.WriteString("removing following files...")
 	for _, entry := range entries {
-		name := entry.Name()
-		fmt.Fprintf(&log, "\n%q", name)
+		name := termcolor.Sprint(
+			"bold red",
+			entry.Name(),
+		)
+		fmt.Fprintf(
+			&log,
+			"\n%s",
+			name,
+		)
 	}
 
 	logger.InfoStart(
@@ -39,11 +47,11 @@ func (c *Cache) Clean(r io.Reader) error {
 
 	cleanCache := parseInput(bufio.NewReader(r))
 	if !cleanCache {
-		logger.InfoEnd("aborted")
+		logger.InfoEnd("aborted...")
 		return nil
 	}
 
-	logger.Info("cleaning...")
+	logger.InfoStart("cleaning... ")
 	for _, entry := range entries {
 		if err := os.RemoveAll(
 			filepath.Join(
@@ -59,7 +67,7 @@ func (c *Cache) Clean(r io.Reader) error {
 		}
 	}
 
-	logger.InfoEnd("done...")
+	logger.InfoEnd("done")
 
 	return nil
 }
