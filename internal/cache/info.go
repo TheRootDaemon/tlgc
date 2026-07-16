@@ -19,27 +19,48 @@ type LanguageInfo struct {
 
 	// Language is the language name (e.g. "en", "pt", "es").
 	Language string
+
+	// Platforms contains per-platform page counts for this language.
+	Platforms []PlatformInfo
+}
+
+// PlatformInfo contains page statistics for a single platform.
+type PlatformInfo struct {
+	// Name is the platform name (e.g. "common", "linux", "osx").
+	Name string
+
+	// Pages is the number of cached pages for this platform.
+	Pages int
 }
 
 // InfoResult contains information about the current cache state.
 type InfoResult struct {
-	// AutoUpdate indicates whether automatic cache updates are enabled.
-	AutoUpdate bool
-
-	// TotalPages is the total number of cached pages across all languages.
-	TotalPages int
-
-	// MaxAge is the maximum cache age in seconds before a refresh is due.
-	MaxAge uint64
-
 	// CacheDir is the absolute path to the cache directory.
 	CacheDir string
 
 	// Age is a human-readable string representing the cache age.
 	Age string
 
+	// AgeDuration is the raw cache age duration.
+	AgeDuration time.Duration
+
+	// MaxAge is the maximum cache age in hours before a refresh is due.
+	MaxAge uint64
+
+	// AutoUpdate indicates whether automatic cache updates are enabled.
+	AutoUpdate bool
+
+	// Mirror is the URL used to download tldr-pages archives.
+	Mirror string
+
+	// Platforms lists the available platforms discovered in the cache.
+	Platforms []string
+
 	// LanguageStats contains per-language page statistics.
 	LanguageStats []LanguageInfo
+
+	// TotalPages is the total number of cached pages across all languages.
+	TotalPages int
 }
 
 // Age returns the cache age based on the checksum file's mtime.
@@ -113,8 +134,11 @@ func (c *Cache) Info() (*InfoResult, error) {
 	return &InfoResult{
 		CacheDir:      c.dir,
 		Age:           format.DurationFmt(age),
+		AgeDuration:   age,
 		MaxAge:        cfg.MaxAge,
 		AutoUpdate:    cfg.AutoUpdate,
+		Mirror:        cfg.Mirror,
+		Platforms:     platforms,
 		LanguageStats: languageStats,
 		TotalPages:    total,
 	}, nil
@@ -127,43 +151,78 @@ func (c *Cache) languageStats(
 	platforms,
 	languageDirectories []string,
 ) ([]LanguageInfo, int, error) {
-	var languageStats []LanguageInfo
 	total := 0
+	languageStats := make(
+		[]LanguageInfo,
+		0,
+		len(languageDirectories),
+	)
 
 	for _, languageDirectory := range languageDirectories {
 		lang := strings.TrimPrefix(
 			languageDirectory,
 			"pages.",
 		)
-		count := 0
 
-		for _, platform := range platforms {
-			if !c.subDirExists(
-				filepath.Join(
-					languageDirectory,
-					platform,
-				),
-			) {
-				continue
-			}
-
-			pages, err := c.listDirectory(
-				platform,
-				languageDirectory,
-			)
-			if err != nil {
-				return nil, 0, err
-			}
-
-			count += len(pages)
+		platformInfos, count, err := c.platformStats(
+			languageDirectory,
+			platforms,
+		)
+		if err != nil {
+			return nil, 0, err
 		}
 
-		languageStats = append(languageStats, LanguageInfo{
-			Language: lang,
-			Pages:    count,
-		})
+		languageStats = append(
+			languageStats,
+			LanguageInfo{
+				Language:  lang,
+				Pages:     count,
+				Platforms: platformInfos,
+			},
+		)
+
 		total += count
 	}
 
 	return languageStats, total, nil
+}
+
+func (c *Cache) platformStats(
+	languageDirectory string,
+	platforms []string,
+) ([]PlatformInfo, int, error) {
+	total := 0
+	var infos []PlatformInfo
+
+	for _, platform := range platforms {
+		if !c.subDirExists(
+			filepath.Join(
+				languageDirectory,
+				platform,
+			),
+		) {
+			continue
+		}
+
+		pages, err := c.listDirectory(
+			platform,
+			languageDirectory,
+		)
+		if err != nil {
+			return nil, 0, err
+		}
+
+		count := len(pages)
+		infos = append(
+			infos,
+			PlatformInfo{
+				Name:  platform,
+				Pages: count,
+			},
+		)
+
+		total += count
+	}
+
+	return infos, total, nil
 }

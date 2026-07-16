@@ -87,6 +87,16 @@ func TestInfo(t *testing.T) {
 		assert.NotEmpty(t, info.Age)
 		assert.True(t, info.AutoUpdate)
 		assert.Equal(t, uint64(336), info.MaxAge)
+		assert.NotEmpty(t, info.Mirror)
+		assert.NotEmpty(t, info.Platforms)
+		assert.Contains(t, info.Platforms, "common")
+		assert.Contains(t, info.Platforms, "linux")
+		assert.Greater(t, info.AgeDuration, time.Duration(0))
+		assert.Len(t, info.LanguageStats[0].Platforms, 2)
+		assert.Equal(t, "common", info.LanguageStats[0].Platforms[0].Name)
+		assert.Equal(t, 1, info.LanguageStats[0].Platforms[0].Pages)
+		assert.Equal(t, "linux", info.LanguageStats[0].Platforms[1].Name)
+		assert.Equal(t, 2, info.LanguageStats[0].Platforms[1].Pages)
 	})
 
 	t.Run("error_on_non_existent_dir", func(t *testing.T) {
@@ -126,88 +136,206 @@ func TestInfo(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, 2, info.TotalPages)
 		assert.Len(t, info.LanguageStats, 2)
+		assert.Len(t, info.LanguageStats[0].Platforms, 1)
+		assert.Equal(t, "common", info.LanguageStats[0].Platforms[0].Name)
+		assert.Equal(t, 1, info.LanguageStats[0].Platforms[0].Pages)
 	})
 }
 
 func TestLanguageStats(t *testing.T) {
 	t.Parallel()
 
-	t.Run("counts_pages_across_platforms", func(t *testing.T) {
-		dir := t.TempDir()
-		require.NoError(t, os.MkdirAll(filepath.Join(dir, "pages.en", "common"), 0o755))
-		require.NoError(t, os.MkdirAll(filepath.Join(dir, "pages.en", "linux"), 0o755))
-		require.NoError(t, os.WriteFile(filepath.Join(dir, "pages.en", "common", "git.md"), nil, 0o644))
-		require.NoError(t, os.WriteFile(filepath.Join(dir, "pages.en", "common", "ls.md"), nil, 0o644))
-		require.NoError(t, os.WriteFile(filepath.Join(dir, "pages.en", "linux", "apt.md"), nil, 0o644))
+	tests := []struct {
+		name      string
+		platforms []string
+		langDirs  []string
+		setup     func(t *testing.T, dir string)
+		wantStats []LanguageInfo
+		wantTotal int
+	}{
+		{
+			name:      "single_language",
+			platforms: []string{"common", "linux"},
+			langDirs:  []string{"pages.en"},
+			setup: func(t *testing.T, dir string) {
+				require.NoError(t, os.MkdirAll(filepath.Join(dir, "pages.en", "common"), 0o755))
+				require.NoError(t, os.MkdirAll(filepath.Join(dir, "pages.en", "linux"), 0o755))
+				require.NoError(t, os.WriteFile(filepath.Join(dir, "pages.en", "common", "git.md"), nil, 0o644))
+				require.NoError(t, os.WriteFile(filepath.Join(dir, "pages.en", "common", "ls.md"), nil, 0o644))
+				require.NoError(t, os.WriteFile(filepath.Join(dir, "pages.en", "linux", "apt.md"), nil, 0o644))
+			},
+			wantStats: []LanguageInfo{
+				{
+					Language: "en",
+					Pages:    3,
+					Platforms: []PlatformInfo{
+						{Name: "common", Pages: 2},
+						{Name: "linux", Pages: 1},
+					},
+				},
+			},
+			wantTotal: 3,
+		},
+		{
+			name:      "multiple_languages",
+			platforms: []string{"common"},
+			langDirs:  []string{"pages.en", "pages.zh"},
+			setup: func(t *testing.T, dir string) {
+				require.NoError(t, os.MkdirAll(filepath.Join(dir, "pages.en", "common"), 0o755))
+				require.NoError(t, os.MkdirAll(filepath.Join(dir, "pages.zh", "common"), 0o755))
+				require.NoError(t, os.WriteFile(filepath.Join(dir, "pages.en", "common", "git.md"), nil, 0o644))
+				require.NoError(t, os.WriteFile(filepath.Join(dir, "pages.zh", "common", "git.md"), nil, 0o644))
+			},
+			wantStats: []LanguageInfo{
+				{
+					Language:  "en",
+					Pages:     1,
+					Platforms: []PlatformInfo{{Name: "common", Pages: 1}},
+				},
+				{
+					Language:  "zh",
+					Pages:     1,
+					Platforms: []PlatformInfo{{Name: "common", Pages: 1}},
+				},
+			},
+			wantTotal: 2,
+		},
+		{
+			name:      "strips_pages_prefix",
+			platforms: []string{"common"},
+			langDirs:  []string{"pages.en", "pages.de"},
+			setup: func(t *testing.T, dir string) {
+				require.NoError(t, os.MkdirAll(filepath.Join(dir, "pages.en", "common"), 0o755))
+				require.NoError(t, os.MkdirAll(filepath.Join(dir, "pages.de", "common"), 0o755))
+				require.NoError(t, os.WriteFile(filepath.Join(dir, "pages.en", "common", "git.md"), nil, 0o644))
+				require.NoError(t, os.WriteFile(filepath.Join(dir, "pages.de", "common", "git.md"), nil, 0o644))
+			},
+			wantStats: []LanguageInfo{
+				{
+					Language:  "en",
+					Pages:     1,
+					Platforms: []PlatformInfo{{Name: "common", Pages: 1}},
+				},
+				{
+					Language:  "de",
+					Pages:     1,
+					Platforms: []PlatformInfo{{Name: "common", Pages: 1}},
+				},
+			},
+			wantTotal: 2,
+		},
+		{
+			name:      "empty_directories_list",
+			platforms: []string{"common"},
+			langDirs:  nil,
+			setup:     func(t *testing.T, dir string) {},
+			wantStats: []LanguageInfo{},
+			wantTotal: 0,
+		},
+	}
 
-		c := &Cache{dir: dir}
-		stats, total, err := c.languageStats(
-			[]string{"common", "linux"},
-			[]string{"pages.en"},
-		)
-		require.NoError(t, err)
-		assert.Equal(t, 3, total)
-		assert.Len(t, stats, 1)
-		assert.Equal(t, "en", stats[0].Language)
-		assert.Equal(t, 3, stats[0].Pages)
-	})
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			dir := t.TempDir()
+			tt.setup(t, dir)
 
-	t.Run("multiple_languages", func(t *testing.T) {
-		dir := t.TempDir()
-		require.NoError(t, os.MkdirAll(filepath.Join(dir, "pages.en", "common"), 0o755))
-		require.NoError(t, os.MkdirAll(filepath.Join(dir, "pages.zh", "common"), 0o755))
-		require.NoError(t, os.WriteFile(filepath.Join(dir, "pages.en", "common", "git.md"), nil, 0o644))
-		require.NoError(t, os.WriteFile(filepath.Join(dir, "pages.zh", "common", "git.md"), nil, 0o644))
+			c := &Cache{dir: dir}
+			stats, total, err := c.languageStats(tt.platforms, tt.langDirs)
+			require.NoError(t, err)
+			assert.Equal(t, tt.wantTotal, total)
+			assert.Equal(t, tt.wantStats, stats)
+		})
+	}
+}
 
-		c := &Cache{dir: dir}
-		stats, total, err := c.languageStats(
-			[]string{"common"},
-			[]string{"pages.en", "pages.zh"},
-		)
-		require.NoError(t, err)
-		assert.Equal(t, 2, total)
-		assert.Len(t, stats, 2)
-	})
+func TestPlatformStats(t *testing.T) {
+	t.Parallel()
 
-	t.Run("skips_non_existent_platform_dirs", func(t *testing.T) {
-		dir := t.TempDir()
-		require.NoError(t, os.MkdirAll(filepath.Join(dir, "pages.en", "common"), 0o755))
-		require.NoError(t, os.WriteFile(filepath.Join(dir, "pages.en", "common", "git.md"), nil, 0o644))
+	tests := []struct {
+		name      string
+		platforms []string
+		setup     func(t *testing.T, dir string)
+		want      []PlatformInfo
+		wantTotal int
+	}{
+		{
+			name:      "single_platform",
+			platforms: []string{"common"},
+			setup: func(t *testing.T, dir string) {
+				require.NoError(t, os.MkdirAll(filepath.Join(dir, "pages.en", "common"), 0o755))
+				require.NoError(t, os.WriteFile(filepath.Join(dir, "pages.en", "common", "git.md"), nil, 0o644))
+				require.NoError(t, os.WriteFile(filepath.Join(dir, "pages.en", "common", "ls.md"), nil, 0o644))
+			},
+			want:      []PlatformInfo{{Name: "common", Pages: 2}},
+			wantTotal: 2,
+		},
+		{
+			name:      "multiple_platforms",
+			platforms: []string{"common", "linux"},
+			setup: func(t *testing.T, dir string) {
+				require.NoError(t, os.MkdirAll(filepath.Join(dir, "pages.en", "common"), 0o755))
+				require.NoError(t, os.MkdirAll(filepath.Join(dir, "pages.en", "linux"), 0o755))
+				require.NoError(t, os.WriteFile(filepath.Join(dir, "pages.en", "common", "git.md"), nil, 0o644))
+				require.NoError(t, os.WriteFile(filepath.Join(dir, "pages.en", "linux", "apt.md"), nil, 0o644))
+			},
+			want: []PlatformInfo{
+				{Name: "common", Pages: 1},
+				{Name: "linux", Pages: 1},
+			},
+			wantTotal: 2,
+		},
+		{
+			name:      "skips_missing_platform",
+			platforms: []string{"common", "linux"},
+			setup: func(t *testing.T, dir string) {
+				require.NoError(t, os.MkdirAll(filepath.Join(dir, "pages.en", "common"), 0o755))
+				require.NoError(t, os.WriteFile(filepath.Join(dir, "pages.en", "common", "git.md"), nil, 0o644))
+			},
+			want:      []PlatformInfo{{Name: "common", Pages: 1}},
+			wantTotal: 1,
+		},
+		{
+			name:      "empty_platforms_list",
+			platforms: []string{},
+			setup: func(t *testing.T, dir string) {
+				require.NoError(t, os.MkdirAll(filepath.Join(dir, "pages.en", "common"), 0o755))
+				require.NoError(t, os.WriteFile(filepath.Join(dir, "pages.en", "common", "git.md"), nil, 0o644))
+			},
+			want:      nil,
+			wantTotal: 0,
+		},
+		{
+			name:      "ignores_non_md_files",
+			platforms: []string{"common"},
+			setup: func(t *testing.T, dir string) {
+				require.NoError(t, os.MkdirAll(filepath.Join(dir, "pages.en", "common"), 0o755))
+				require.NoError(t, os.WriteFile(filepath.Join(dir, "pages.en", "common", "git.md"), nil, 0o644))
+				require.NoError(t, os.WriteFile(filepath.Join(dir, "pages.en", "common", "notes.txt"), nil, 0o644))
+			},
+			want:      []PlatformInfo{{Name: "common", Pages: 1}},
+			wantTotal: 1,
+		},
+		{
+			name:      "empty_directory",
+			platforms: []string{"common"},
+			setup: func(t *testing.T, dir string) {
+				require.NoError(t, os.MkdirAll(filepath.Join(dir, "pages.en", "common"), 0o755))
+			},
+			want:      []PlatformInfo{{Name: "common", Pages: 0}},
+			wantTotal: 0,
+		},
+	}
 
-		c := &Cache{dir: dir}
-		stats, total, err := c.languageStats(
-			[]string{"common", "linux"},
-			[]string{"pages.en"},
-		)
-		require.NoError(t, err)
-		assert.Equal(t, 1, total)
-		assert.Len(t, stats, 1)
-	})
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			dir := t.TempDir()
+			tt.setup(t, dir)
 
-	t.Run("empty_directories_list", func(t *testing.T) {
-		dir := t.TempDir()
-		c := &Cache{dir: dir}
-		stats, total, err := c.languageStats(
-			[]string{"common"},
-			nil,
-		)
-		require.NoError(t, err)
-		assert.Equal(t, 0, total)
-		assert.Empty(t, stats)
-	})
-
-	t.Run("ignores_non_md_files", func(t *testing.T) {
-		dir := t.TempDir()
-		require.NoError(t, os.MkdirAll(filepath.Join(dir, "pages.en", "common"), 0o755))
-		require.NoError(t, os.WriteFile(filepath.Join(dir, "pages.en", "common", "git.md"), nil, 0o644))
-		require.NoError(t, os.WriteFile(filepath.Join(dir, "pages.en", "common", "notes.txt"), nil, 0o644))
-
-		c := &Cache{dir: dir}
-		_, total, err := c.languageStats(
-			[]string{"common"},
-			[]string{"pages.en"},
-		)
-		require.NoError(t, err)
-		assert.Equal(t, 1, total)
-	})
+			c := &Cache{dir: dir}
+			got, total, err := c.platformStats("pages.en", tt.platforms)
+			require.NoError(t, err)
+			assert.Equal(t, tt.wantTotal, total)
+			assert.Equal(t, tt.want, got)
+		})
+	}
 }
