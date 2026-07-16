@@ -100,18 +100,18 @@ func (r *Renderer) Render(platform string, p *Page) error {
 		len(p.Examples),
 	)
 
-	if !r.output.Compact {
-		if err := r.writeNewline(); err != nil {
-			return err
-		}
+	if r.output.RawMarkdown {
+		return r.renderRaw(p)
 	}
 
 	if err := r.renderPageEditLink(p); err != nil {
 		return err
 	}
 
-	if r.output.RawMarkdown {
-		return r.renderRaw(p)
+	if !r.output.Compact {
+		if err := r.writeNewline(); err != nil {
+			return err
+		}
 	}
 
 	if err := r.renderPageTitle(platform, p); err != nil {
