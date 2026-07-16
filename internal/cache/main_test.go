@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/TheRootDaemon/tlgc/internal/config"
@@ -13,7 +14,7 @@ import (
 )
 
 // createTestZip builds an in-memory ZIP from a path→content map.
-// Entries whose path ends with "/" are treated as directory entries.
+// Entries whose path ends with "/" are created as proper directory entries.
 func createTestZip(t *testing.T, files map[string]string) []byte {
 	t.Helper()
 
@@ -21,6 +22,15 @@ func createTestZip(t *testing.T, files map[string]string) []byte {
 	zw := zip.NewWriter(&buf)
 
 	for path, content := range files {
+		if strings.HasSuffix(path, "/") {
+			_, err := zw.CreateHeader(&zip.FileHeader{
+				Name:   path,
+				Method: zip.Store,
+			})
+			require.NoError(t, err)
+			continue
+		}
+
 		w, err := zw.Create(path)
 		require.NoError(t, err)
 

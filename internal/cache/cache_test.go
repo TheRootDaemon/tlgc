@@ -537,3 +537,88 @@ func TestLanguagesToDirectories(t *testing.T) {
 		})
 	}
 }
+
+// TestCacheNeedsUpdate tests Cache.NeedsUpdate.
+func TestCacheNeedsUpdate(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name     string
+		setupDir func(t *testing.T) string
+		maxAge   uint64
+		want     bool
+	}{
+		{
+			name: "empty_cache",
+			setupDir: func(t *testing.T) string {
+				return t.TempDir()
+			},
+			maxAge: 336,
+			want:   true,
+		},
+		{
+			name: "cache_dir_does_not_exist",
+			setupDir: func(t *testing.T) string {
+				return filepath.Join(t.TempDir(), "nonexistent")
+			},
+			maxAge: 336,
+			want:   true,
+		},
+		{
+			name: "fresh_cache",
+			setupDir: func(t *testing.T) string {
+				d := t.TempDir()
+				require.NoError(t, os.MkdirAll(filepath.Join(d, "pages.en"), 0o750))
+				return d
+			},
+			maxAge: 336,
+			want:   false,
+		},
+		{
+			name: "stale_cache",
+			setupDir: func(t *testing.T) string {
+				d := t.TempDir()
+				require.NoError(t, os.MkdirAll(filepath.Join(d, "pages.en"), 0o750))
+				return d
+			},
+			maxAge: 0,
+			want:   true,
+		},
+		{
+			name: "cache_at_exact_max_age",
+			setupDir: func(t *testing.T) string {
+				d := t.TempDir()
+				require.NoError(t, os.MkdirAll(filepath.Join(d, "pages.en"), 0o750))
+				return d
+			},
+			maxAge: 1,
+			want:   false,
+		},
+		{
+			name: "cache_older_than_max_age",
+			setupDir: func(t *testing.T) string {
+				d := t.TempDir()
+				require.NoError(t, os.MkdirAll(filepath.Join(d, "pages.en"), 0o750))
+				require.NoError(t, os.MkdirAll(filepath.Join(d, "pages.de"), 0o750))
+				return d
+			},
+			maxAge: 1,
+			want:   false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			dir := tt.setupDir(t)
+			c := &Cache{dir: dir}
+
+			if tt.name == "cache_at_exact_max_age" {
+				sumfile := filepath.Join(dir, checksumFile)
+				require.NoError(t, os.WriteFile(sumfile, nil, 0o644))
+			}
+
+			got := c.NeedsUpdate(tt.maxAge)
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}

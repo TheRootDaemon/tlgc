@@ -7,6 +7,7 @@ import (
 	"sort"
 	"strings"
 	"sync/atomic"
+	"time"
 
 	"github.com/TheRootDaemon/tlgc/internal/config"
 	"github.com/TheRootDaemon/tlgc/logger"
@@ -108,4 +109,20 @@ func (c *Cache) languagesToDirectories(languages []string, sortFlag bool) []stri
 
 	dirs = slice.Dedup(dirs)
 	return dirs
+}
+
+// NeedsUpdate reports whether the cache needs to be refreshed.
+// It returns true when no language directories exist (empty cache)
+// or when the cache age exceeds maxAge hours.
+func (c *Cache) NeedsUpdate(maxAge uint64) bool {
+	dirs, err := c.getLanguageDirectories()
+	if err != nil || len(dirs) == 0 {
+		return true
+	}
+
+	age, err := c.Age()
+	if err != nil {
+		return true
+	}
+	return age > time.Duration(maxAge)*time.Hour
 }
