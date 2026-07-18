@@ -1,6 +1,7 @@
 package format
 
 import (
+	"math"
 	"testing"
 	"time"
 
@@ -28,6 +29,37 @@ func TestDurationFmt(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got := DurationFmt(tt.input)
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
+func TestValidateDurationOverflow(t *testing.T) {
+	t.Parallel()
+
+	const maxValid = math.MaxInt64 / int64(time.Hour)
+
+	tests := []struct {
+		name    string
+		hours   uint64
+		want    time.Duration
+		wantErr string
+	}{
+		{name: "zero_hours", hours: 0, want: 0},
+		{name: "one_hour", hours: 1, want: time.Hour},
+		{name: "max_valid", hours: uint64(maxValid), want: time.Duration(maxValid) * time.Hour},
+		{name: "overflow", hours: uint64(maxValid) + 1, wantErr: "overflows"},
+		{name: "max_uint64", hours: math.MaxUint64, wantErr: "overflows"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := ValidateDurationOverflow(tt.hours)
+			if tt.wantErr != "" {
+				assert.ErrorContains(t, err, tt.wantErr)
+				return
+			}
+			assert.NoError(t, err)
 			assert.Equal(t, tt.want, got)
 		})
 	}

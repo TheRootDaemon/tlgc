@@ -67,23 +67,26 @@ func (a *App) printAutoUpdate(info *cache.InfoResult) error {
 		return err
 	}
 
+	maxAge, err := format.ValidateDurationOverflow(info.MaxAge)
+	if err != nil {
+		return err
+	}
+
 	frequency := termcolor.Sprint(
 		"bold blue",
-		format.DurationFmt(
-			time.Duration(info.MaxAge)*time.Hour,
-		),
+		format.DurationFmt(maxAge),
 	)
 	remaining := termcolor.Sprint(
 		"bold blue",
 		format.DurationFmt(
 			max(
 				0,
-				time.Duration(info.MaxAge)*time.Hour-info.AgeDuration,
+				maxAge*time.Hour-info.AgeDuration,
 			),
 		),
 	)
 
-	_, err := fmt.Fprintf(
+	_, err = fmt.Fprintf(
 		a.Stdout,
 		"Auto update: every %s (next in %s)\n",
 		frequency,

@@ -7,8 +7,8 @@ import (
 	"sort"
 	"strings"
 	"sync/atomic"
-	"time"
 
+	"github.com/TheRootDaemon/tlgc/format"
 	"github.com/TheRootDaemon/tlgc/internal/config"
 	"github.com/TheRootDaemon/tlgc/logger"
 	"github.com/TheRootDaemon/tlgc/slice"
@@ -124,5 +124,11 @@ func (c *Cache) NeedsUpdate(maxAge uint64) bool {
 	if err != nil {
 		return true
 	}
-	return age > time.Duration(maxAge)*time.Hour
+
+	maxAgeDuration, err := format.ValidateDurationOverflow(maxAge)
+	if err != nil {
+		return true
+	}
+
+	return age > maxAgeDuration
 }

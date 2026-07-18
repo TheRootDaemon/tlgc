@@ -1,9 +1,11 @@
 package cache
 
 import (
+	"math"
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -585,10 +587,17 @@ func TestCacheNeedsUpdate(t *testing.T) {
 			want:   true,
 		},
 		{
-			name: "cache_at_exact_max_age",
+			name: "cache_below_max_age",
 			setupDir: func(t *testing.T) string {
 				d := t.TempDir()
 				require.NoError(t, os.MkdirAll(filepath.Join(d, "pages.en"), 0o750))
+				sumfile := filepath.Join(d, checksumFile)
+				require.NoError(t, os.WriteFile(sumfile, nil, 0o644))
+				require.NoError(t, os.Chtimes(
+					sumfile,
+					time.Now().Add(-50*time.Minute),
+					time.Now().Add(-50*time.Minute),
+				))
 				return d
 			},
 			maxAge: 1,
@@ -599,11 +608,44 @@ func TestCacheNeedsUpdate(t *testing.T) {
 			setupDir: func(t *testing.T) string {
 				d := t.TempDir()
 				require.NoError(t, os.MkdirAll(filepath.Join(d, "pages.en"), 0o750))
-				require.NoError(t, os.MkdirAll(filepath.Join(d, "pages.de"), 0o750))
+				sumfile := filepath.Join(d, checksumFile)
+				require.NoError(t, os.WriteFile(sumfile, nil, 0o644))
+				require.NoError(t, os.Chtimes(
+					sumfile,
+					time.Now().Add(-2*time.Hour),
+					time.Now().Add(-2*time.Hour),
+				))
 				return d
 			},
 			maxAge: 1,
-			want:   false,
+			want:   true,
+		},
+		{
+			name: "overflow_max_age",
+			setupDir: func(t *testing.T) string {
+				d := t.TempDir()
+				require.NoError(t, os.MkdirAll(filepath.Join(d, "pages.en"), 0o750))
+				return d
+			},
+			maxAge: math.MaxUint64,
+			want:   true,
+		},
+		{
+			name: "future_mtime_on_checksum_file",
+			setupDir: func(t *testing.T) string {
+				d := t.TempDir()
+				require.NoError(t, os.MkdirAll(filepath.Join(d, "pages.en"), 0o750))
+				sumfile := filepath.Join(d, checksumFile)
+				require.NoError(t, os.WriteFile(sumfile, nil, 0o644))
+				require.NoError(t, os.Chtimes(
+					sumfile,
+					time.Now().Add(1*time.Hour),
+					time.Now().Add(1*time.Hour),
+				))
+				return d
+			},
+			maxAge: 336,
+			want:   true,
 		},
 	}
 
@@ -611,11 +653,6 @@ func TestCacheNeedsUpdate(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			dir := tt.setupDir(t)
 			c := &Cache{dir: dir}
-
-			if tt.name == "cache_at_exact_max_age" {
-				sumfile := filepath.Join(dir, checksumFile)
-				require.NoError(t, os.WriteFile(sumfile, nil, 0o644))
-			}
 
 			got := c.NeedsUpdate(tt.maxAge)
 			assert.Equal(t, tt.want, got)

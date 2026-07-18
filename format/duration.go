@@ -2,6 +2,7 @@ package format
 
 import (
 	"fmt"
+	"math"
 	"time"
 )
 
@@ -52,4 +53,14 @@ func DurationFmt(d time.Duration) string {
 	default:
 		return fmt.Sprintf("%ds", seconds)
 	}
+}
+
+func ValidateDurationOverflow(hours uint64) (time.Duration, error) {
+	const maxHours = math.MaxInt64 / int64(time.Hour)
+
+	if hours > uint64(maxHours) {
+		return 0, fmt.Errorf("max age %d hours overflows time.Duration", hours)
+	}
+
+	return time.Duration(hours) * time.Hour, nil
 }
