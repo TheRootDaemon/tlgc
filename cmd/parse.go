@@ -242,7 +242,7 @@ func parse(args []string) (*CLI, error) {
 
 	// show help
 	if cli.ShowHelp {
-		fmt.Println("TODO")
+		help()
 		return cli, nil
 	}
 
@@ -252,7 +252,7 @@ func parse(args []string) (*CLI, error) {
 	// validate that exactly one operation is active
 	ops := cli.operationCount()
 	if ops == 0 {
-		fmt.Println("TODO")
+		help()
 		return cli, nil
 	} else if ops > 1 {
 		return nil, fmt.Errorf("only one operation can be specified at a time")
