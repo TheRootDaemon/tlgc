@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/TheRootDaemon/tlgc/version"
 )
@@ -19,6 +20,8 @@ func Parse() (*CLI, error) {
 // and ensures that exactly one operation has been requested.
 // If the arguments are empty it prints help message.
 func parse(args []string) (*CLI, error) {
+	args = reorderFlags(args)
+
 	cli := &CLI{}
 
 	fs := flag.NewFlagSet("tlgc", flag.ContinueOnError)
@@ -288,4 +291,39 @@ func (c *CLI) operationCount() int {
 	}
 
 	return count
+}
+
+// reorderFlags moves all flags before positional arguments
+// so that Go's flag package can parse flags
+// that appear after the page name.
+func reorderFlags(args []string) []string {
+	var flags, positional []string
+
+	for i := 0; i < len(args); i++ {
+		arg := args[i]
+		if !strings.HasPrefix(arg, "-") {
+			positional = append(positional, arg)
+			continue
+		}
+
+		flags = append(flags, arg)
+		name := strings.TrimLeft(arg, "-")
+		if strings.Contains(name, "=") {
+			continue
+		}
+		switch name {
+		case "p", "platform",
+			"L", "language",
+			"color",
+			"config",
+			"s", "search",
+			"r", "render":
+			if i+1 < len(args) {
+				i++
+				flags = append(flags, args[i])
+			}
+		}
+	}
+
+	return append(flags, positional...)
 }

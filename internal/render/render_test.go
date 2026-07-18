@@ -271,7 +271,7 @@ func TestRender(t *testing.T) {
 			name:     "raw markdown mode writes content from RawContent",
 			renderer: &Renderer{output: config.OutputConfig{RawMarkdown: true}},
 			page:     &Page{RawContent: "# test page\n\n> description.\n"},
-			want:     "\n# test page\n\n> description.\n",
+			want:     "# test page\n\n> description.\n",
 		},
 		{
 			name:     "leading and trailing newlines in non-compact mode",

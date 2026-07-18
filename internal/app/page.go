@@ -180,17 +180,24 @@ func (a *App) renderOptions(cli *cmd.CLI) []render.RenderOption {
 	}
 
 	output := config.Output()
-	switch {
-	case cli.Compact:
+	if cli.Compact {
 		output.Compact = true
-	case cli.Raw:
+	}
+	if cli.Raw {
 		output.RawMarkdown = true
-	case cli.Edit:
-		output.EditLink = true
+	}
+
+	switch {
+	case cli.ShortOptions && cli.LongOptions:
+		output.OptionStyle = config.OptionStyleCombined
 	case cli.ShortOptions:
 		output.OptionStyle = config.OptionStyleShort
 	case cli.LongOptions:
 		output.OptionStyle = config.OptionStyleLong
+	}
+
+	if cli.Edit {
+		output.EditLink = true
 	}
 
 	opts = append(opts, render.WithOutput(output))
