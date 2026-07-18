@@ -180,10 +180,15 @@ func (a *App) renderOptions(cli *cmd.CLI) []render.RenderOption {
 	}
 
 	output := config.Output()
-	if cli.Compact {
+	if cli.NoCompact {
+		output.Compact = false
+	} else if cli.Compact {
 		output.Compact = true
 	}
-	if cli.Raw {
+
+	if cli.NoRaw {
+		output.RawMarkdown = false
+	} else if cli.Raw {
 		output.RawMarkdown = true
 	}
 
