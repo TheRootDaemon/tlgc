@@ -85,7 +85,6 @@ func New(w io.Writer, options ...RenderOption) *Renderer {
 // Nil pages are silently ignored.
 func (r *Renderer) Render(platform string, p *Page) error {
 	if p == nil {
-		logger.Trace("nil page, skipped")
 		return nil
 	}
 

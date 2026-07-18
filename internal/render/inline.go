@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	"github.com/TheRootDaemon/tlgc/internal/config"
-	"github.com/TheRootDaemon/tlgc/logger"
 )
 
 // inlineSegment is one piece of inline content
@@ -30,8 +29,6 @@ func (r *Renderer) renderStyledInline(
 	baseStyle,
 	codeStyle config.OutputStyle,
 ) error {
-	logger.Trace("text=%q len=%d", text, len(text))
-
 	segments := parseInline(text)
 	if len(segments) == 1 {
 		_, err := io.WriteString(

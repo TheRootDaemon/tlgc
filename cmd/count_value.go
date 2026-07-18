@@ -24,6 +24,12 @@ func (v *countValue) String() string {
 	return fmt.Sprintf("%d", *v.count)
 }
 
+// IsBoolFlag returns true so flag.Parse treats --verbose as a boolean flag
+// that does not consume the next argument.
+func (v *countValue) IsBoolFlag() bool {
+	return true
+}
+
 // Set increments the counter each time the flag is encountered.
 func (v *countValue) Set(string) error {
 	*v.count++

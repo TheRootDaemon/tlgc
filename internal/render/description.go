@@ -3,15 +3,12 @@ package render
 import (
 	"io"
 	"strings"
-
-	"github.com/TheRootDaemon/tlgc/logger"
 )
 
 // renderDescriptionLine writes one description line,
 // styled with r.style.Description, indented,
 // and followed by a newline.
 func (r *Renderer) renderDescriptionLine(w io.Writer, text, indent string) error {
-	logger.Trace("text=%q", text)
 	if err := r.renderStyledInline(
 		w,
 		text,
@@ -34,8 +31,6 @@ func (r *Renderer) renderDescriptions(w io.Writer, descs []string, url string) e
 	if len(descs) == 0 && url == "" {
 		return nil
 	}
-
-	logger.Trace("count=%d hasURL=%t", len(descs), url != "")
 
 	indent := strings.Repeat(" ", r.indent.Description)
 
@@ -98,7 +93,6 @@ func (r *Renderer) renderDescriptionURL(w io.Writer, url, indent string) error {
 // styled with r.style.Bullet and indented.
 // No trailing newline is added.
 func (r *Renderer) renderBulletLine(w io.Writer, text, indent string) error {
-	logger.Trace("text=%q", text)
 	return r.renderStyledInline(
 		w,
 		text,

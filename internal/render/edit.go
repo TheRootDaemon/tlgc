@@ -12,7 +12,6 @@ import (
 // unless output is in compact mode.
 func (r *Renderer) renderEditLink(w io.Writer, url string) error {
 	logger.Info("edit this page on GitHub")
-	logger.Trace("url=%q compact=%t", url, r.output.Compact)
 	_, err := io.WriteString(w, url)
 	if err != nil {
 		return err
@@ -46,22 +45,18 @@ func (r *Renderer) renderPageEditLink(p *Page) error {
 // Otherwise the URL is constructed from the page's file path.
 func buildEditURL(path, url string) string {
 	if url != "" {
-		logger.Trace("using custom url=%s", url)
 		return url
 	}
 
 	if path != "" {
 		page := pathutil.PageName(path)
 		platform := pathutil.PagePlatform(path)
-		result := fmt.Sprintf(
+		return fmt.Sprintf(
 			"https://github.com/tldr-pages/tldr/edit/main/pages/%s/%s.md",
 			platform,
 			page,
 		)
-		logger.Trace("path=%s -> %s", path, result)
-		return result
 	}
 
-	logger.Trace("empty path and url")
 	return ""
 }
