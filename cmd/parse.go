@@ -170,6 +170,12 @@ func parse(args []string) (*CLI, error) {
 
 	fs.BoolVar(&cli.Compact, "c", false, "strip empty lines from output")
 	fs.BoolVar(&cli.Compact, "compact", false, "strip empty lines from output")
+	fs.BoolVar(
+		&cli.NoCompact,
+		"no-compact",
+		false,
+		"do not strip empty lines from output (overrides --compact)",
+	)
 
 	fs.BoolVar(
 		&cli.Raw,
@@ -182,6 +188,12 @@ func parse(args []string) (*CLI, error) {
 		"raw",
 		false,
 		"print pages in raw markdown instead of rendering them",
+	)
+	fs.BoolVar(
+		&cli.NoRaw,
+		"no-raw",
+		false,
+		"render pages instead of printing raw file contents (overrides --raw)",
 	)
 
 	fs.BoolVar(&cli.Quiet, "q", false, "suppress status messages and warnings")

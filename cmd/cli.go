@@ -69,8 +69,12 @@ type CLI struct {
 	// Compact strips empty lines from output.
 	Compact bool
 
+	NoCompact bool
+
 	// Raw prints pages in raw markdown.
 	Raw bool
+
+	NoRaw bool
 
 	// Quiet suppresses informational and warning messages.
 	Quiet bool
