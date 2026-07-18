@@ -15,7 +15,12 @@ func (r *Renderer) applyStyle(s config.OutputStyle, t string) string {
 		return t
 	}
 
-	styled := termcolor.Sprint(styleString(s), t)
+	c := termcolor.Parse(styleString(s))
+	if c.String() == "" {
+		return t
+	}
+
+	styled := c.String() + t + termcolor.Reset()
 	logger.Trace("len=%d styled=%t", len(t), styled != t)
 	return styled
 }

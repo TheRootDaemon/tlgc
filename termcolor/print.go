@@ -12,6 +12,9 @@ import "fmt"
 //
 //	Sprint("bold red", "error") => "\x1b[1;31merror\x1b[0m"
 func Sprint(styleString, text string) string {
+	if !SupportsColor() {
+		return text
+	}
 	c := Parse(styleString)
 	if c.String() == "" {
 		return text
