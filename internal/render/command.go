@@ -13,9 +13,16 @@ import (
 // with the index of its originating Segment,
 // so that the segment's style can be applied
 // during line-by-line rendering.
+//
+// spaceAfter reports whether a space originally
+// followed this word in the source,
+// so commandText can reconstruct
+// the display string faithfully
+// without guessing punctuation spacing.
 type mappedWord struct {
-	text         string
-	segmentIndex int
+	followedBySpace bool
+	segmentIndex    int
+	text            string
 }
 
 // renderCommand writes a styled, wrapped command to w.
@@ -71,6 +78,10 @@ func (r *Renderer) renderCommand(w io.Writer, segments []Segment) error {
 // applying the style of each word's originating Segment.
 // wordOffset tracks the current position in mappedWords
 // across multi-line rendering.
+//
+// Consecutive mappedWords with spaceAfter=false form a single
+// whitespace-delimited field in the wrapped display text;
+// each sub-word is rendered with its own segment's style.
 func (r *Renderer) renderCommandLine(
 	w io.Writer,
 	words []string,
@@ -85,22 +96,32 @@ func (r *Renderer) renderCommandLine(
 		return err
 	}
 
-	for j, word := range words {
+	for j := range words {
 		if *wordOffset >= len(mappedWords) {
 			break
 		}
 
-		mapped := mappedWords[*wordOffset]
-		segment := segments[mapped.segmentIndex]
+		start := *wordOffset
+		for *wordOffset < len(mappedWords) {
+			mw := mappedWords[*wordOffset]
+			*wordOffset++
+			if mw.followedBySpace {
+				break
+			}
+		}
 
-		if _, err := io.WriteString(
-			w,
-			r.applyStyle(
-				r.styleForSegment(&segment),
-				word,
-			),
-		); err != nil {
-			return err
+		for k := start; k < *wordOffset; k++ {
+			mw := mappedWords[k]
+			seg := segments[mw.segmentIndex]
+			if _, err := io.WriteString(
+				w,
+				r.applyStyle(
+					r.styleForSegment(&seg),
+					mw.text,
+				),
+			); err != nil {
+				return err
+			}
 		}
 
 		if j < len(words)-1 {
@@ -109,27 +130,40 @@ func (r *Renderer) renderCommandLine(
 				return err
 			}
 		}
-
-		*wordOffset++
 	}
 
 	_, err = io.WriteString(w, "\n")
 	return err
 }
 
-// mapWords flattens each Segment's DisplayText into individual words.
+// mapWords flattens each Segment's DisplayText into individual words
+// and records whether each word was followed by whitespace.
 func mapWords(segments []Segment, optionStyle config.OptionStyle) []mappedWord {
 	var mappedWords []mappedWord
 	for i, segment := range segments {
-		words := strings.FieldsSeq(segment.DisplayText(optionStyle))
-		for word := range words {
-			mappedWords = append(
-				mappedWords,
-				mappedWord{
-					text:         word,
-					segmentIndex: i,
-				},
-			)
+		text := segment.DisplayText(optionStyle)
+		segmentWords := strings.Fields(text)
+		for j, w := range segmentWords {
+			mw := mappedWord{
+				text:         w,
+				segmentIndex: i,
+			}
+
+			isLast := j == len(segmentWords)-1
+
+			if isLast {
+				trailingSpace := hasTrailingSpace(text)
+				leadingSpace := false
+				if i+1 < len(segments) {
+					next := segments[i+1].DisplayText(optionStyle)
+					leadingSpace = hasLeadingSpace(next)
+				}
+				mw.followedBySpace = trailingSpace || leadingSpace
+			} else {
+				mw.followedBySpace = true
+			}
+
+			mappedWords = append(mappedWords, mw)
 		}
 	}
 
@@ -138,14 +172,16 @@ func mapWords(segments []Segment, optionStyle config.OptionStyle) []mappedWord {
 
 // commandText joins the text fields of mapped words back
 // into a single space-separated string, suitable for text wrapping.
+// A space is inserted only where the original source had whitespace
+// (recorded in spaceAfter), so punctuation spacing is preserved
+// faithfully without a hard-coded punctuation list.
 func commandText(words []mappedWord) string {
 	var b strings.Builder
-
-	for i, word := range words {
-		if i > 0 {
+	for i, w := range words {
+		if i > 0 && words[i-1].followedBySpace {
 			b.WriteByte(' ')
 		}
-		b.WriteString(word.text)
+		b.WriteString(w.text)
 	}
 
 	return b.String()
@@ -174,4 +210,16 @@ func wrapLines(
 		len(lines),
 	)
 	return lines
+}
+
+// hasTrailingSpace reports whether s ends with a space,
+// indicating that whitespace originally followed the segment.
+func hasTrailingSpace(s string) bool {
+	return len(s) > 0 && s[len(s)-1] == ' '
+}
+
+// hasLeadingSpace reports whether s begins with a space,
+// indicating that whitespace originally preceded the segment.
+func hasLeadingSpace(s string) bool {
+	return len(s) > 0 && s[0] == ' '
 }

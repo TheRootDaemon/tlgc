@@ -48,6 +48,36 @@ func TestRenderCommand(t *testing.T) {
 			raw:      "tar cf {{archive.tar}} {{dest}}",
 			want:     "    tar cf archive.tar dest\n",
 		},
+		{
+			name:     "comma between placeholders renders without space after comma",
+			renderer: noColorRenderer,
+			raw:      "tokei {{path}} {{[-t|--types]}} {{Rust}},{{Markdown}}",
+			want:     "    tokei path --types Rust,Markdown\n",
+		},
+		{
+			name:     "slash between placeholders no spaces",
+			renderer: noColorRenderer,
+			raw:      "{{image}}/{{repository}}",
+			want:     "    image/repository\n",
+		},
+		{
+			name:     "colon between placeholders no spaces",
+			renderer: noColorRenderer,
+			raw:      "{{host}}:{{port}}",
+			want:     "    host:port\n",
+		},
+		{
+			name:     "equals between placeholders no spaces",
+			renderer: noColorRenderer,
+			raw:      "{{a}}={{b}}",
+			want:     "    a=b\n",
+		},
+		{
+			name:     "equals with spaces around it",
+			renderer: noColorRenderer,
+			raw:      "{{a}} = {{b}}",
+			want:     "    a = b\n",
+		},
 	}
 
 	for _, tt := range tests {
@@ -184,8 +214,8 @@ func TestRenderCommandLine(t *testing.T) {
 			name:  "multiple words",
 			words: []string{"tar", "cf", "archive.tar"},
 			mappedWords: []mappedWord{
-				{text: "tar", segmentIndex: 0},
-				{text: "cf", segmentIndex: 0},
+				{text: "tar", segmentIndex: 0, followedBySpace: true},
+				{text: "cf", segmentIndex: 0, followedBySpace: true},
 				{text: "archive.tar", segmentIndex: 0},
 			},
 			segments: []Segment{
@@ -280,8 +310,8 @@ func TestMapWords(t *testing.T) {
 			segments:    []Segment{{Kind: Text, Text: "tar cf archive.tar"}},
 			optionStyle: config.OptionStyleLong,
 			want: []mappedWord{
-				{text: "tar", segmentIndex: 0},
-				{text: "cf", segmentIndex: 0},
+				{text: "tar", segmentIndex: 0, followedBySpace: true},
+				{text: "cf", segmentIndex: 0, followedBySpace: true},
 				{text: "archive.tar", segmentIndex: 0},
 			},
 		},
@@ -294,8 +324,8 @@ func TestMapWords(t *testing.T) {
 			},
 			optionStyle: config.OptionStyleLong,
 			want: []mappedWord{
-				{text: "mv", segmentIndex: 0},
-				{text: "src", segmentIndex: 1},
+				{text: "mv", segmentIndex: 0, followedBySpace: true},
+				{text: "src", segmentIndex: 1, followedBySpace: true},
 				{text: "dst", segmentIndex: 2},
 			},
 		},
@@ -307,7 +337,7 @@ func TestMapWords(t *testing.T) {
 			},
 			optionStyle: config.OptionStyleShort,
 			want: []mappedWord{
-				{text: "cmd", segmentIndex: 0},
+				{text: "cmd", segmentIndex: 0, followedBySpace: true},
 				{text: "-s", segmentIndex: 1},
 			},
 		},
@@ -319,7 +349,7 @@ func TestMapWords(t *testing.T) {
 			},
 			optionStyle: config.OptionStyleLong,
 			want: []mappedWord{
-				{text: "cmd", segmentIndex: 0},
+				{text: "cmd", segmentIndex: 0, followedBySpace: true},
 				{text: "--long", segmentIndex: 1},
 			},
 		},
@@ -331,7 +361,7 @@ func TestMapWords(t *testing.T) {
 			},
 			optionStyle: config.OptionStyleCombined,
 			want: []mappedWord{
-				{text: "cmd", segmentIndex: 0},
+				{text: "cmd", segmentIndex: 0, followedBySpace: true},
 				{text: "[-s|--long]", segmentIndex: 1},
 			},
 		},
@@ -343,7 +373,7 @@ func TestMapWords(t *testing.T) {
 			},
 			optionStyle: config.OptionStyleLong,
 			want: []mappedWord{
-				{text: "echo", segmentIndex: 0},
+				{text: "echo", segmentIndex: 0, followedBySpace: true},
 				{text: "hello", segmentIndex: 1},
 			},
 		},
@@ -357,9 +387,23 @@ func TestMapWords(t *testing.T) {
 			},
 			optionStyle: config.OptionStyleShort,
 			want: []mappedWord{
-				{text: "cmd", segmentIndex: 0},
-				{text: "-o", segmentIndex: 1},
+				{text: "cmd", segmentIndex: 0, followedBySpace: true},
+				{text: "-o", segmentIndex: 1, followedBySpace: true},
 				{text: "file", segmentIndex: 3},
+			},
+		},
+		{
+			name: "slash with spaces on both sides",
+			segments: []Segment{
+				{Kind: Placeholder, Text: "a"},
+				{Kind: Text, Text: " / "},
+				{Kind: Placeholder, Text: "b"},
+			},
+			optionStyle: config.OptionStyleLong,
+			want: []mappedWord{
+				{text: "a", segmentIndex: 0, followedBySpace: true},
+				{text: "/", segmentIndex: 1, followedBySpace: true},
+				{text: "b", segmentIndex: 2},
 			},
 		},
 	}
@@ -395,11 +439,64 @@ func TestCommandText(t *testing.T) {
 		{
 			name: "multiple words",
 			words: []mappedWord{
-				{text: "tar"},
-				{text: "cf"},
+				{text: "tar", followedBySpace: true},
+				{text: "cf", followedBySpace: true},
 				{text: "archive.tar"},
 			},
 			want: "tar cf archive.tar",
+		},
+		{
+			name: "adjacent placeholders no space",
+			words: []mappedWord{
+				{text: "Rust"},
+				{text: ","},
+				{text: "Markdown"},
+			},
+			want: "Rust,Markdown",
+		},
+		{
+			name: "colon without trailing space",
+			words: []mappedWord{
+				{text: "host"},
+				{text: ":"},
+				{text: "port"},
+			},
+			want: "host:port",
+		},
+		{
+			name: "colon with trailing space",
+			words: []mappedWord{
+				{text: "host"},
+				{text: ":", followedBySpace: true},
+				{text: "port"},
+			},
+			want: "host: port",
+		},
+		{
+			name: "slash between placeholders no spaces",
+			words: []mappedWord{
+				{text: "a"},
+				{text: "/"},
+				{text: "b"},
+			},
+			want: "a/b",
+		},
+		{
+			name: "slash with spaces on both sides",
+			words: []mappedWord{
+				{text: "a", followedBySpace: true},
+				{text: "/", followedBySpace: true},
+				{text: "b"},
+			},
+			want: "a / b",
+		},
+		{
+			name: "space between regular words",
+			words: []mappedWord{
+				{text: "hello", followedBySpace: true},
+				{text: "world"},
+			},
+			want: "hello world",
 		},
 	}
 
@@ -464,6 +561,106 @@ func TestWrapLines(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got := wrapLines(tt.width, tt.indent, tt.text)
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
+func TestHasTrailingSpace(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name string
+		s    string
+		want bool
+	}{
+		{
+			name: "empty string",
+			s:    "",
+			want: false,
+		},
+		{
+			name: "no trailing space",
+			s:    "hello",
+			want: false,
+		},
+		{
+			name: "single trailing space",
+			s:    "hello ",
+			want: true,
+		},
+		{
+			name: "space only",
+			s:    " ",
+			want: true,
+		},
+		{
+			name: "multiple trailing spaces",
+			s:    "hello  ",
+			want: true,
+		},
+		{
+			name: "leading but no trailing space",
+			s:    " hello",
+			want: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			got := hasTrailingSpace(tt.s)
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
+func TestHasLeadingSpace(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name string
+		s    string
+		want bool
+	}{
+		{
+			name: "empty string",
+			s:    "",
+			want: false,
+		},
+		{
+			name: "no leading space",
+			s:    "hello",
+			want: false,
+		},
+		{
+			name: "single leading space",
+			s:    " hello",
+			want: true,
+		},
+		{
+			name: "space only",
+			s:    " ",
+			want: true,
+		},
+		{
+			name: "multiple leading spaces",
+			s:    "  hello",
+			want: true,
+		},
+		{
+			name: "trailing but no leading space",
+			s:    "hello ",
+			want: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			got := hasLeadingSpace(tt.s)
 			assert.Equal(t, tt.want, got)
 		})
 	}
