@@ -7,6 +7,7 @@ import (
 	"github.com/TheRootDaemon/tlgc/cmd"
 	"github.com/TheRootDaemon/tlgc/internal/cache"
 	"github.com/TheRootDaemon/tlgc/logger"
+	"github.com/TheRootDaemon/tlgc/platform"
 	"github.com/TheRootDaemon/tlgc/termcolor"
 )
 
@@ -14,9 +15,12 @@ import (
 // Returns 0 on success, 1 on error.
 func (a *App) searchPages(cli *cmd.CLI) int {
 	c := cache.New()
-	p := a.resolvePlatform(cli.Platform)
-	languages := a.resolveLanguages(cli.Languages)
+	p := cli.Platform
+	if p != "" {
+		p = platform.Resolve(p)
+	}
 
+	languages := a.resolveLanguages(cli.Languages)
 	results, err := c.Search(cli.Search, p, languages)
 	if err != nil {
 		logger.Error("search failed: %v", err)
