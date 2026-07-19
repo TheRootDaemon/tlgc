@@ -95,8 +95,8 @@ func TestParse(t *testing.T) {
 				Description: []string{"archive utility."},
 				URL:         "https://example.org/tar",
 				Examples: []Example{
-					{Description: "create an archive", Command: "tar cf {{archive.tar}} {{files}}"},
-					{Description: "extract an archive", Command: "tar xf {{archive.tar}}"},
+					{Description: "create an archive:", Command: "tar cf {{archive.tar}} {{files}}"},
+					{Description: "extract an archive:", Command: "tar xf {{archive.tar}}"},
 				},
 			},
 		},
@@ -139,7 +139,7 @@ func TestParse(t *testing.T) {
 			want: &Page{
 				Title: "placeholders",
 				Examples: []Example{
-					{Description: "example", Command: "tar cf {{archive.tar}} {{files}}"},
+					{Description: "example:", Command: "tar cf {{archive.tar}} {{files}}"},
 				},
 			},
 		},
@@ -149,7 +149,7 @@ func TestParse(t *testing.T) {
 			want: &Page{
 				Title: "plain",
 				Examples: []Example{
-					{Description: "example", Command: "ls -la"},
+					{Description: "example:", Command: "ls -la"},
 				},
 			},
 		},
@@ -173,7 +173,7 @@ func TestParse(t *testing.T) {
 			want: &Page{
 				Title: "no-command",
 				Examples: []Example{
-					{Description: "description only"},
+					{Description: "description only:"},
 				},
 			},
 		},
@@ -195,8 +195,8 @@ func TestParse(t *testing.T) {
 				Description: []string{"This is a test page."},
 				URL:         "https://example.org",
 				Examples: []Example{
-					{Description: "This is a description of a `command` example", Command: "command --opt1 --opt2 {{placeholder}}"},
-					{Description: "Another one", Command: "command --opt1 {{placeholder1 placeholder2 ...}}"},
+					{Description: "This is a description of a `command` example:", Command: "command --opt1 --opt2 {{placeholder}}"},
+					{Description: "Another one:", Command: "command --opt1 {{placeholder1 placeholder2 ...}}"},
 				},
 			},
 		},

@@ -123,7 +123,7 @@ func Parse(content string) *Page {
 				p.Description = append(p.Description, body)
 			}
 		case strings.HasPrefix(line, "- "):
-			desc := strings.TrimSuffix(line[2:], ":")
+			desc := line[2:]
 			p.Examples = append(
 				p.Examples,
 				Example{
