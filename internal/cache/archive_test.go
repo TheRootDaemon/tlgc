@@ -558,7 +558,7 @@ func TestExtractZipEntry(t *testing.T) {
 			name:  "existing_file",
 			files: map[string]string{"common/git.md": "# git\n"},
 			preExisting: map[string]struct{}{
-				"common/git.md": {},
+				filepath.Clean("common/git.md"): {},
 			},
 			wantFile: true,
 			wantNew:  false,
