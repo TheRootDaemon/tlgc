@@ -87,7 +87,7 @@ func TestRenderPageEditLink(t *testing.T) {
 			want:     "",
 		},
 		{
-			name:     "empty path and url",
+			name:     "empty path",
 			editLink: true,
 			page:     &Page{},
 			want:     "",
@@ -99,24 +99,11 @@ func TestRenderPageEditLink(t *testing.T) {
 			want:     "https://github.com/tldr-pages/tldr/edit/main/pages/common/tar.md\n",
 		},
 		{
-			name:     "custom url returned as-is",
-			editLink: true,
-			page:     &Page{URL: "https://custom.com/edit"},
-			want:     "https://custom.com/edit\n",
-		},
-		{
 			name:     "compact mode omits newline",
 			editLink: true,
 			compact:  true,
 			page:     &Page{Path: "/pages/common/tar.md"},
 			want:     "https://github.com/tldr-pages/tldr/edit/main/pages/common/tar.md",
-		},
-		{
-			name:     "write error",
-			editLink: true,
-			page:     &Page{URL: "https://example.com"},
-			writer:   &errorWriter{err: errors.New("write error")},
-			wantErr:  "write error",
 		},
 	}
 
@@ -151,17 +138,10 @@ func TestBuildEditURL(t *testing.T) {
 	tests := []struct {
 		name string
 		path string
-		url  string
 		want string
 	}{
 		{
-			name: "non-empty url returned as-is",
-			path: "/pages/common/tar.md",
-			url:  "https://example.com",
-			want: "https://example.com",
-		},
-		{
-			name: "empty url constructs from path",
+			name: "constructs from path",
 			path: "/pages/common/tar.md",
 			want: "https://github.com/tldr-pages/tldr/edit/main/pages/common/tar.md",
 		},
@@ -176,9 +156,8 @@ func TestBuildEditURL(t *testing.T) {
 			want: "https://github.com/tldr-pages/tldr/edit/main/pages/windows/dir.md",
 		},
 		{
-			name: "empty path and empty url returns empty",
+			name: "empty path returns empty",
 			path: "",
-			url:  "",
 			want: "",
 		},
 		{
@@ -186,17 +165,11 @@ func TestBuildEditURL(t *testing.T) {
 			path: "/pages/common/some-page",
 			want: "https://github.com/tldr-pages/tldr/edit/main/pages/common/some-page.md",
 		},
-		{
-			name: "url takes precedence over path",
-			path: "/pages/common/tar.md",
-			url:  "https://custom.com/edit",
-			want: "https://custom.com/edit",
-		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := buildEditURL(tt.path, tt.url)
+			got := buildEditURL(tt.path)
 			assert.Equal(t, tt.want, got)
 		})
 	}

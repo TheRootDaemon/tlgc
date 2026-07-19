@@ -99,12 +99,12 @@ func (r *Renderer) Render(platform string, p *Page) error {
 		len(p.Examples),
 	)
 
-	if r.output.RawMarkdown {
-		return r.renderRaw(p)
-	}
-
 	if err := r.renderPageEditLink(p); err != nil {
 		return err
+	}
+
+	if r.output.RawMarkdown {
+		return r.renderRaw(p)
 	}
 
 	if !r.output.Compact {

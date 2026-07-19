@@ -32,7 +32,7 @@ func (r *Renderer) renderPageEditLink(p *Page) error {
 		return nil
 	}
 
-	url := buildEditURL(p.Path, p.URL)
+	url := buildEditURL(p.Path)
 	if url == "" {
 		return nil
 	}
@@ -41,13 +41,8 @@ func (r *Renderer) renderPageEditLink(p *Page) error {
 }
 
 // buildEditURL returns the GitHub edit URL for a tldr page.
-// If url is non-empty it is returned as-is (the page has a custom source).
-// Otherwise the URL is constructed from the page's file path.
-func buildEditURL(path, url string) string {
-	if url != "" {
-		return url
-	}
-
+// The URL is constructed from the page's file path.
+func buildEditURL(path string) string {
 	if path != "" {
 		page := pathutil.PageName(path)
 		platform := pathutil.PagePlatform(path)
