@@ -17,7 +17,7 @@ func help() {
 func printUsage() {
 	fmt.Printf(
 		"tlgc %s (implementing client specification v2.3)\n\n",
-		version.Version,
+		version.String(),
 	)
 	fmt.Printf(
 		"%s tldr [OPTIONS] [PAGE]...\n\n",

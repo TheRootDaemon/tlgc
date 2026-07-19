@@ -235,7 +235,7 @@ func parse(args []string) (*CLI, error) {
 	if cli.ShowVersion {
 		fmt.Printf(
 			"tlgc %s (implementing client specification v2.3)\n",
-			version.Version,
+			version.String(),
 		)
 		return cli, nil
 	}
