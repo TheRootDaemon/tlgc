@@ -28,7 +28,7 @@ func (a *App) searchPages(cli *cmd.CLI) int {
 	}
 
 	if err := a.printSearchResults(results, cli.Search); err != nil {
-		logger.Error("%w", err)
+		logger.Error("%v", err)
 		return 1
 	}
 

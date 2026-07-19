@@ -11,7 +11,7 @@ import (
 func main() {
 	cli, err := cmd.Parse()
 	if err != nil {
-		logger.Error("%w", err)
+		logger.Error("%v", err)
 		os.Exit(1)
 	}
 

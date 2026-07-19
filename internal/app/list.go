@@ -21,7 +21,7 @@ func (a *App) listPages(cli *cmd.CLI) int {
 
 	for _, page := range pages {
 		if _, err := fmt.Fprintln(a.Stdout, page); err != nil {
-			logger.Error("%w", err)
+			logger.Error("%v", err)
 			return 1
 		}
 	}
@@ -40,7 +40,7 @@ func (a *App) listAllPages() int {
 
 	for _, page := range pages {
 		if _, err := fmt.Fprintln(a.Stdout, page); err != nil {
-			logger.Error("%w", err)
+			logger.Error("%v", err)
 			return 1
 		}
 	}
@@ -59,7 +59,7 @@ func (a *App) listPlatforms() int {
 
 	for _, p := range platforms {
 		if _, err := fmt.Fprintln(a.Stdout, p); err != nil {
-			logger.Error("%w", err)
+			logger.Error("%v", err)
 			return 1
 		}
 	}
@@ -78,7 +78,7 @@ func (a *App) listLanguages() int {
 
 	for _, l := range languages {
 		if _, err := fmt.Fprintln(a.Stdout, l); err != nil {
-			logger.Error("%w", err)
+			logger.Error("%v", err)
 			return 1
 		}
 	}
