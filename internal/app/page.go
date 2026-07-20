@@ -14,6 +14,7 @@ import (
 	"github.com/TheRootDaemon/tlgc/internal/upstream"
 	"github.com/TheRootDaemon/tlgc/logger"
 	"github.com/TheRootDaemon/tlgc/pathutil"
+	"github.com/TheRootDaemon/tlgc/termcolor"
 )
 
 // lookupAndRenderPage finds a page by name and renders it to the terminal.
@@ -127,7 +128,21 @@ func (a *App) selectPage(
 		return page, pathutil.PagePlatform(page), nil
 
 	default:
-		return "", "", fmt.Errorf("page not found, try running tldr --update")
+		const (
+			pageNotFound = `page not found, try running tldr --update
+
+If the page does not exist, you can create an issue here:
+%s
+or document it yourself and create a pull request here:
+%s`
+			tldrIssues = "https://github.com/tldr-pages/tldr/issues"
+			tldrPulls  = "https://github.com/tldr-pages/tldr/pulls"
+		)
+		return "", "", fmt.Errorf(
+			pageNotFound,
+			termcolor.Sprint("bold", tldrIssues),
+			termcolor.Sprint("bold", tldrPulls),
+		)
 	}
 }
 
