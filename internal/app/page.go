@@ -50,34 +50,14 @@ func (a *App) lookupAndRenderPage(cli *cmd.CLI) int {
 		return 1
 	}
 
-	root, err := os.OpenRoot(
-		filepath.Dir(pagePath),
-	)
+	page, err := loadPage(pagePath)
 	if err != nil {
 		logger.Error("%v", err)
 		return 1
 	}
 
-	data, err := root.ReadFile(
-		filepath.Base(pagePath),
-	)
-	if err != nil {
-		logger.Error("failed to read page: %v", err)
-		return 1
-	}
-
-	if err := render.Validate(string(data)); err != nil {
-		logger.Error("not a valid tldr page: %s\n\n%v", pagePath, err)
-		return 1
-	}
-
-	page := render.Parse(string(data))
-	page.Path = pagePath
-	page.RawContent = string(data)
-
-	renderer := render.New(a.Stdout, a.renderOptions(cli)...)
-	if err := renderer.Render(renderPlatform, page); err != nil {
-		logger.Error("failed to render page: %v", err)
+	if err := a.renderPage(cli, renderPlatform, page); err != nil {
+		logger.Error("failed to render: %v", err)
 		return 1
 	}
 	return 0
@@ -87,42 +67,26 @@ func (a *App) lookupAndRenderPage(cli *cmd.CLI) int {
 // and renders it to the terminal.
 // Returns 0 on success, 1 on error.
 func (a *App) renderLocalFile(cli *cmd.CLI) int {
-	root, err := os.OpenRoot(
-		filepath.Dir(cli.Render),
-	)
+	page, err := loadPage(cli.Render)
 	if err != nil {
 		logger.Error("%v", err)
 		return 1
 	}
 
-	data, err := root.ReadFile(
-		filepath.Base(cli.Render),
-	)
-	if err != nil {
-		logger.Error("failed to read file: %v", err)
-		return 1
-	}
-
-	if err := render.Validate(string(data)); err != nil {
-		logger.Error("not a valid tldr page: %s\n\n%v", cli.Render, err)
-		return 1
-	}
-
-	page := render.Parse(string(data))
-	if page.Title == "" {
-		logger.Error("not a valid tldr page: %s", cli.Render)
-		return 1
-	}
-
-	page.Path = cli.Render
-	page.RawContent = string(data)
-
-	renderer := render.New(a.Stdout, a.renderOptions(cli)...)
-	if err := renderer.Render("", page); err != nil {
+	if err := a.renderPage(cli, "", page); err != nil {
 		logger.Error("failed to render: %v", err)
 		return 1
 	}
 	return 0
+}
+
+func (a *App) renderPage(
+	cli *cmd.CLI,
+	platform string,
+	page *render.Page,
+) error {
+	renderer := render.New(a.Stdout, a.renderOptions(cli)...)
+	return renderer.Render(platform, page)
 }
 
 // selectPage chooses the best matching page
@@ -180,15 +144,17 @@ func (a *App) renderOptions(cli *cmd.CLI) []render.RenderOption {
 	}
 
 	output := config.Output()
-	if cli.NoCompact {
+	switch {
+	case cli.NoCompact:
 		output.Compact = false
-	} else if cli.Compact {
+	case cli.Compact:
 		output.Compact = true
 	}
 
-	if cli.NoRaw {
+	switch {
+	case cli.NoRaw:
 		output.RawMarkdown = false
-	} else if cli.Raw {
+	case cli.Raw:
 		output.RawMarkdown = true
 	}
 
@@ -207,4 +173,31 @@ func (a *App) renderOptions(cli *cmd.CLI) []render.RenderOption {
 
 	opts = append(opts, render.WithOutput(output))
 	return opts
+}
+
+// loadPage reads and validates the TL;DR markdown page at path,
+// parses it into a render.Page,
+// and sets the page's Path and RawContent fields.
+// It returns an error if the file cannot be read
+// or is not a valid TLDR page.
+func loadPage(path string) (*render.Page, error) {
+	root, err := os.OpenRoot(filepath.Dir(path))
+	if err != nil {
+		return nil, err
+	}
+
+	data, err := root.ReadFile(filepath.Base(path))
+	if err != nil {
+		return nil, fmt.Errorf("failed to read file: %w", err)
+	}
+
+	if err := render.Validate(string(data)); err != nil {
+		return nil, fmt.Errorf("invalid tldr page: %w", err)
+	}
+
+	page := render.Parse(string(data))
+	page.Path = path
+	page.RawContent = string(data)
+
+	return page, nil
 }
