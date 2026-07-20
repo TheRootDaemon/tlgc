@@ -185,6 +185,9 @@ func loadPage(path string) (*render.Page, error) {
 	if err != nil {
 		return nil, err
 	}
+	defer func() {
+		_ = root.Close()
+	}()
 
 	data, err := root.ReadFile(filepath.Base(path))
 	if err != nil {
