@@ -46,7 +46,7 @@ type CLI struct {
 	// ShowHelp requests printing the help text.
 	ShowHelp bool
 
-	// Options
+	// options
 
 	// Platform overrides the platform used for page lookup.
 	Platform string
@@ -69,11 +69,13 @@ type CLI struct {
 	// Compact strips empty lines from output.
 	Compact bool
 
+	// NoCompact overrides --compact, preserving empty lines in output.
 	NoCompact bool
 
 	// Raw prints pages in raw markdown.
 	Raw bool
 
+	// NoRaw overrides --raw, rendering pages instead of printing raw content.
 	NoRaw bool
 
 	// Quiet suppresses informational and warning messages.
