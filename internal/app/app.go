@@ -72,9 +72,9 @@ func New(opts ...Option) *App {
 	return a
 }
 
-// Run dispatches the CLI command to the appropriate handler.
-// It initializes the config if needed, then delegates to the matching
-// sub-handler based on the CLI flags. Returns 0 on success, 1 on error.
+// Run initializes the configuration when required and dispatches
+// the parsed CLI command to the appropriate handler.
+// It returns 0 on success and 1 on error.
 func (a *App) Run(cli *cmd.CLI) int {
 	needsConfig := !cli.GenConfig && !cli.ConfigPath && !cli.ShowVersion && !cli.ShowHelp
 
@@ -85,6 +85,13 @@ func (a *App) Run(cli *cmd.CLI) int {
 		}
 	}
 
+	return a.dispatch(cli)
+}
+
+// dispatch routes the parsed CLI command to the corresponding handler
+// based on the provided flags.
+// It returns 0 on success and 1 on error.
+func (a *App) dispatch(cli *cmd.CLI) int {
 	switch {
 	case cli.Update:
 		return a.updateCache(cli)
