@@ -8,12 +8,14 @@ import (
 	"github.com/TheRootDaemon/tlgc/version"
 )
 
+// help prints the full help text: usage, flags, and the footer.
 func help() {
 	printUsage()
 	printFlags()
 	printFooter()
 }
 
+// printUsage prints the version, usage line, and argument descriptions.
 func printUsage() {
 	fmt.Printf(
 		"tlgc %s (implementing client specification v2.3)\n\n",
@@ -30,6 +32,7 @@ func printUsage() {
 	fmt.Printf("  [PAGE]...  The tldr page to show\n\n")
 }
 
+// printFlags prints the aligned table of all available command-line options.
 func printFlags() {
 	type flagEntry struct {
 		short       string
@@ -192,10 +195,13 @@ func printFlags() {
 	}
 }
 
+// printFooter prints the project URL footer.
 func printFooter() {
 	fmt.Printf("\nSee https://github.com/TheRootDaemon/tlgc for more information.\n")
 }
 
+// updateColumnWidths updates the running maximum column widths
+// for the short and long flag columns.
 func updateColumnWidths(
 	maxShort,
 	maxLong *int,
@@ -220,6 +226,7 @@ func updateColumnWidths(
 	*maxLong = max(*maxLong, longWidth)
 }
 
+// printFlag prints a single colorized and aligned row of the flags table.
 func printFlag(
 	maxShort,
 	maxLong int,
