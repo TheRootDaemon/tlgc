@@ -2,11 +2,8 @@ package cmd
 
 import (
 	"flag"
-	"fmt"
 	"os"
 	"strings"
-
-	"github.com/TheRootDaemon/tlgc/version"
 )
 
 // Parse parses the process command-line arguments into a CLI value.
@@ -221,88 +218,7 @@ func parse(args []string) (*CLI, error) {
 		"specify an alternative configuration file",
 	)
 
-	if err := fs.Parse(args); err != nil {
-		return nil, err
-	}
-
-	switch cli.Color {
-	case "auto", "always", "never":
-	default:
-		return nil, fmt.Errorf("invalid value %q for --color (expected auto, always, never)", cli.Color)
-	}
-
-	// show version
-	if cli.ShowVersion {
-		fmt.Printf(
-			"tlgc %s (implementing client specification v2.3)\n",
-			version.String(),
-		)
-		return cli, nil
-	}
-
-	// show help
-	if cli.ShowHelp {
-		help()
-		return cli, nil
-	}
-
-	// positional arguments
-	cli.Page = fs.Args()
-
-	// validate that exactly one operation is active
-	ops := cli.operationCount()
-	if ops == 0 {
-		help()
-		return cli, nil
-	} else if ops > 1 {
-		return nil, fmt.Errorf("only one operation can be specified at a time")
-	}
-
-	return cli, nil
-}
-
-// operationCount returns how many operation-group flags are active.
-func (c *CLI) operationCount() int {
-	count := 0
-
-	if len(c.Page) > 0 {
-		count++
-	}
-	if c.Update {
-		count++
-	}
-	if c.List {
-		count++
-	}
-	if c.ListAll {
-		count++
-	}
-	if c.Search != "" {
-		count++
-	}
-	if c.ListPlatforms {
-		count++
-	}
-	if c.ListLanguages {
-		count++
-	}
-	if c.Info {
-		count++
-	}
-	if c.Render != "" {
-		count++
-	}
-	if c.CleanCache {
-		count++
-	}
-	if c.GenConfig {
-		count++
-	}
-	if c.ConfigPath {
-		count++
-	}
-
-	return count
+	return Validate(cli, fs, args)
 }
 
 // reorderFlags moves all flags before positional arguments

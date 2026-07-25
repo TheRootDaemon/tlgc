@@ -11,10 +11,11 @@ func TestParse(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
-		name    string
-		args    []string
-		check   func(t *testing.T, cli *CLI)
-		wantErr bool
+		name     string
+		args     []string
+		check    func(t *testing.T, cli *CLI)
+		wantErr  bool
+		errCheck func(t *testing.T, err error)
 	}{
 		// operations (short forms)
 		{
@@ -402,26 +403,58 @@ func TestParse(t *testing.T) {
 			name:    "two_operations",
 			args:    []string{"-u", "-l"},
 			wantErr: true,
+			errCheck: func(t *testing.T, err error) {
+				assert.ErrorContains(t, err, "cannot be used with")
+				assert.ErrorContains(t, err, "--update")
+				assert.ErrorContains(t, err, "--list")
+			},
 		},
 		{
 			name:    "three_operations",
 			args:    []string{"-u", "-l", "-a"},
 			wantErr: true,
+			errCheck: func(t *testing.T, err error) {
+				assert.ErrorContains(t, err, "cannot be used with")
+				assert.ErrorContains(t, err, "--update")
+				assert.ErrorContains(t, err, "--list")
+			},
 		},
 		{
 			name:    "invalid_color",
 			args:    []string{"--color", "invalid", "-u"},
 			wantErr: true,
+			errCheck: func(t *testing.T, err error) {
+				assert.ErrorContains(t, err, "invalid value")
+			},
 		},
 		{
 			name:    "unknown_flag",
 			args:    []string{"--bogus"},
 			wantErr: true,
+			errCheck: func(t *testing.T, err error) {
+				assert.ErrorContains(t, err, "unexpected argument")
+				assert.ErrorContains(t, err, "--bogus")
+			},
 		},
 		{
 			name:    "unknown_short_flag",
 			args:    []string{"-x"},
 			wantErr: true,
+			errCheck: func(t *testing.T, err error) {
+				assert.ErrorContains(t, err, "unexpected argument")
+				assert.ErrorContains(t, err, "-x")
+			},
+		},
+		{
+			name:    "unknown_flag_tip",
+			args:    []string{"--searc"},
+			wantErr: true,
+			errCheck: func(t *testing.T, err error) {
+				assert.ErrorContains(t, err, "unexpected argument")
+				assert.ErrorContains(t, err, "--searc")
+				assert.ErrorContains(t, err, "similar argument")
+				assert.ErrorContains(t, err, "--search")
+			},
 		},
 	}
 
@@ -429,7 +462,11 @@ func TestParse(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			cli, err := parse(tt.args)
 			if tt.wantErr {
-				assert.Error(t, err)
+				if tt.errCheck != nil {
+					tt.errCheck(t, err)
+				} else {
+					assert.Error(t, err)
+				}
 				return
 			}
 			require.NoError(t, err)
@@ -437,112 +474,6 @@ func TestParse(t *testing.T) {
 			if tt.check != nil {
 				tt.check(t, cli)
 			}
-		})
-	}
-}
-
-func TestOperationCount(t *testing.T) {
-	t.Parallel()
-
-	tests := []struct {
-		name string
-		cli  CLI
-		want int
-	}{
-		{
-			name: "none",
-			cli:  CLI{},
-			want: 0,
-		},
-		{
-			name: "page",
-			cli:  CLI{Page: []string{"tar"}},
-			want: 1,
-		},
-		{
-			name: "update",
-			cli:  CLI{Update: true},
-			want: 1,
-		},
-		{
-			name: "list",
-			cli:  CLI{List: true},
-			want: 1,
-		},
-		{
-			name: "list_all",
-			cli:  CLI{ListAll: true},
-			want: 1,
-		},
-		{
-			name: "search",
-			cli:  CLI{Search: "ngi"},
-			want: 1,
-		},
-		{
-			name: "list_platforms",
-			cli:  CLI{ListPlatforms: true},
-			want: 1,
-		},
-		{
-			name: "list_languages",
-			cli:  CLI{ListLanguages: true},
-			want: 1,
-		},
-		{
-			name: "info",
-			cli:  CLI{Info: true},
-			want: 1,
-		},
-		{
-			name: "render",
-			cli:  CLI{Render: "file.md"},
-			want: 1,
-		},
-		{
-			name: "clean_cache",
-			cli:  CLI{CleanCache: true},
-			want: 1,
-		},
-		{
-			name: "gen_config",
-			cli:  CLI{GenConfig: true},
-			want: 1,
-		},
-		{
-			name: "config_path",
-			cli:  CLI{ConfigPath: true},
-			want: 1,
-		},
-		{
-			name: "two_operations",
-			cli:  CLI{Update: true, List: true},
-			want: 2,
-		},
-		{
-			name: "all_operations",
-			cli: CLI{
-				Page:          []string{"tar"},
-				Update:        true,
-				List:          true,
-				ListAll:       true,
-				Search:        "ngi",
-				ListPlatforms: true,
-				ListLanguages: true,
-				Info:          true,
-				Render:        "file.md",
-				CleanCache:    true,
-				GenConfig:     true,
-				ConfigPath:    true,
-			},
-			want: 12,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got := tt.cli.operationCount()
-			assert.Equal(t, tt.want, got)
 		})
 	}
 }
