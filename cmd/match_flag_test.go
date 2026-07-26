@@ -7,28 +7,42 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestEditDistance(t *testing.T) {
+func TestSimilarFlag(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
-		name string
-		a, b string
-		want int
+		name    string
+		flagSet []string
+		query   string
+		want    string
 	}{
-		{name: "identical", a: "abc", b: "abc", want: 0},
-		{name: "empty_both", a: "", b: "", want: 0},
-		{name: "empty_a", a: "", b: "abc", want: 3},
-		{name: "empty_b", a: "abc", b: "", want: 3},
-		{name: "substitution", a: "abc", b: "axc", want: 1},
-		{name: "insertion", a: "ac", b: "abc", want: 1},
-		{name: "deletion", a: "abc", b: "ac", want: 1},
-		{name: "full_mismatch", a: "abc", b: "xyz", want: 3},
-		{name: "typo", a: "searc", b: "search", want: 1},
+		{
+			name:    "prefix_priority",
+			flagSet: []string{"search", "update"},
+			query:   "sea",
+			want:    "search",
+		},
+		{
+			name:    "fuzzy_fallback",
+			flagSet: []string{"search", "update"},
+			query:   "searh",
+			want:    "search",
+		},
+		{
+			name:    "no_match",
+			flagSet: []string{"update", "list"},
+			query:   "xyz",
+			want:    "",
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := editDistance(tt.a, tt.b)
+			fs := flag.NewFlagSet("test", flag.ContinueOnError)
+			for _, name := range tt.flagSet {
+				fs.Bool(name, false, "")
+			}
+			got := similarFlag(fs, tt.query)
 			assert.Equal(t, tt.want, got)
 		})
 	}
@@ -134,42 +148,28 @@ func TestFuzzyFlag(t *testing.T) {
 	}
 }
 
-func TestSimilarFlag(t *testing.T) {
+func TestEditDistance(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
-		name    string
-		flagSet []string
-		query   string
-		want    string
+		name string
+		a, b string
+		want int
 	}{
-		{
-			name:    "prefix_priority",
-			flagSet: []string{"search", "update"},
-			query:   "sea",
-			want:    "search",
-		},
-		{
-			name:    "fuzzy_fallback",
-			flagSet: []string{"search", "update"},
-			query:   "searh",
-			want:    "search",
-		},
-		{
-			name:    "no_match",
-			flagSet: []string{"update", "list"},
-			query:   "xyz",
-			want:    "",
-		},
+		{name: "identical", a: "abc", b: "abc", want: 0},
+		{name: "empty_both", a: "", b: "", want: 0},
+		{name: "empty_a", a: "", b: "abc", want: 3},
+		{name: "empty_b", a: "abc", b: "", want: 3},
+		{name: "substitution", a: "abc", b: "axc", want: 1},
+		{name: "insertion", a: "ac", b: "abc", want: 1},
+		{name: "deletion", a: "abc", b: "ac", want: 1},
+		{name: "full_mismatch", a: "abc", b: "xyz", want: 3},
+		{name: "typo", a: "searc", b: "search", want: 1},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			fs := flag.NewFlagSet("test", flag.ContinueOnError)
-			for _, name := range tt.flagSet {
-				fs.Bool(name, false, "")
-			}
-			got := similarFlag(fs, tt.query)
+			got := editDistance(tt.a, tt.b)
 			assert.Equal(t, tt.want, got)
 		})
 	}
