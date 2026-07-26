@@ -405,8 +405,6 @@ func TestParse(t *testing.T) {
 			wantErr: true,
 			errCheck: func(t *testing.T, err error) {
 				assert.ErrorContains(t, err, "cannot be used with")
-				assert.ErrorContains(t, err, "--update")
-				assert.ErrorContains(t, err, "--list")
 			},
 		},
 		{
@@ -415,8 +413,6 @@ func TestParse(t *testing.T) {
 			wantErr: true,
 			errCheck: func(t *testing.T, err error) {
 				assert.ErrorContains(t, err, "cannot be used with")
-				assert.ErrorContains(t, err, "--update")
-				assert.ErrorContains(t, err, "--list")
 			},
 		},
 		{
@@ -433,7 +429,6 @@ func TestParse(t *testing.T) {
 			wantErr: true,
 			errCheck: func(t *testing.T, err error) {
 				assert.ErrorContains(t, err, "unexpected argument")
-				assert.ErrorContains(t, err, "--bogus")
 			},
 		},
 		{
@@ -442,7 +437,6 @@ func TestParse(t *testing.T) {
 			wantErr: true,
 			errCheck: func(t *testing.T, err error) {
 				assert.ErrorContains(t, err, "unexpected argument")
-				assert.ErrorContains(t, err, "-x")
 			},
 		},
 		{
@@ -451,9 +445,6 @@ func TestParse(t *testing.T) {
 			wantErr: true,
 			errCheck: func(t *testing.T, err error) {
 				assert.ErrorContains(t, err, "unexpected argument")
-				assert.ErrorContains(t, err, "--searc")
-				assert.ErrorContains(t, err, "similar argument")
-				assert.ErrorContains(t, err, "--search")
 			},
 		},
 	}

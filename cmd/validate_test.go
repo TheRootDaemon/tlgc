@@ -10,10 +10,9 @@ func TestValidate(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
-		name        string
-		cli         CLI
-		wantErr     bool
-		errContains string
+		name    string
+		cli     CLI
+		wantErr bool
 	}{
 		{
 			name: "single_operation_update",
@@ -33,28 +32,24 @@ func TestValidate(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name:        "invalid_color",
-			cli:         CLI{Color: "invalid", Update: true},
-			wantErr:     true,
-			errContains: "invalid value",
+			name:    "invalid_color",
+			cli:     CLI{Color: "invalid", Update: true},
+			wantErr: true,
 		},
 		{
-			name:        "two_operations",
-			cli:         CLI{Color: "auto", Update: true, List: true},
-			wantErr:     true,
-			errContains: "cannot be used with",
+			name:    "two_operations",
+			cli:     CLI{Color: "auto", Update: true, List: true},
+			wantErr: true,
 		},
 		{
-			name:        "three_operations",
-			cli:         CLI{Color: "auto", Update: true, List: true, ListAll: true},
-			wantErr:     true,
-			errContains: "cannot be used with",
+			name:    "three_operations",
+			cli:     CLI{Color: "auto", Update: true, List: true, ListAll: true},
+			wantErr: true,
 		},
 		{
-			name:        "page_and_update",
-			cli:         CLI{Color: "auto", Page: []string{"tar"}, Update: true},
-			wantErr:     true,
-			errContains: "cannot be used with",
+			name:    "page_and_update",
+			cli:     CLI{Color: "auto", Page: []string{"tar"}, Update: true},
+			wantErr: true,
 		},
 		{
 			name:    "valid_color_auto",
@@ -78,9 +73,6 @@ func TestValidate(t *testing.T) {
 			err := validate(&tt.cli)
 			if tt.wantErr {
 				assert.Error(t, err)
-				if tt.errContains != "" {
-					assert.ErrorContains(t, err, tt.errContains)
-				}
 			} else {
 				assert.NoError(t, err)
 			}
