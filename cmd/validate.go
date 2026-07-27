@@ -66,6 +66,14 @@ func validate(cli *CLI) error {
 		return fmtConflictError(cli)
 	}
 
+	// browse requires a page argument
+	if cli.Browse && len(cli.Page) == 0 {
+		return fmtUsage(
+			"flag %s requires a page argument",
+			termcolor.Sprint("bold blue", "--browse"),
+		)
+	}
+
 	return nil
 }
 
@@ -73,7 +81,7 @@ func validate(cli *CLI) error {
 func (c *CLI) operationCount() int {
 	count := 0
 
-	if len(c.Page) > 0 {
+	if len(c.Page) > 0 && !c.Browse {
 		count++
 	}
 	if c.Update {

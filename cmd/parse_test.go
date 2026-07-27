@@ -41,16 +41,18 @@ func TestParse(t *testing.T) {
 		},
 		{
 			name: "browse_short",
-			args: []string{"-b"},
+			args: []string{"-b", "tar"},
 			check: func(t *testing.T, cli *CLI) {
 				assert.True(t, cli.Browse)
+				assert.Equal(t, []string{"tar"}, cli.Page)
 			},
 		},
 		{
 			name: "browse_long",
-			args: []string{"--browse"},
+			args: []string{"--browse", "tar"},
 			check: func(t *testing.T, cli *CLI) {
 				assert.True(t, cli.Browse)
+				assert.Equal(t, []string{"tar"}, cli.Page)
 			},
 		},
 		{
@@ -414,11 +416,19 @@ func TestParse(t *testing.T) {
 
 		// error cases
 		{
-			name:    "browse_with_page_conflict",
-			args:    []string{"-b", "tar"},
+			name:    "browse_without_page",
+			args:    []string{"-b"},
 			wantErr: true,
 			errCheck: func(t *testing.T, err error) {
-				assert.ErrorContains(t, err, "cannot be used with")
+				assert.ErrorContains(t, err, "requires a page argument")
+			},
+		},
+		{
+			name: "browse_with_page",
+			args: []string{"-b", "tar"},
+			check: func(t *testing.T, cli *CLI) {
+				assert.True(t, cli.Browse)
+				assert.Equal(t, []string{"tar"}, cli.Page)
 			},
 		},
 		{

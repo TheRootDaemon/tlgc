@@ -163,8 +163,8 @@ func TestActiveOps(t *testing.T) {
 		},
 		{
 			name: "browse",
-			cli:  CLI{Browse: true},
-			want: []string{"--browse"},
+			cli:  CLI{Browse: true, Page: []string{"tar"}},
+			want: []string{"--browse [PAGE]..."},
 		},
 		{
 			name: "search",
