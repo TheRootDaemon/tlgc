@@ -88,6 +88,9 @@ func (c *CLI) operationCount() int {
 	if c.Search != "" {
 		count++
 	}
+	if c.Browse {
+		count++
+	}
 	if c.ListPlatforms {
 		count++
 	}

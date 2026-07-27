@@ -19,6 +19,9 @@ type CLI struct {
 	// Search requests a keyword search across pages.
 	Search string
 
+	// Browse requests opening the page in the default web browser.
+	Browse bool
+
 	// ListPlatforms requests listing available platforms.
 	ListPlatforms bool
 
@@ -60,9 +63,6 @@ type CLI struct {
 	// LongOptions requests displaying long option forms.
 	LongOptions bool
 
-	// Edit requests displaying a GitHub edit link.
-	Edit bool
-
 	// Offline suppresses automatic cache updates.
 	Offline bool
 
@@ -89,4 +89,9 @@ type CLI struct {
 
 	// Config specifies an alternative config file path.
 	Config string
+
+	// page actions
+
+	// Edit requests displaying a GitHub edit link.
+	Edit bool
 }

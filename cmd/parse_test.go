@@ -40,6 +40,20 @@ func TestParse(t *testing.T) {
 			},
 		},
 		{
+			name: "browse_short",
+			args: []string{"-b"},
+			check: func(t *testing.T, cli *CLI) {
+				assert.True(t, cli.Browse)
+			},
+		},
+		{
+			name: "browse_long",
+			args: []string{"--browse"},
+			check: func(t *testing.T, cli *CLI) {
+				assert.True(t, cli.Browse)
+			},
+		},
+		{
 			name: "search_short",
 			args: []string{"-s", "ngi"},
 			check: func(t *testing.T, cli *CLI) {
@@ -399,6 +413,14 @@ func TestParse(t *testing.T) {
 		},
 
 		// error cases
+		{
+			name:    "browse_with_page_conflict",
+			args:    []string{"-b", "tar"},
+			wantErr: true,
+			errCheck: func(t *testing.T, err error) {
+				assert.ErrorContains(t, err, "cannot be used with")
+			},
+		},
 		{
 			name:    "two_operations",
 			args:    []string{"-u", "-l"},
