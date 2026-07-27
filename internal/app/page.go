@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/TheRootDaemon/tlgc/browser"
 	"github.com/TheRootDaemon/tlgc/cmd"
 	"github.com/TheRootDaemon/tlgc/internal/cache"
 	"github.com/TheRootDaemon/tlgc/internal/config"
@@ -59,6 +60,51 @@ func (a *App) lookupAndRenderPage(cli *cmd.CLI) int {
 
 	if err := a.renderPage(cli, renderPlatform, page); err != nil {
 		logger.Error("failed to render: %v", err)
+		return 1
+	}
+	return 0
+}
+
+// browsePage looks up a page and opens it in the default web browser.
+// It does not render the page content to the terminal.
+// Returns 0 on success, 1 on error.
+func (a *App) browsePage(cli *cmd.CLI) int {
+	p := a.resolvePlatform(cli.Platform)
+	langs := a.resolveLanguages(cli.Languages)
+	c := cache.New()
+
+	if !cli.Offline {
+		cfg := config.Cache()
+		if cfg.AutoUpdate && c.NeedsUpdate(cfg.MaxAge) {
+			client := upstream.New()
+			if err := c.Update(context.Background(), langs, client); err != nil {
+				logger.Warn("auto-update failed: %v", err)
+			}
+		}
+	}
+
+	query := strings.Join(cli.Page, "-")
+	results, err := c.Find(query, p, langs)
+	if err != nil {
+		logger.Error("failed to find page: %v", err)
+		return 1
+	}
+
+	pagePath, _, err := a.selectPage(results, query, p)
+	if err != nil {
+		logger.Error("%v", err)
+		return 1
+	}
+
+	url := render.BuildViewURL(pagePath)
+	if url == "" {
+		logger.Error("could not build URL for page")
+		return 1
+	}
+
+	logger.Info("opening page in browser")
+	if err := browser.Open(url); err != nil {
+		logger.Error("failed to open browser: %v", err)
 		return 1
 	}
 	return 0

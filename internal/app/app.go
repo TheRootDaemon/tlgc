@@ -115,6 +115,8 @@ func (a *App) dispatch(cli *cmd.CLI) int {
 		return a.genConfig()
 	case cli.ConfigPath:
 		return a.configPath()
+	case cli.Browse:
+		return a.browsePage(cli)
 	case len(cli.Page) > 0:
 		return a.lookupAndRenderPage(cli)
 	default:
