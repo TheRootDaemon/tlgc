@@ -174,3 +174,46 @@ func TestBuildEditURL(t *testing.T) {
 		})
 	}
 }
+
+func TestBuildViewURL(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name string
+		path string
+		want string
+	}{
+		{
+			name: "constructs from path",
+			path: "/pages/common/tar.md",
+			want: "https://github.com/tldr-pages/tldr/blob/main/pages/common/tar.md",
+		},
+		{
+			name: "linux platform extracted correctly",
+			path: "/pages/linux/apt.md",
+			want: "https://github.com/tldr-pages/tldr/blob/main/pages/linux/apt.md",
+		},
+		{
+			name: "windows platform extracted correctly",
+			path: "/pages/windows/dir.md",
+			want: "https://github.com/tldr-pages/tldr/blob/main/pages/windows/dir.md",
+		},
+		{
+			name: "empty path returns empty",
+			path: "",
+			want: "",
+		},
+		{
+			name: "path without .md extension adds .md",
+			path: "/pages/common/some-page",
+			want: "https://github.com/tldr-pages/tldr/blob/main/pages/common/some-page.md",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := BuildViewURL(tt.path)
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
