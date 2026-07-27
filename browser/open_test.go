@@ -115,9 +115,34 @@ func TestOpen(t *testing.T) {
 			assert.Error(t, err)
 			assert.Contains(t, err.Error(), "no display server detected")
 		}
-	default:
+	case "darwin":
+		var calls []call
+		mockBrowse(t, func(name string, args ...string) error {
+			calls = append(calls, call{name, args})
+			return nil
+		})
+
 		err := Open("https://example.com")
-		assert.Error(t, err)
+		assert.NoError(t, err)
+		assert.Equal(
+			t,
+			[]call{{name: "open", args: []string{"https://example.com"}}},
+			calls,
+		)
+	case "windows":
+		var calls []call
+		mockBrowse(t, func(name string, args ...string) error {
+			calls = append(calls, call{name, args})
+			return nil
+		})
+
+		err := Open("https://example.com")
+		assert.NoError(t, err)
+		assert.Equal(
+			t,
+			[]call{{name: "explorer.exe", args: []string{"https://example.com"}}},
+			calls,
+		)
 	}
 }
 

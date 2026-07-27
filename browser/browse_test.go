@@ -1,6 +1,7 @@
 package browser
 
 import (
+	"runtime"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -36,6 +37,9 @@ func TestRun(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
+			if runtime.GOOS == "windows" && tt.command == "echo" {
+				t.Skip("echo is not a standalone executable on Windows")
+			}
 			err := browse(tt.command, tt.args...)
 			if tt.wantErr {
 				assert.Error(t, err)
