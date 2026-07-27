@@ -47,8 +47,22 @@ func TestValidate(t *testing.T) {
 			wantErr: true,
 		},
 		{
+			name: "single_operation_browse",
+			cli:  CLI{Color: "auto", Browse: true},
+		},
+		{
 			name:    "page_and_update",
 			cli:     CLI{Color: "auto", Page: []string{"tar"}, Update: true},
+			wantErr: true,
+		},
+		{
+			name:    "browse_and_page",
+			cli:     CLI{Color: "auto", Browse: true, Page: []string{"tar"}},
+			wantErr: true,
+		},
+		{
+			name:    "browse_and_update",
+			cli:     CLI{Color: "auto", Browse: true, Update: true},
 			wantErr: true,
 		},
 		{
@@ -119,6 +133,11 @@ func TestOperationCount(t *testing.T) {
 			want: 1,
 		},
 		{
+			name: "browse",
+			cli:  CLI{Browse: true},
+			want: 1,
+		},
+		{
 			name: "list_platforms",
 			cli:  CLI{ListPlatforms: true},
 			want: 1,
@@ -166,6 +185,7 @@ func TestOperationCount(t *testing.T) {
 				List:          true,
 				ListAll:       true,
 				Search:        "ngi",
+				Browse:        true,
 				ListPlatforms: true,
 				ListLanguages: true,
 				Info:          true,
@@ -174,7 +194,7 @@ func TestOperationCount(t *testing.T) {
 				GenConfig:     true,
 				ConfigPath:    true,
 			},
-			want: 12,
+			want: 13,
 		},
 	}
 

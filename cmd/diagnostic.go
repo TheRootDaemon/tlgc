@@ -89,6 +89,9 @@ func activeOps(cli *CLI) []string {
 	if cli.Search != "" {
 		ops = append(ops, "--search <KEYWORD>")
 	}
+	if cli.Browse {
+		ops = append(ops, "--browse")
+	}
 	if cli.ListPlatforms {
 		ops = append(ops, "--list-platforms")
 	}

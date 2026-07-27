@@ -57,6 +57,19 @@ func parse(args []string) (*CLI, error) {
 	)
 
 	fs.BoolVar(
+		&cli.Browse,
+		"b",
+		false,
+		"open page in default web browser",
+	)
+	fs.BoolVar(
+		&cli.Browse,
+		"browse",
+		false,
+		"open page in default web browser",
+	)
+
+	fs.BoolVar(
 		&cli.ListPlatforms,
 		"list-platforms",
 		false,

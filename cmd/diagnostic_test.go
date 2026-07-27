@@ -162,6 +162,11 @@ func TestActiveOps(t *testing.T) {
 			want: []string{"--update"},
 		},
 		{
+			name: "browse",
+			cli:  CLI{Browse: true},
+			want: []string{"--browse"},
+		},
+		{
 			name: "search",
 			cli:  CLI{Search: "ngi"},
 			want: []string{"--search <KEYWORD>"},
