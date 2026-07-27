@@ -47,8 +47,8 @@ func TestValidate(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "single_operation_browse",
-			cli:  CLI{Color: "auto", Browse: true},
+			name: "browse_with_page",
+			cli:  CLI{Color: "auto", Browse: true, Page: []string{"tar"}},
 		},
 		{
 			name:    "page_and_update",
@@ -56,13 +56,13 @@ func TestValidate(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name:    "browse_and_page",
-			cli:     CLI{Color: "auto", Browse: true, Page: []string{"tar"}},
+			name:    "browse_and_update",
+			cli:     CLI{Color: "auto", Browse: true, Update: true},
 			wantErr: true,
 		},
 		{
-			name:    "browse_and_update",
-			cli:     CLI{Color: "auto", Browse: true, Update: true},
+			name:    "browse_without_page",
+			cli:     CLI{Color: "auto", Browse: true},
 			wantErr: true,
 		},
 		{
@@ -134,7 +134,7 @@ func TestOperationCount(t *testing.T) {
 		},
 		{
 			name: "browse",
-			cli:  CLI{Browse: true},
+			cli:  CLI{Browse: true, Page: []string{"tar"}},
 			want: 1,
 		},
 		{
@@ -194,7 +194,7 @@ func TestOperationCount(t *testing.T) {
 				GenConfig:     true,
 				ConfigPath:    true,
 			},
-			want: 13,
+			want: 12,
 		},
 	}
 

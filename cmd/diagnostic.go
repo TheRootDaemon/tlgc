@@ -74,7 +74,7 @@ func flagDisplay(name string) string {
 // activeOps returns display names for all active operations in cli.
 func activeOps(cli *CLI) []string {
 	var ops []string
-	if len(cli.Page) > 0 {
+	if len(cli.Page) > 0 && !cli.Browse {
 		ops = append(ops, "[PAGE]...")
 	}
 	if cli.Update {
@@ -90,7 +90,7 @@ func activeOps(cli *CLI) []string {
 		ops = append(ops, "--search <KEYWORD>")
 	}
 	if cli.Browse {
-		ops = append(ops, "--browse")
+		ops = append(ops, "--browse [PAGE]...")
 	}
 	if cli.ListPlatforms {
 		ops = append(ops, "--list-platforms")
