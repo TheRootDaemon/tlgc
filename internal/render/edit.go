@@ -40,6 +40,22 @@ func (r *Renderer) renderPageEditLink(p *Page) error {
 	return r.renderEditLink(r.w, url)
 }
 
+// BuildViewURL returns the GitHub blob URL for a tldr page.
+// The URL is constructed from the page's file path.
+func BuildViewURL(path string) string {
+	if path != "" {
+		page := pathutil.PageName(path)
+		platform := pathutil.PagePlatform(path)
+		return fmt.Sprintf(
+			"https://github.com/tldr-pages/tldr/blob/main/pages/%s/%s.md",
+			platform,
+			page,
+		)
+	}
+
+	return ""
+}
+
 // buildEditURL returns the GitHub edit URL for a tldr page.
 // The URL is constructed from the page's file path.
 func buildEditURL(path string) string {
