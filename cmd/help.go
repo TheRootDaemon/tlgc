@@ -63,6 +63,12 @@ func printFlags() {
 			arg:   "<KEYWORD>", description: "Search for pages containing a keyword",
 		},
 		{
+			short:       "-b",
+			long:        "--browse",
+			arg:         "[PAGE]...",
+			description: "Open page in the default web browser",
+		},
+		{
 			long:        "--list-platforms",
 			description: "List available platforms",
 		},
