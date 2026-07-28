@@ -21,6 +21,7 @@ _tlgc() {
         {-l,--list}"[List all pages in the current platform]" \
         {-a,--list-all}"[List all pages]" \
         {-s,--search}"[Search for pages containing a keyword]" \
+        {-b,--browse}"[Open page in the default web browser]" \
         --list-platforms"[List available platforms]" \
         --list-languages"[List installed languages]" \
         {-i,--info}"[Show cache information]" \
