@@ -19,6 +19,7 @@ func Validate(cli *CLI, fs *flag.FlagSet, args []string) (*CLI, error) {
 	}
 
 	cli.Page = fs.Args()
+	cli.HasArgs = len(args) > 0
 
 	if err := validate(cli); err != nil {
 		return nil, err
@@ -59,6 +60,9 @@ func validate(cli *CLI) error {
 	// validate that exactly one operation is active
 	ops := cli.operationCount()
 	if ops == 0 {
+		if cli.HasArgs {
+			return fmtUsage("no operation specified")
+		}
 		help()
 		return nil
 	}

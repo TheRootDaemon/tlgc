@@ -32,6 +32,11 @@ func TestValidate(t *testing.T) {
 			wantErr: false,
 		},
 		{
+			name:    "no_operations_with_modifiers",
+			cli:     CLI{Color: "auto", HasArgs: true, Compact: true, Edit: true},
+			wantErr: true,
+		},
+		{
 			name:    "invalid_color",
 			cli:     CLI{Color: "invalid", Update: true},
 			wantErr: true,

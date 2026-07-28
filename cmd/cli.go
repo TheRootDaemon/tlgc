@@ -94,4 +94,7 @@ type CLI struct {
 
 	// Edit requests displaying a GitHub edit link.
 	Edit bool
+
+	// HasArgs indicates whether any command-line arguments were provided.
+	HasArgs bool
 }

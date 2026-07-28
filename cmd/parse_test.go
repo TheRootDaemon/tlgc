@@ -413,6 +413,14 @@ func TestParse(t *testing.T) {
 			args:    []string{},
 			wantErr: false,
 		},
+		{
+			name:    "only_modifiers_no_operation",
+			args:    []string{"--compact", "--edit", "--offline", "--no-raw"},
+			wantErr: true,
+			errCheck: func(t *testing.T, err error) {
+				assert.ErrorContains(t, err, "no operation specified")
+			},
+		},
 
 		// error cases
 		{
