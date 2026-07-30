@@ -1,21 +1,21 @@
-#compdef tlgc
+#compdef tldr
 
 _pages() {
-    local -a pages=(${(uonzf)"$(tlgc --offline --list-all 2> /dev/null)"//:/\\:})
+    local -a pages=(${(uonzf)"$(tldr --offline --list-all 2> /dev/null)"//:/\\:})
     _describe "PAGE" pages
 }
 
 _languages() {
-    local -a languages=(${(uonzf)"$(tlgc --offline --list-languages 2> /dev/null)"//:/\\:})
+    local -a languages=(${(uonzf)"$(tldr --offline --list-languages 2> /dev/null)"//:/\\:})
     _describe "LANGUAGE_CODE" languages
 }
 
 _platforms() {
-    local -a platforms=(${(uonzf)"$(tlgc --offline --list-platforms 2> /dev/null)"//:/\\:})
+    local -a platforms=(${(uonzf)"$(tldr --offline --list-platforms 2> /dev/null)"//:/\\:})
     _describe "PLATFORM" platforms
 }
 
-_tlgc() {
+_tldr() {
     _arguments -s -S \
         {-u,--update}"[Update the cache]" \
         {-l,--list}"[List all pages in the current platform]" \
@@ -48,4 +48,4 @@ _tlgc() {
         '*:PAGE:_pages'
 }
 
-_tlgc
+_tldr

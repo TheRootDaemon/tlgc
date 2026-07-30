@@ -1,6 +1,6 @@
 # shellcheck shell=bash
 
-_tlgc() {
+_tldr() {
     local cur="${COMP_WORDS[COMP_CWORD]}"
     local prev="${COMP_WORDS[COMP_CWORD-1]}"
 
@@ -21,12 +21,12 @@ _tlgc() {
         --color)
             mapfile -t COMPREPLY < <(compgen -W "auto always never" -- "$cur");;
         -p|--platform)
-            mapfile -t COMPREPLY < <(compgen -W "$(tlgc --offline --list-platforms 2> /dev/null)" -- "$cur");;
+            mapfile -t COMPREPLY < <(compgen -W "$(tldr --offline --list-platforms 2> /dev/null)" -- "$cur");;
         -L|--language)
-            mapfile -t COMPREPLY < <(compgen -W "$(tlgc --offline --list-languages 2> /dev/null)" -- "$cur");;
+            mapfile -t COMPREPLY < <(compgen -W "$(tldr --offline --list-languages 2> /dev/null)" -- "$cur");;
         *)
-            mapfile -t COMPREPLY < <(compgen -W "$(tlgc --offline --list-all 2> /dev/null)" -- "$cur");;
+            mapfile -t COMPREPLY < <(compgen -W "$(tldr --offline --list-all 2> /dev/null)" -- "$cur");;
     esac
 }
 
-complete -o bashdefault -F _tlgc tlgc
+complete -o bashdefault -F _tldr tldr

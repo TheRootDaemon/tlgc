@@ -56,7 +56,7 @@ func fmtUsage(format string, args ...any) error {
 	usage := fmt.Sprintf(
 		"\n\n%s %s [OPTIONS] [PAGE]...\n\nFor more information, try %s.",
 		termcolor.Sprint("bold underline", "Usage:"),
-		termcolor.Sprint("bold", "tlgc"),
+		termcolor.Sprint("bold", "tldr"),
 		termcolor.Sprint("bold blue", "--help"),
 	)
 	return fmt.Errorf(format+usage, args...)
