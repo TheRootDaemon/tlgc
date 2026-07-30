@@ -113,7 +113,7 @@ func TestFmtUsage(t *testing.T) {
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "test message 42")
 	assert.Contains(t, err.Error(), "Usage:")
-	assert.Contains(t, err.Error(), "tlgc")
+	assert.Contains(t, err.Error(), "tldr")
 	assert.Contains(t, err.Error(), "--help")
 }
 

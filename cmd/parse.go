@@ -21,7 +21,7 @@ func parse(args []string) (*CLI, error) {
 
 	cli := &CLI{}
 
-	fs := flag.NewFlagSet("tlgc", flag.ContinueOnError)
+	fs := flag.NewFlagSet("tldr", flag.ContinueOnError)
 
 	// operations
 	fs.BoolVar(&cli.Update, "u", false, "update the cache")
