@@ -5,7 +5,9 @@ import (
 	"strings"
 )
 
-// checkFileExtension reports an error if filename
+// checkFileExtension enforces TLDR107.
+//
+// It reports an error if filename
 // does not use the appropriate extension (.md)
 // required for TLDR pages.
 func checkFileExtension(filename string, r *Result) {
@@ -14,7 +16,9 @@ func checkFileExtension(filename string, r *Result) {
 	}
 }
 
-// checkFilenameWhitespace reports an error if the filename
+// checkFilenameWhitespace enforces TLDR108.
+//
+// It reports an error if the filename
 // contains spaces or tab characters.
 func checkFilenameWhitespace(filename string, r *Result) {
 	base := filepath.Base(filename)
@@ -23,7 +27,9 @@ func checkFilenameWhitespace(filename string, r *Result) {
 	}
 }
 
-// checkFilenameLowercase reports an error if the filename
+// checkFilenameLowercase enforces TLDR109.
+//
+// It reports an error if the filename
 // contains uppercase letters.
 func checkFilenameLowercase(filename string, r *Result) {
 	base := filepath.Base(filename)
@@ -32,7 +38,9 @@ func checkFilenameLowercase(filename string, r *Result) {
 	}
 }
 
-// checkForbiddenFilenameCharacters reports an error if filename
+// checkForbiddenFilenameCharacters enforces TLDR111.
+//
+// It reports an error if filename
 // contains characters that are invalid on Windows filesystems.
 func checkForbiddenFilenameCharacters(filename string, r *Result) {
 	base := filepath.Base(filename)
