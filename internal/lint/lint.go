@@ -1,6 +1,11 @@
 package lint
 
-import "fmt"
+import (
+	"fmt"
+	"io"
+	"os"
+	"path/filepath"
+)
 
 // Error represents a single lint violation.
 type Error struct {
@@ -51,6 +56,106 @@ var ErrorCodes = map[string]string{
 	"TLDR112": "Terms `stdin`, `stdout`, `stderr`, and `regex` should be lowercase and wrapped in backticks",
 }
 
+// rule couples a TLDR code with the check that reports it.
+type rule struct {
+	code  string
+	check func(*parsedPage, *Result)
+}
+
+// contentRules lists every rule that runs on page content, in ascending
+// TLDR code order. Filename-only rules (TLDR107, TLDR108, TLDR109, TLDR111)
+// are excluded because they require a filename.
+var contentRules = []rule{
+	{"TLDR001", checkLeadingWhitespace},
+	{"TLDR002", checkSpaceAfterPrefix},
+	{"TLDR003", checkDescriptionStartsWithCapital},
+	{"TLDR004", checkDescriptionEndsWithPeriod},
+	{"TLDR005", checkExampleDescriptionEndsWithColon},
+	{"TLDR006", checkTitleDescriptionSeparator},
+	{"TLDR007", checkExampleDescriptionSurroundedByBlankLines},
+	{"TLDR008", checkNoTrailingWhitespaceAtEOF},
+	{"TLDR009", checkEndsWithNewline},
+	{"TLDR010", checkUnixLineEndings},
+	{"TLDR011", checkConsecutiveBlankLines},
+	{"TLDR012", checkNoTabs},
+	{"TLDR013", checkTitleCharacters},
+	{"TLDR014", checkTrailingWhitespace},
+	{"TLDR015", checkExampleDescriptionStartsWithCapital},
+	{"TLDR016", checkInformationLinkLabel},
+	{"TLDR017", checkInformationLinkBrackets},
+	{"TLDR018", checkSingleInformationLink},
+	{"TLDR019", checkMaximumExampleCount},
+	{"TLDR020", checkNoteLabelFormat},
+	{"TLDR021", checkCommandWhitespace},
+	{"TLDR101", checkCommandDescriptionAnnotated},
+	{"TLDR102", checkExampleDescriptionAnnotated},
+	{"TLDR103", checkCommandClosingBacktick},
+	{"TLDR104", checkInfinitiveTense},
+	{"TLDR105", checkSingleCommandPerExample},
+	{"TLDR106", checkTitleHash},
+	{"TLDR110", checkCommandNotEmpty},
+	{"TLDR112", checkStandardTermsInBackticks},
+}
+
+// filenameRule couples a TLDR code with the check that reports it.
+type filenameRule struct {
+	code  string
+	check func(string, *Result)
+}
+
+// filenameRules lists every rule that runs on a page's filename, in
+// ascending TLDR code order.
+var filenameRules = []filenameRule{
+	{"TLDR107", checkFileExtension},
+	{"TLDR108", checkFilenameWhitespace},
+	{"TLDR109", checkFilenameLowercase},
+	{"TLDR111", checkForbiddenFilenameCharacters},
+}
+
+// Lint runs all applicable rules on the page read from f
+// and returns the violations found.
+// Rules may inspect the file's content or name.
+// Any rule code listed in ignore is skipped.
+func Lint(
+	f *os.File,
+	ignore ...string,
+) (*Result, error) {
+	r := &Result{}
+
+	if _, err := f.Seek(0, io.SeekStart); err != nil {
+		return r, err
+	}
+
+	content, err := io.ReadAll(f)
+	if err != nil {
+		return r, err
+	}
+
+	skipped := make(map[string]struct{}, len(ignore))
+	for _, code := range ignore {
+		skipped[code] = struct{}{}
+	}
+
+	if page := parse(string(content)); page != nil {
+		for _, rl := range contentRules {
+			if _, ok := skipped[rl.code]; ok {
+				continue
+			}
+			rl.check(page, r)
+		}
+	}
+
+	name := filepath.Base(f.Name())
+	for _, rl := range filenameRules {
+		if _, ok := skipped[rl.code]; ok {
+			continue
+		}
+		rl.check(name, r)
+	}
+
+	return r, nil
+}
+
 // addError is a convenience helper used by rules.
 func addError(r *Result, code string, line int) {
 	desc := ErrorCodes[code]
@@ -67,6 +172,8 @@ func addError(r *Result, code string, line int) {
 	)
 }
 
+// String returns the error as a formatted string
+// containing its code, line number, and description.
 func (e Error) String() string {
 	return fmt.Sprintf(
 		"%s:%d %s",
