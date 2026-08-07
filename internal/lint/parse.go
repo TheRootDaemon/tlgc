@@ -62,9 +62,6 @@ type parsedPage struct {
 	// description lines that are "More information: ..." links
 	infoLinks []parsedLine
 
-	// note lines (unused for now; kept for future rules)
-	notes []parsedLine
-
 	// example descriptions paired with their commands
 	exampleSections []commandSection
 }
