@@ -13,7 +13,8 @@ func checkLeadingWhitespace(p *parsedPage, r *Result) {
 			continue
 		}
 
-		// first non-blank line: check for leading space/tab on the line itself.
+		// first non-blank line:
+		// check for leading space/tab on the line itself.
 		if len(l.rawLine) > 0 &&
 			(l.rawLine[0] == ' ' || l.rawLine[0] == '\t') {
 			addError(r, "TLDR001", l.lineNumber)
@@ -30,13 +31,17 @@ func checkLeadingWhitespace(p *parsedPage, r *Result) {
 //
 // It reports an error if a title, description, or example description
 // line does not have exactly one space
-// after its marker ('#', '>', '-').
+// after its marker ('#', '>', '-'), with tabs normalized to spaces
+// (the reference re-lexes tab lines with tabs replaced).
 func checkSpaceAfterPrefix(p *parsedPage, r *Result) {
 	for _, l := range p.lines {
 		switch l.kind {
 		case kindTitle, kindDescription, kindExampleDesc:
-			if len(l.rawLine) > 1 && l.rawLine[1] != ' ' {
-				addError(r, "TLDR002", l.lineNumber)
+			if len(l.rawLine) > 1 {
+				after := strings.ReplaceAll(l.rawLine[1:2], "\t", " ")
+				if after != " " {
+					addError(r, "TLDR002", l.lineNumber)
+				}
 			}
 		}
 	}
@@ -90,28 +95,33 @@ func checkUnixLineEndings(p *parsedPage, r *Result) {
 
 // checkConsecutiveBlankLines enforces TLDR011.
 //
-// It reports an error for every blank line that directly
-// follows another blank line.
+// It reports an error for every blank line
+// run longer than one, per run.
+// A trailing run at EOF is consumed by TLDR008's
+// whitespace-at-end-of-file rule and is not reported here.
 func checkConsecutiveBlankLines(p *parsedPage, r *Result) {
-	count := 0
+	run := 0
 	for _, l := range p.lines {
 		if l.kind == kindBlank {
-			count++
-			if count > 1 {
-				addError(r, "TLDR011", l.lineNumber)
-			}
-		} else {
-			count = 0
+			run++
+			continue
 		}
+		if run > 1 {
+			addError(r, "TLDR011", l.lineNumber)
+		}
+		run = 0
 	}
 }
 
 // checkNoTabs enforces TLDR012.
 //
-// It reports an error if the page contains any tab character.
+// It reports an error for every line
+// that contains a tab character.
 func checkNoTabs(p *parsedPage, r *Result) {
-	if strings.Contains(p.rawContent, "\t") {
-		addError(r, "TLDR012", 0)
+	for _, l := range p.lines {
+		if strings.Contains(l.rawLine, "\t") {
+			addError(r, "TLDR012", l.lineNumber)
+		}
 	}
 }
 

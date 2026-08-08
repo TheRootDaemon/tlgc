@@ -191,9 +191,14 @@ func TestCheckConsecutiveBlankLines(t *testing.T) {
 			wantCodes: []string{"TLDR011"},
 		},
 		{
-			name:      "three consecutive blank lines fail twice",
+			name:      "three consecutive blank lines fail once",
 			lines:     []parsedLine{title, blank1, blank2, blank3, description},
-			wantCodes: []string{"TLDR011", "TLDR011"},
+			wantCodes: []string{"TLDR011"},
+		},
+		{
+			name:      "page ending in blank run passes",
+			lines:     []parsedLine{title, blank1, blank2, blank3},
+			wantCodes: nil,
 		},
 	}
 	for _, tt := range tests {
@@ -222,7 +227,7 @@ func TestCheckNoTabs(t *testing.T) {
 			tt.name,
 			func(t *testing.T) {
 				r := &Result{}
-				checkNoTabs(&parsedPage{rawContent: tt.raw}, r)
+				checkNoTabs(&parsedPage{rawContent: tt.raw, lines: parseLines(tt.raw)}, r)
 				require.Equal(t, tt.wantCode, errorCode(r))
 			},
 		)
