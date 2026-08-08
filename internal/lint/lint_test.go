@@ -8,46 +8,152 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestLint(t *testing.T) {
-	clean := "# App\n\n> Description.\n\n- List files:\n\n`ls`\n"
-	missingPeriod := "# App\n\n> Description\n\n- List files:\n\n`ls`\n"
+// specFixture couples a failing spec page with the errors it must produce,
+// mirroring the reference tldr-lint's tldr-lint.spec.js.
+type specFixture struct {
+	name   string
+	want   []string
+	count  int
+	subset bool
+}
 
-	tests := []struct {
-		name     string
-		content  string
-		badName  bool
-		ignore   []string
-		wantCode []string
-		line     int
-	}{
-		{"clean page reports nothing", clean, false, nil, nil, 0},
-		{"missing period", missingPeriod, false, nil, []string{"TLDR004"}, 2},
-		{"ignored rule skipped", missingPeriod, false, []string{"TLDR004"}, nil, 0},
-		{"filename rules run on bad name", clean, true, nil, []string{"TLDR107", "TLDR108", "TLDR109"}, 0},
-		{"bad ignore code is harmless", clean, false, []string{"TLDR999"}, nil, 0},
+func TestLintSpecsFailing(t *testing.T) {
+	tests := []specFixture{
+		{"failing/001.md", []string{"TLDR001"}, 1, false},
+		{"failing/002.md", []string{"TLDR002"}, 3, false},
+		{"failing/003.md", []string{"TLDR003"}, 1, false},
+		{"failing/004.md", []string{"TLDR004", "TLDR014"}, 4, true},
+		{"failing/005.md", []string{"TLDR005"}, 2, false},
+		{"failing/006.md", []string{"TLDR006"}, 1, false},
+		{"failing/007.md", []string{"TLDR007"}, 2, false},
+		{"failing/008.md", []string{"TLDR008"}, 1, false},
+		{"failing/009.md", []string{"TLDR009"}, 1, false},
+		{"failing/010.md", []string{"TLDR010"}, 1, false},
+		{"failing/011.md", []string{"TLDR011"}, 2, false},
+		{"failing/012.md", []string{"TLDR012"}, 2, false},
+		{"failing/013.md", []string{"TLDR013"}, 1, false},
+		{"failing/014.md", []string{"TLDR014"}, 5, false},
+		{"failing/015.md", []string{"TLDR015"}, 1, false},
+		{"failing/016.md", []string{"TLDR016"}, 1, false},
+		{"failing/017.md", []string{"TLDR017"}, 1, false},
+		{"failing/018.md", []string{"TLDR018"}, 2, false},
+		{"failing/019.md", []string{"TLDR019"}, 1, false},
+		{"failing/020.md", []string{"TLDR020"}, 3, false},
+		{"failing/021.md", []string{"TLDR021"}, 2, false},
+		{"failing/101.md", []string{"TLDR101"}, 1, false},
+		{"failing/102.md", []string{"TLDR102"}, 1, false},
+		{"failing/103.md", []string{"TLDR103"}, 2, false},
+		{"failing/104.md", []string{"TLDR104"}, 2, false},
+		{"failing/105.md", []string{"TLDR105"}, 2, false},
+		{"failing/106.md", []string{"TLDR106"}, 1, false},
+		{"failing/107", []string{"TLDR107"}, 1, false},
+		{"failing/108 .md", []string{"TLDR108"}, 1, false},
+		{"failing/109A.md", []string{"TLDR109"}, 1, false},
+		{"failing/110.md", []string{"TLDR110"}, 1, false},
+		{"failing/112.md", []string{"TLDR112"}, 7, false},
 	}
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			name := "app.md"
-			if tt.badName {
-				name = "Bad File.txt"
-			}
+		t.Run(
+			tt.name,
+			func(t *testing.T) {
+				f, err := os.Open(filepath.Join("specs", "pages", tt.name))
+				require.NoError(t, err)
+				defer func() {
+					_ = f.Close()
+				}()
 
-			path := filepath.Join(t.TempDir(), name)
-			require.NoError(t, os.WriteFile(path, []byte(tt.content), 0o644))
+				r, err := Lint(f)
+				require.NoError(t, err)
+				assertSpecErrors(t, r, tt.want, tt.count, tt.subset)
+			},
+		)
+	}
+}
 
-			f, err := os.Open(path)
-			require.NoError(t, err)
-			defer func() {
-				_ = f.Close()
-			}()
+func TestLintSpecsForbiddenFilenameCharacters(t *testing.T) {
+	for _, char := range `<>:"\|?*` {
+		t.Run(
+			"111"+string(char),
+			func(t *testing.T) {
+				content, err := os.ReadFile(filepath.Join("specs", "pages", "failing", "111.md"))
+				require.NoError(t, err)
 
-			r, err := Lint(f, tt.ignore...)
-			require.NoError(t, err)
-			require.Equal(t, tt.wantCode, errorCodes(r))
-			if tt.line != 0 {
-				require.Equal(t, tt.line, r.Errors[0].Line)
-			}
-		})
+				path := filepath.Join(t.TempDir(), "111"+string(char)+".md")
+				require.NoError(t, os.WriteFile(path, content, 0o600))
+
+				f, err := os.Open(path)
+				require.NoError(t, err)
+				defer func() {
+					_ = f.Close()
+				}()
+
+				r, err := Lint(f)
+				require.NoError(t, err)
+				assertSpecErrors(t, r, []string{"TLDR111"}, 1, false)
+			},
+		)
+	}
+}
+
+func TestLintSpecsPassing(t *testing.T) {
+	entries, err := os.ReadDir(filepath.Join("specs", "pages", "passing"))
+	require.NoError(t, err)
+	for _, entry := range entries {
+		t.Run(
+			entry.Name(),
+			func(t *testing.T) {
+				f, err := os.Open(filepath.Join("specs", "pages", "passing", entry.Name()))
+				require.NoError(t, err)
+				defer func() {
+					_ = f.Close()
+				}()
+
+				r, err := Lint(f)
+				require.NoError(t, err)
+				assertSpecErrors(t, r, nil, 0, false)
+			},
+		)
+	}
+}
+
+func TestLintSpecsIgnore(t *testing.T) {
+	f, err := os.Open(filepath.Join("specs", "pages", "failing", "004.md"))
+	require.NoError(t, err)
+	defer func() {
+		_ = f.Close()
+	}()
+
+	r, err := Lint(f, "TLDR014")
+	require.NoError(t, err)
+	assertSpecErrors(t, r, []string{"TLDR004"}, 2, false)
+}
+
+// assertSpecErrors verifies that a lint result
+// contains the expected number of errors and error codes.
+//
+// The total error count must match count exactly.
+// Every code in want must be present in the result.
+// When subset is false, want must also contain every distinct error code
+// reported by the result;
+// when true, additional error codes are allowed.
+func assertSpecErrors(
+	t *testing.T,
+	r *Result,
+	want []string,
+	count int,
+	subset bool,
+) {
+	t.Helper()
+	require.Equal(t, count, len(r.Errors))
+
+	seen := make(map[string]bool, len(r.Errors))
+	for _, e := range r.Errors {
+		seen[e.Code] = true
+	}
+	for _, code := range want {
+		require.True(t, seen[code])
+	}
+	if !subset {
+		require.Len(t, seen, len(want))
 	}
 }

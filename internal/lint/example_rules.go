@@ -103,7 +103,6 @@ func checkInfinitiveTense(p *parsedPage, r *Result) {
 }
 
 // checkSingleCommandPerExample enforces TLDR105.
-// checkSingleCommandPerExample enforces TLDR105.
 //
 // It reports an error for every command after the first
 // in an example with multiple commands.

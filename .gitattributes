@@ -1,1 +1,4 @@
 * text=auto eol=lf
+
+# Required for TLDR010 (Only Unix-style line endings allowed)
+internal/lint/specs/pages/failing/010.md binary
