@@ -323,7 +323,7 @@ func TestCheckSingleCommandPerExample(t *testing.T) {
 			},
 		},
 		{
-			name: "two commands fail on both",
+			name: "two commands fail on the second",
 			exampleSections: []commandSection{
 				{
 					description:           "List all files:",
@@ -334,7 +334,7 @@ func TestCheckSingleCommandPerExample(t *testing.T) {
 					},
 				},
 			},
-			wantCodes: []string{"TLDR105", "TLDR105"},
+			wantCodes: []string{"TLDR105"},
 		},
 	}
 	for _, tt := range tests {

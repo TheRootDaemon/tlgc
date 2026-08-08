@@ -103,14 +103,14 @@ func checkInfinitiveTense(p *parsedPage, r *Result) {
 }
 
 // checkSingleCommandPerExample enforces TLDR105.
+// checkSingleCommandPerExample enforces TLDR105.
 //
-// It reports an error for every command in an example that has more than one command.
+// It reports an error for every command after the first
+// in an example with multiple commands.
 func checkSingleCommandPerExample(p *parsedPage, r *Result) {
 	for _, section := range p.exampleSections {
-		if len(section.commands) > 1 {
-			for _, cmd := range section.commands {
-				addError(r, "TLDR105", cmd.lineNumber)
-			}
+		for i := 1; i < len(section.commands); i++ {
+			addError(r, "TLDR105", section.commands[i].lineNumber)
 		}
 	}
 }
