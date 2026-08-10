@@ -14,56 +14,49 @@ import (
 )
 
 func TestNew(t *testing.T) {
-	t.Run("from_initialized_config", func(t *testing.T) {
-		config.ResetForTesting()
-		defer config.ResetForTesting()
+	tests := []struct {
+		name   string
+		config []byte
+		want   string
+	}{
+		{
+			name:   "from_initialized_config",
+			config: []byte("[cache]\ndir = \"/custom/cache\"\n"),
+			want:   "/custom/cache",
+		},
+		{
+			name:   "default_dir_when_not_in_config",
+			config: []byte("[output]\nshow_title = false\n"),
+			want:   config.Cache().Dir,
+		},
+		{
+			name:   "empty_dir_in_config",
+			config: []byte("[cache]\ndir = \"\"\n"),
+			want:   "",
+		},
+	}
 
-		dir := t.TempDir()
-		cfgPath := filepath.Join(dir, "config.toml")
-		err := os.WriteFile(cfgPath, []byte("[cache]\ndir = \"/custom/cache\"\n"), 0o644)
-		require.NoError(t, err)
+	for _, tt := range tests {
+		t.Run(
+			tt.name,
+			func(t *testing.T) {
+				config.ResetForTesting()
+				defer config.ResetForTesting()
 
-		t.Setenv("TLGC_CONFIG", cfgPath)
-		err = config.Initialize()
-		require.NoError(t, err)
+				dir := t.TempDir()
+				cfgPath := filepath.Join(dir, "config.toml")
+				err := os.WriteFile(cfgPath, tt.config, 0o600)
+				require.NoError(t, err)
 
-		c := New()
-		assert.Equal(t, "/custom/cache", c.Dir())
-	})
+				t.Setenv("TLGC_CONFIG", cfgPath)
+				err = config.Initialize()
+				require.NoError(t, err)
 
-	t.Run("default_dir_when_not_in_config", func(t *testing.T) {
-		config.ResetForTesting()
-		defer config.ResetForTesting()
-
-		dir := t.TempDir()
-		cfgPath := filepath.Join(dir, "config.toml")
-		err := os.WriteFile(cfgPath, []byte("[output]\nshow_title = false\n"), 0o644)
-		require.NoError(t, err)
-
-		t.Setenv("TLGC_CONFIG", cfgPath)
-		err = config.Initialize()
-		require.NoError(t, err)
-
-		c := New()
-		assert.Equal(t, config.Cache().Dir, c.Dir())
-	})
-
-	t.Run("empty_dir_in_config", func(t *testing.T) {
-		config.ResetForTesting()
-		defer config.ResetForTesting()
-
-		dir := t.TempDir()
-		cfgPath := filepath.Join(dir, "config.toml")
-		err := os.WriteFile(cfgPath, []byte("[cache]\ndir = \"\"\n"), 0o644)
-		require.NoError(t, err)
-
-		t.Setenv("TLGC_CONFIG", cfgPath)
-		err = config.Initialize()
-		require.NoError(t, err)
-
-		c := New()
-		assert.Equal(t, "", c.Dir())
-	})
+				c := New()
+				assert.Equal(t, tt.want, c.Dir())
+			},
+		)
+	}
 }
 
 func TestDir(t *testing.T) {
