@@ -78,6 +78,28 @@ func validate(cli *CLI) error {
 		)
 	}
 
+	// lint and format require a file or directory argument
+	if cli.Lint && len(cli.Page) == 0 {
+		return fmtUsage(
+			"flag %s requires a file or directory argument",
+			termcolor.Sprint("bold blue", "--lint"),
+		)
+	}
+	if cli.Format && len(cli.Page) == 0 {
+		return fmtUsage(
+			"flag %s requires a file or directory argument",
+			termcolor.Sprint("bold blue", "--format"),
+		)
+	}
+
+	if cli.Output != "" && !cli.Format {
+		return fmtUsage(
+			"flag %s requires %s",
+			termcolor.Sprint("bold blue", "--output"),
+			termcolor.Sprint("bold blue", "--format"),
+		)
+	}
+
 	return nil
 }
 
@@ -85,7 +107,10 @@ func validate(cli *CLI) error {
 func (c *CLI) operationCount() int {
 	count := 0
 
-	if len(c.Page) > 0 && !c.Browse {
+	if len(c.Page) > 0 &&
+		!c.Browse &&
+		!c.Lint &&
+		!c.Format {
 		count++
 	}
 	if c.Update {
@@ -95,6 +120,12 @@ func (c *CLI) operationCount() int {
 		count++
 	}
 	if c.ListAll {
+		count++
+	}
+	if c.Lint {
+		count++
+	}
+	if c.Format {
 		count++
 	}
 	if c.Search != "" {

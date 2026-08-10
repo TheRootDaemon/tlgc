@@ -40,6 +40,20 @@ func parse(args []string) (*CLI, error) {
 		"list all pages for the current platform",
 	)
 
+	fs.BoolVar(
+		&cli.Lint,
+		"lint",
+		false,
+		"validate the specified tldr pages",
+	)
+
+	fs.BoolVar(
+		&cli.Format,
+		"format",
+		false,
+		"format the specified tldr pages",
+	)
+
 	fs.BoolVar(&cli.ListAll, "a", false, "list all pages")
 	fs.BoolVar(&cli.ListAll, "list-all", false, "list all pages")
 
@@ -143,6 +157,35 @@ func parse(args []string) (*CLI, error) {
 		},
 		"language",
 		"specify the languages to use",
+	)
+
+	fs.StringVar(
+		&cli.Output,
+		"output",
+		"",
+		"write formatted output to the specified file",
+	)
+
+	fs.BoolVar(
+		&cli.InPlace,
+		"in-place",
+		false,
+		"formats pages in place",
+	)
+
+	fs.BoolVar(
+		&cli.Tabular,
+		"tabular",
+		false,
+		"format lint errors in a tabular format",
+	)
+
+	fs.Var(
+		&stringListValue{
+			values: &cli.Ignore,
+		},
+		"ignore",
+		"ignore comma-separated tldr lint error codes",
 	)
 
 	fs.BoolVar(
@@ -258,7 +301,9 @@ func reorderFlags(args []string) []string {
 			"color",
 			"config",
 			"s", "search",
-			"r", "render":
+			"r", "render",
+			"output",
+			"ignore":
 			if i+1 < len(args) {
 				i++
 				flags = append(flags, args[i])
