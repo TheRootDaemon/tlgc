@@ -259,7 +259,6 @@ func TestExtractArchive(t *testing.T) {
 	}
 }
 
-// TestExtractFile tests the extractFile helper.
 func TestExtractFile(t *testing.T) {
 	t.Parallel()
 

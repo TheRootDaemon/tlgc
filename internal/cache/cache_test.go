@@ -66,7 +66,6 @@ func TestNew(t *testing.T) {
 	})
 }
 
-// TestDir tests Cache.Dir.
 func TestDir(t *testing.T) {
 	t.Parallel()
 
@@ -88,7 +87,6 @@ func TestDir(t *testing.T) {
 	}
 }
 
-// TestSubDirExists tests Cache.subDirExists.
 func TestSubDirExists(t *testing.T) {
 	t.Parallel()
 
@@ -163,7 +161,6 @@ func TestSubDirExists(t *testing.T) {
 	}
 }
 
-// TestGetPlatforms tests Cache.getPlatforms.
 func TestGetPlatforms(t *testing.T) {
 	t.Parallel()
 
@@ -290,7 +287,6 @@ func TestGetPlatforms(t *testing.T) {
 	}
 }
 
-// TestGetLanguageDirectories tests Cache.getLanguageDirectories.
 func TestGetLanguageDirectories(t *testing.T) {
 	t.Parallel()
 
@@ -377,7 +373,6 @@ func TestGetLanguageDirectories(t *testing.T) {
 	}
 }
 
-// TestLanguagesToDirectories tests Cache.languagesToDirectories.
 func TestLanguagesToDirectories(t *testing.T) {
 	t.Parallel()
 
@@ -540,7 +535,6 @@ func TestLanguagesToDirectories(t *testing.T) {
 	}
 }
 
-// TestCacheNeedsUpdate tests Cache.NeedsUpdate.
 func TestCacheNeedsUpdate(t *testing.T) {
 	t.Parallel()
 
@@ -571,6 +565,8 @@ func TestCacheNeedsUpdate(t *testing.T) {
 			setupDir: func(t *testing.T) string {
 				d := t.TempDir()
 				require.NoError(t, os.MkdirAll(filepath.Join(d, "pages.en"), 0o750))
+				fresh := time.Now().Add(-time.Minute)
+				require.NoError(t, os.Chtimes(d, fresh, fresh))
 				return d
 			},
 			maxAge: 336,
@@ -581,6 +577,8 @@ func TestCacheNeedsUpdate(t *testing.T) {
 			setupDir: func(t *testing.T) string {
 				d := t.TempDir()
 				require.NoError(t, os.MkdirAll(filepath.Join(d, "pages.en"), 0o750))
+				stale := time.Now().Add(-2 * time.Hour)
+				require.NoError(t, os.Chtimes(d, stale, stale))
 				return d
 			},
 			maxAge: 0,
