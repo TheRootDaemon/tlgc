@@ -21,8 +21,7 @@ func checkFileExtension(filename string, r *Result) {
 // It reports an error if the filename
 // contains spaces or tab characters.
 func checkFilenameWhitespace(filename string, r *Result) {
-	base := filepath.Base(filename)
-	if strings.ContainsAny(base, " \t") {
+	if strings.ContainsAny(filename, " \t") {
 		addError(r, "TLDR108", 0)
 	}
 }
@@ -32,8 +31,7 @@ func checkFilenameWhitespace(filename string, r *Result) {
 // It reports an error if the filename
 // contains uppercase letters.
 func checkFilenameLowercase(filename string, r *Result) {
-	base := filepath.Base(filename)
-	if base != strings.ToLower(base) {
+	if filename != strings.ToLower(filename) {
 		addError(r, "TLDR109", 0)
 	}
 }
@@ -43,8 +41,7 @@ func checkFilenameLowercase(filename string, r *Result) {
 // It reports an error if filename
 // contains characters that are invalid on Windows filesystems.
 func checkForbiddenFilenameCharacters(filename string, r *Result) {
-	base := filepath.Base(filename)
-	if strings.ContainsAny(base, `<>:"/\|?*`) {
+	if strings.ContainsAny(filename, `<>:"/\|?*`) {
 		addError(r, "TLDR111", 0)
 	}
 }

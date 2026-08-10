@@ -71,24 +71,14 @@ func TestLintSpecsFailing(t *testing.T) {
 }
 
 func TestLintSpecsForbiddenFilenameCharacters(t *testing.T) {
-	for _, char := range `<>:"\|?*` {
+	content, err := os.ReadFile(filepath.Join("specs", "pages", "failing", "111.md"))
+	require.NoError(t, err)
+
+	for _, char := range `<>:"/\|?*` {
 		t.Run(
 			"111"+string(char),
 			func(t *testing.T) {
-				content, err := os.ReadFile(filepath.Join("specs", "pages", "failing", "111.md"))
-				require.NoError(t, err)
-
-				path := filepath.Join(t.TempDir(), "111"+string(char)+".md")
-				require.NoError(t, os.WriteFile(path, content, 0o600))
-
-				f, err := os.Open(path)
-				require.NoError(t, err)
-				defer func() {
-					_ = f.Close()
-				}()
-
-				r, err := Lint(f)
-				require.NoError(t, err)
+				r := lint("111"+string(char)+".md", content)
 				assertSpecErrors(t, r, []string{"TLDR111"}, 1, false)
 			},
 		)

@@ -67,11 +67,6 @@ func TestCheckFilenameWhitespace(t *testing.T) {
 			wantCode: "",
 		},
 		{
-			name:     "space in directory only passes",
-			filename: "my dir/tldr.md",
-			wantCode: "",
-		},
-		{
 			name:     "space in name fails",
 			filename: "tldr page.md",
 			wantCode: "TLDR108",
@@ -149,11 +144,6 @@ func TestCheckForbiddenFilenameCharacters(t *testing.T) {
 		{
 			name:     "clean name passes",
 			filename: "tldr.md",
-			wantCode: "",
-		},
-		{
-			name:     "directory separator in path passes",
-			filename: "dir/tldr.md",
 			wantCode: "",
 		},
 		{

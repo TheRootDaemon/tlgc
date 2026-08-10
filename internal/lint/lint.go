@@ -120,16 +120,32 @@ func Lint(
 	f *os.File,
 	ignore ...string,
 ) (*Result, error) {
-	r := &Result{}
-
 	if _, err := f.Seek(0, io.SeekStart); err != nil {
-		return r, err
+		return &Result{}, err
 	}
 
 	content, err := io.ReadAll(f)
 	if err != nil {
-		return r, err
+		return &Result{}, err
 	}
+
+	return lint(
+		filepath.Base(f.Name()),
+		content,
+		ignore...,
+	), nil
+}
+
+// lint runs all applicable rules on the page
+// with the given filename
+// and content and returns the violations found.
+// Any rule code listed in ignore is skipped.
+func lint(
+	name string,
+	content []byte,
+	ignore ...string,
+) *Result {
+	r := &Result{}
 
 	skipped := make(map[string]struct{}, len(ignore))
 	for _, code := range ignore {
@@ -145,7 +161,6 @@ func Lint(
 		}
 	}
 
-	name := filepath.Base(f.Name())
 	for _, rl := range filenameRules {
 		if _, ok := skipped[rl.code]; ok {
 			continue
@@ -153,7 +168,7 @@ func Lint(
 		rl.check(name, r)
 	}
 
-	return r, nil
+	return r
 }
 
 // addError is a convenience helper used by rules.
