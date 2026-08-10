@@ -9,7 +9,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// TestSearch tests Cache.Search.
 func TestSearch(t *testing.T) {
 	t.Parallel()
 
@@ -165,7 +164,6 @@ func TestSearch(t *testing.T) {
 	}
 }
 
-// TestResolvePlatforms tests Cache.resolvePlatforms.
 func TestResolvePlatforms(t *testing.T) {
 	t.Parallel()
 
@@ -236,7 +234,6 @@ func TestResolvePlatforms(t *testing.T) {
 	}
 }
 
-// TestPlatformExists tests platformExists.
 func TestPlatformExists(t *testing.T) {
 	t.Parallel()
 
@@ -274,7 +271,6 @@ func TestPlatformExists(t *testing.T) {
 	}
 }
 
-// TestSearchDirectory tests Cache.searchDirectory.
 func TestSearchDirectory(t *testing.T) {
 	t.Parallel()
 
