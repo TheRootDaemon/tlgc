@@ -16,6 +16,12 @@ type CLI struct {
 	// ListAll requests listing all pages across all platforms.
 	ListAll bool
 
+	// Lint requests validating the specified tldr pages.
+	Lint bool
+
+	// Format requests formatting the specified tldr pages.
+	Format bool
+
 	// Search requests a keyword search across pages.
 	Search string
 
@@ -56,6 +62,18 @@ type CLI struct {
 
 	// Languages overrides the language list.
 	Languages []string
+
+	// Output specifies the file to write formatted output to.
+	Output string
+
+	// InPlace requests formatting files in place.
+	InPlace bool
+
+	// Tabular requests displaying lint errors in tabular format.
+	Tabular bool
+
+	// Ignore specifies comma-separated lint error codes to ignore.
+	Ignore []string
 
 	// ShortOptions requests displaying short option forms.
 	ShortOptions bool

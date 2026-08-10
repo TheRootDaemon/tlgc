@@ -74,7 +74,10 @@ func flagDisplay(name string) string {
 // activeOps returns display names for all active operations in cli.
 func activeOps(cli *CLI) []string {
 	var ops []string
-	if len(cli.Page) > 0 && !cli.Browse {
+	if len(cli.Page) > 0 &&
+		!cli.Browse &&
+		!cli.Lint &&
+		!cli.Format {
 		ops = append(ops, "[PAGE]...")
 	}
 	if cli.Update {
@@ -85,6 +88,12 @@ func activeOps(cli *CLI) []string {
 	}
 	if cli.ListAll {
 		ops = append(ops, "--list-all")
+	}
+	if cli.Lint {
+		ops = append(ops, "--lint <FILE|DIR>")
+	}
+	if cli.Format {
+		ops = append(ops, "--format <FILE|DIR>")
 	}
 	if cli.Search != "" {
 		ops = append(ops, "--search <KEYWORD>")

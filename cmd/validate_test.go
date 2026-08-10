@@ -71,6 +71,33 @@ func TestValidate(t *testing.T) {
 			wantErr: true,
 		},
 		{
+			name:    "lint_without_path",
+			cli:     CLI{Color: "auto", Lint: true},
+			wantErr: true,
+		},
+		{
+			name: "lint_with_path",
+			cli:  CLI{Color: "auto", Lint: true, Page: []string{"pages/"}},
+		},
+		{
+			name:    "format_without_path",
+			cli:     CLI{Color: "auto", Format: true},
+			wantErr: true,
+		},
+		{
+			name: "format_with_path",
+			cli:  CLI{Color: "auto", Format: true, Page: []string{"file.md"}},
+		},
+		{
+			name:    "output_without_format",
+			cli:     CLI{Color: "auto", Output: "out.md", Page: []string{"file.md"}},
+			wantErr: true,
+		},
+		{
+			name: "output_with_format",
+			cli:  CLI{Color: "auto", Format: true, Output: "out.md", Page: []string{"file.md"}},
+		},
+		{
 			name:    "valid_color_auto",
 			cli:     CLI{Color: "auto", Update: true},
 			wantErr: false,
@@ -163,6 +190,21 @@ func TestOperationCount(t *testing.T) {
 			want: 1,
 		},
 		{
+			name: "lint",
+			cli:  CLI{Lint: true, Page: []string{"file.md"}},
+			want: 1,
+		},
+		{
+			name: "format",
+			cli:  CLI{Format: true, Page: []string{"file.md"}},
+			want: 1,
+		},
+		{
+			name: "lint_and_format",
+			cli:  CLI{Lint: true, Format: true, Page: []string{"file.md"}},
+			want: 2,
+		},
+		{
 			name: "clean_cache",
 			cli:  CLI{CleanCache: true},
 			want: 1,
@@ -200,6 +242,19 @@ func TestOperationCount(t *testing.T) {
 				ConfigPath:    true,
 			},
 			want: 12,
+		},
+		{
+			name: "all_lint_operations",
+			cli: CLI{
+				Lint:    true,
+				Format:  true,
+				Output:  "out.md",
+				InPlace: true,
+				Tabular: true,
+				Ignore:  []string{"TLDR001"},
+				Page:    []string{"file.md"},
+			},
+			want: 2,
 		},
 	}
 

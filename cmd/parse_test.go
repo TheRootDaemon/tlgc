@@ -121,6 +121,22 @@ func TestParse(t *testing.T) {
 			},
 		},
 		{
+			name: "lint",
+			args: []string{"--lint", "pages/"},
+			check: func(t *testing.T, cli *CLI) {
+				assert.True(t, cli.Lint)
+				assert.Equal(t, []string{"pages/"}, cli.Page)
+			},
+		},
+		{
+			name: "format",
+			args: []string{"--format", "file.md"},
+			check: func(t *testing.T, cli *CLI) {
+				assert.True(t, cli.Format)
+				assert.Equal(t, []string{"file.md"}, cli.Page)
+			},
+		},
+		{
 			name: "list_platforms",
 			args: []string{"--list-platforms"},
 			check: func(t *testing.T, cli *CLI) {
@@ -355,6 +371,62 @@ func TestParse(t *testing.T) {
 				assert.True(t, cli.LongOptions)
 			},
 		},
+		{
+			name: "output",
+			args: []string{"--output", "out.md", "--format", "file.md"},
+			check: func(t *testing.T, cli *CLI) {
+				assert.Equal(t, "out.md", cli.Output)
+			},
+		},
+		{
+			name: "in_place",
+			args: []string{"--in-place", "--format", "file.md"},
+			check: func(t *testing.T, cli *CLI) {
+				assert.True(t, cli.InPlace)
+			},
+		},
+		{
+			name: "tabular",
+			args: []string{"--tabular", "--lint", "file.md"},
+			check: func(t *testing.T, cli *CLI) {
+				assert.True(t, cli.Tabular)
+			},
+		},
+		{
+			name: "ignore_comma",
+			args: []string{"--ignore", "TLDR001,TLDR002", "--lint", "file.md"},
+			check: func(t *testing.T, cli *CLI) {
+				assert.Equal(t, []string{"TLDR001", "TLDR002"}, cli.Ignore)
+			},
+		},
+		{
+			name: "ignore_repeat",
+			args: []string{"--ignore", "TLDR001", "--ignore", "TLDR002", "--lint", "file.md"},
+			check: func(t *testing.T, cli *CLI) {
+				assert.Equal(t, []string{"TLDR001", "TLDR002"}, cli.Ignore)
+			},
+		},
+		{
+			name: "lint_with_all_options",
+			args: []string{"--lint", "file.md", "--in-place", "--tabular", "--ignore", "TLDR001"},
+			check: func(t *testing.T, cli *CLI) {
+				assert.True(t, cli.Lint)
+				assert.True(t, cli.InPlace)
+				assert.True(t, cli.Tabular)
+				assert.Equal(t, []string{"TLDR001"}, cli.Ignore)
+			},
+		},
+		{
+			name: "format_with_all_options",
+			args: []string{"--format", "file.md", "--output", "out.md", "--in-place", "--tabular", "--ignore", "TLDR001"},
+			check: func(t *testing.T, cli *CLI) {
+				assert.True(t, cli.Format)
+				assert.Equal(t, "out.md", cli.Output)
+				assert.True(t, cli.InPlace)
+				assert.True(t, cli.Tabular)
+				assert.Equal(t, []string{"TLDR001"}, cli.Ignore)
+			},
+		},
 
 		// combined
 		{
@@ -432,6 +504,38 @@ func TestParse(t *testing.T) {
 			},
 		},
 		{
+			name:    "lint_without_path",
+			args:    []string{"--lint"},
+			wantErr: true,
+			errCheck: func(t *testing.T, err error) {
+				assert.ErrorContains(t, err, "requires a file or directory argument")
+			},
+		},
+		{
+			name:    "format_without_path",
+			args:    []string{"--format"},
+			wantErr: true,
+			errCheck: func(t *testing.T, err error) {
+				assert.ErrorContains(t, err, "requires a file or directory argument")
+			},
+		},
+		{
+			name:    "output_without_format",
+			args:    []string{"--output", "out.md", "file.md"},
+			wantErr: true,
+			errCheck: func(t *testing.T, err error) {
+				assert.ErrorContains(t, err, "requires --format")
+			},
+		},
+		{
+			name:    "lint_and_format",
+			args:    []string{"--lint", "file.md", "--format", "file.md"},
+			wantErr: true,
+			errCheck: func(t *testing.T, err error) {
+				assert.ErrorContains(t, err, "cannot be used with")
+			},
+		},
+		{
 			name: "browse_with_page",
 			args: []string{"-b", "tar"},
 			check: func(t *testing.T, cli *CLI) {
@@ -500,6 +604,7 @@ func TestParse(t *testing.T) {
 				}
 				return
 			}
+
 			require.NoError(t, err)
 			require.NotNil(t, cli)
 			if tt.check != nil {
@@ -576,6 +681,21 @@ func TestReorderFlags(t *testing.T) {
 			name: "search_flag_after_positional",
 			args: []string{"tar", "-s", "ngi"},
 			want: []string{"-s", "ngi", "tar"},
+		},
+		{
+			name: "output_flag_after_positional",
+			args: []string{"file.md", "--output", "out.md"},
+			want: []string{"--output", "out.md", "file.md"},
+		},
+		{
+			name: "ignore_flag_after_positional",
+			args: []string{"file.md", "--ignore", "TLDR001,TLDR002"},
+			want: []string{"--ignore", "TLDR001,TLDR002", "file.md"},
+		},
+		{
+			name: "lint_output_ignore_after_positional",
+			args: []string{"file.md", "--lint", "--output", "out.md", "--ignore", "TLDR001"},
+			want: []string{"--lint", "--output", "out.md", "--ignore", "TLDR001", "file.md"},
 		},
 	}
 

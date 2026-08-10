@@ -88,6 +88,11 @@ func TestFmtConflictError(t *testing.T) {
 			contains: []string{"cannot be used with", "[PAGE]...", "--search"},
 		},
 		{
+			name:     "lint_and_format",
+			cli:      CLI{Lint: true, Format: true, Page: []string{"file.md"}},
+			contains: []string{"cannot be used with", "--lint <FILE|DIR>", "--format <FILE|DIR>"},
+		},
+		{
 			name:     "one_operation_fallback",
 			cli:      CLI{Update: true},
 			contains: []string{"only one operation"},
@@ -177,9 +182,24 @@ func TestActiveOps(t *testing.T) {
 			want: []string{"--render <FILE>"},
 		},
 		{
+			name: "lint",
+			cli:  CLI{Lint: true, Page: []string{"file.md"}},
+			want: []string{"--lint <FILE|DIR>"},
+		},
+		{
+			name: "format",
+			cli:  CLI{Format: true, Page: []string{"file.md"}},
+			want: []string{"--format <FILE|DIR>"},
+		},
+		{
 			name: "multiple",
 			cli:  CLI{Update: true, Search: "foo"},
 			want: []string{"--update", "--search <KEYWORD>"},
+		},
+		{
+			name: "lint_with_update",
+			cli:  CLI{Lint: true, Page: []string{"file.md"}, Update: true},
+			want: []string{"--update", "--lint <FILE|DIR>"},
 		},
 	}
 
