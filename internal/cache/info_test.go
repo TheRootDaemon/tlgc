@@ -76,6 +76,9 @@ func TestInfo(t *testing.T) {
 		require.NoError(t, os.WriteFile(filepath.Join(dir, "pages.en", "linux", "apt.md"), nil, 0o644))
 		require.NoError(t, os.WriteFile(filepath.Join(dir, "pages.en", "linux", "pacman.md"), nil, 0o644))
 
+		past := time.Now().Add(-1 * time.Hour)
+		require.NoError(t, os.Chtimes(dir, past, past))
+
 		c := &Cache{dir: dir}
 		info, err := c.Info()
 		require.NoError(t, err)
@@ -91,7 +94,8 @@ func TestInfo(t *testing.T) {
 		assert.NotEmpty(t, info.Platforms)
 		assert.Contains(t, info.Platforms, "common")
 		assert.Contains(t, info.Platforms, "linux")
-		assert.Greater(t, info.AgeDuration, time.Duration(0))
+		assert.Greater(t, info.AgeDuration, 55*time.Minute)
+		assert.Less(t, info.AgeDuration, 65*time.Minute)
 		assert.Len(t, info.LanguageStats[0].Platforms, 2)
 		assert.Equal(t, "common", info.LanguageStats[0].Platforms[0].Name)
 		assert.Equal(t, 1, info.LanguageStats[0].Platforms[0].Pages)
