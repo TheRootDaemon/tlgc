@@ -118,6 +118,57 @@ func TestLintSpecsIgnore(t *testing.T) {
 	assertSpecErrors(t, r, []string{"TLDR004"}, 2, false)
 }
 
+func TestString(t *testing.T) {
+	tests := []struct {
+		name string
+		err  Error
+		want string
+	}{
+		{
+			name: "standard error",
+			err: Error{
+				Code:        "TLDR001",
+				Line:        10,
+				Description: "missing command description",
+			},
+			want: "TLDR001:10 missing command description",
+		},
+		{
+			name: "zero line",
+			err: Error{
+				Code:        "TLDR002",
+				Line:        0,
+				Description: "invalid page format",
+			},
+			want: "TLDR002:0 invalid page format",
+		},
+		{
+			name: "empty fields",
+			err:  Error{},
+			want: ":0 ",
+		},
+		{
+			name: "description with punctuation",
+			err: Error{
+				Code:        "TLDR003",
+				Line:        42,
+				Description: "description must end with a period.",
+			},
+			want: "TLDR003:42 description must end with a period.",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(
+			tt.name,
+			func(t *testing.T) {
+				got := tt.err.String()
+				require.Equal(t, tt.want, got)
+			},
+		)
+	}
+}
+
 // assertSpecErrors verifies that a lint result
 // contains the expected number of errors and error codes.
 //
