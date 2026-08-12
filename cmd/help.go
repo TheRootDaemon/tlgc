@@ -58,9 +58,24 @@ func printFlags() {
 			description: "List all pages",
 		},
 		{
-			short: "-s",
-			long:  "--search",
-			arg:   "<KEYWORD>", description: "Search for pages containing a keyword",
+			long:        "--lint",
+			arg:         "<FILE|DIR>",
+			description: "Validate the specified tldr pages",
+		},
+		{
+			long:        "--tabular",
+			description: "Display lint errors in a tabular format",
+		},
+		{
+			long:        "--ignore",
+			arg:         "<CODES>",
+			description: "Ignore comma-separated lint error codes",
+		},
+		{
+			short:       "-s",
+			long:        "--search",
+			arg:         "<KEYWORD>",
+			description: "Search for pages containing a keyword",
 		},
 		{
 			short:       "-b",
@@ -82,9 +97,10 @@ func printFlags() {
 			description: "Show cache information",
 		},
 		{
-			short: "-r",
-			long:  "--render",
-			arg:   "<FILE>", description: "Render the specified tldr page",
+			short:       "-r",
+			long:        "--render",
+			arg:         "<FILE>",
+			description: "Render the specified tldr page",
 		},
 		{
 			long:        "--clean-cache",
@@ -101,14 +117,16 @@ func printFlags() {
 			description: "Print the default config path",
 		},
 		{
-			short: "-p",
-			long:  "--platform",
-			arg:   "<PLATFORM>", description: "Specify the platform to use (linux, osx, windows, etc.)",
+			short:       "-p",
+			long:        "--platform",
+			arg:         "<PLATFORM>",
+			description: "Specify the platform to use (linux, osx, windows, etc.)",
 		},
 		{
-			short: "-L",
-			long:  "--language",
-			arg:   "<LANGUAGE_CODE>", description: "Specify the languages to use",
+			short:       "-L",
+			long:        "--language",
+			arg:         "<LANGUAGE_CODE>",
+			description: "Specify the languages to use",
 		},
 		{
 			long:        "--short-options",
@@ -144,13 +162,19 @@ func printFlags() {
 			long:        "--raw",
 			description: "Print pages in raw markdown instead of rendering them",
 		},
-		{long: "--no-raw", description: "Render pages instead of printing raw file contents (overrides --raw)"},
+		{
+			long:        "--no-raw",
+			description: "Render pages instead of printing raw file contents (overrides --raw)",
+		},
 		{
 			short:       "-q",
 			long:        "--quiet",
 			description: "Suppress status messages and warnings",
 		},
-		{long: "--verbose...", description: "Be more verbose (can be specified twice)"},
+		{
+			long:        "--verbose...",
+			description: "Be more verbose (can be specified twice)",
+		},
 		{
 			long:        "--color",
 			arg:         "<WHEN>",
