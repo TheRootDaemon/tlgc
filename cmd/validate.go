@@ -70,24 +70,24 @@ func validate(cli *CLI) error {
 		return fmtConflictError(cli)
 	}
 
-	// browse requires a page argument
+	// browse requires a page
 	if cli.Browse && len(cli.Page) == 0 {
 		return fmtUsage(
-			"flag %s requires a page argument",
+			"flag %s requires a page",
 			termcolor.Sprint("bold blue", "--browse"),
 		)
 	}
 
-	// lint and format require a file or directory argument
+	// lint and format require a file or directory
 	if cli.Lint && len(cli.Page) == 0 {
 		return fmtUsage(
-			"flag %s requires a file or directory argument",
+			"flag %s requires a file or directory",
 			termcolor.Sprint("bold blue", "--lint"),
 		)
 	}
 	if cli.Format && len(cli.Page) == 0 {
 		return fmtUsage(
-			"flag %s requires a file or directory argument",
+			"flag %s requires a file or directory",
 			termcolor.Sprint("bold blue", "--format"),
 		)
 	}

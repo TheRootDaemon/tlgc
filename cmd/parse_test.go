@@ -500,7 +500,7 @@ func TestParse(t *testing.T) {
 			args:    []string{"-b"},
 			wantErr: true,
 			errCheck: func(t *testing.T, err error) {
-				assert.ErrorContains(t, err, "requires a page argument")
+				assert.ErrorContains(t, err, "requires a page")
 			},
 		},
 		{
@@ -508,7 +508,7 @@ func TestParse(t *testing.T) {
 			args:    []string{"--lint"},
 			wantErr: true,
 			errCheck: func(t *testing.T, err error) {
-				assert.ErrorContains(t, err, "requires a file or directory argument")
+				assert.ErrorContains(t, err, "requires a file or directory")
 			},
 		},
 		{
@@ -516,7 +516,7 @@ func TestParse(t *testing.T) {
 			args:    []string{"--format"},
 			wantErr: true,
 			errCheck: func(t *testing.T, err error) {
-				assert.ErrorContains(t, err, "requires a file or directory argument")
+				assert.ErrorContains(t, err, "requires a file or directory")
 			},
 		},
 		{
