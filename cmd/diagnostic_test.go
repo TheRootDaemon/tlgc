@@ -49,6 +49,16 @@ func TestFmtFlagError(t *testing.T) {
 				"requires an argument",
 			},
 		},
+		{
+			name: "missing_argument_output",
+			setup: func(fs *flag.FlagSet) {
+				fs.String("output", "", "")
+			},
+			args: []string{"--output"},
+			contains: []string{
+				"--format",
+			},
+		},
 	}
 
 	for _, tt := range tests {
