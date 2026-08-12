@@ -1,6 +1,9 @@
 complete -c tldr -s u -l update -d "Update the cache"
 complete -c tldr -s l -l list -d "List all pages in the current platform"
 complete -c tldr -s a -l list-all -d "List all pages"
+complete -c tldr -l lint -d "Validate the specified tldr pages" -r
+complete -c tldr -l tabular -d "Display lint errors in a tabular format"
+complete -c tldr -l ignore -d "Ignore comma-separated lint error codes" -r
 complete -c tldr -s s -l search -d "Search for pages containing a keyword"
 complete -c tldr -s b -l browse -d "Open page in the default web browser"
 complete -c tldr -l list-platforms -d "List available platforms"
