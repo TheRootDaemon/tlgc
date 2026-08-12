@@ -32,7 +32,17 @@ func fmtFlagError(fs *flag.FlagSet, err error) error {
 	case strings.HasPrefix(s, "flag needs an argument: "):
 		raw := strings.TrimPrefix(s, "flag needs an argument: ")
 		name := strings.TrimLeft(raw, "-")
-		return fmtUsage("flag %s requires an argument", termcolor.Sprint("bold blue", flagDisplay(name)))
+		if name == "output" {
+			return fmtUsage(
+				"flag %s requires %s",
+				termcolor.Sprint("bold blue", "--output"),
+				termcolor.Sprint("bold blue", "--format"),
+			)
+		}
+		return fmtUsage(
+			"flag %s requires an argument",
+			termcolor.Sprint("bold blue", flagDisplay(name)),
+		)
 	default:
 		return fmtUsage("%s", s)
 	}
