@@ -99,6 +99,8 @@ func (a *App) dispatch(cli *cmd.CLI) int {
 		return a.listPages(cli)
 	case cli.ListAll:
 		return a.listAllPages()
+	case cli.Lint:
+		return a.lintPages(cli)
 	case cli.Search != "":
 		return a.searchPages(cli)
 	case cli.ListPlatforms:
