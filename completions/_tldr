@@ -20,6 +20,9 @@ _tldr() {
         {-u,--update}"[Update the cache]" \
         {-l,--list}"[List all pages in the current platform]" \
         {-a,--list-all}"[List all pages]" \
+        --lint"[Validate the specified tldr pages]:FILE:_files" \
+        --tabular"[Display lint errors in a tabular format]" \
+        --ignore"[Ignore comma-separated lint error codes]" \
         {-s,--search}"[Search for pages containing a keyword]" \
         {-b,--browse}"[Open page in the default web browser]" \
         --list-platforms"[List available platforms]" \
