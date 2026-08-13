@@ -2,7 +2,6 @@ package app
 
 import (
 	"fmt"
-	"io/fs"
 	"os"
 	"path/filepath"
 
@@ -11,10 +10,12 @@ import (
 	"github.com/TheRootDaemon/tlgc/logger"
 )
 
-// lintPages validates the tldr pages
-// under the given paths
-// and reports any lint errors to stderr.
-// Returns 0 when no errors are found, 1 otherwise.
+// lintPages runs the linter over every page reachable
+// from the CLI paths and reports each violation to stderr.
+//
+// It returns 0 when every file passed without violations
+// and 1 otherwise;
+// a failure to collect or open any file is logged and also yields 1.
 func (a *App) lintPages(cli *cmd.CLI) int {
 	files, err := collectFiles(cli.Page)
 	if err != nil {
@@ -22,26 +23,9 @@ func (a *App) lintPages(cli *cmd.CLI) int {
 		return 1
 	}
 
-	root, err := os.OpenRoot(".")
-	if err != nil {
-		logger.Error("%v", err)
-		return 1
-	}
-	defer func() {
-		_ = root.Close()
-	}()
-
 	failed := false
 	for _, file := range files {
-		f, err := root.Open(file)
-		if err != nil {
-			logger.Error("%v", err)
-			failed = true
-			continue
-		}
-
-		result, err := lint.Lint(f, cli.Ignore...)
-		_ = f.Close()
+		result, err := a.lintFile(file, cli.Ignore...)
 		if err != nil {
 			logger.Error("%v", err)
 			failed = true
@@ -61,8 +45,36 @@ func (a *App) lintPages(cli *cmd.CLI) int {
 	return 0
 }
 
-// writeLintError reports a single lint error to stderr
-// in the default or tabular reference format.
+// lintFile opens the page at path and runs every applicable lint rule
+// over it, returning the violations found.
+//
+// Error codes passed in ignore are suppressed by the linter.
+//
+// On any open or lint failure it returns an empty Result together with the error.
+func (a *App) lintFile(
+	path string,
+	ignore ...string,
+) (*lint.Result, error) {
+	root, err := os.OpenRoot(filepath.Dir(path))
+	if err != nil {
+		return &lint.Result{}, err
+	}
+	defer func() {
+		_ = root.Close()
+	}()
+
+	f, err := root.Open(filepath.Base(path))
+	if err != nil {
+		return &lint.Result{}, err
+	}
+	defer func() {
+		_ = f.Close()
+	}()
+
+	return lint.Lint(f, ignore...)
+}
+
+// writeLintError reports a single lint violation for path to a.Stderr.
 func (a *App) writeLintError(
 	path string,
 	e lint.Error,
@@ -88,61 +100,4 @@ func (a *App) writeLintError(
 		e.Code,
 		e.Description,
 	)
-}
-
-// collectFiles expands each input path
-// into a flat list of page files.
-// Individual .md files are included as-is,
-// while directories are walked recursively
-// to collect .md files.
-func collectFiles(paths []string) ([]string, error) {
-	var files []string
-
-	for _, path := range paths {
-		pathFiles, err := collectPathFiles(path)
-		if err != nil {
-			return nil, err
-		}
-		files = append(files, pathFiles...)
-	}
-
-	return files, nil
-}
-
-// collectPathFiles expands a single path into page files.
-// A .md file is returned as-is,
-// a directory is walked recursively for .md files,
-// and other file types are ignored.
-func collectPathFiles(path string) ([]string, error) {
-	info, err := os.Stat(path)
-	if err != nil {
-		return nil, err
-	}
-
-	if !info.IsDir() {
-		if filepath.Ext(path) == ".md" {
-			return []string{path}, nil
-		}
-		return nil, nil
-	}
-
-	var files []string
-	if err = filepath.WalkDir(
-		path,
-		func(entry string, d fs.DirEntry, err error) error {
-			if err != nil {
-				return err
-			}
-
-			if !d.IsDir() && filepath.Ext(entry) == ".md" {
-				files = append(files, entry)
-			}
-
-			return nil
-		},
-	); err != nil {
-		return nil, err
-	}
-
-	return files, nil
 }
