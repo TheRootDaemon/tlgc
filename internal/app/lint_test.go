@@ -1,205 +1,93 @@
 package app
 
 import (
-	"bytes"
-	"os"
 	"path/filepath"
-	"sort"
+	"strings"
 	"testing"
 
-	"github.com/TheRootDaemon/tlgc/internal/lint"
+	"github.com/TheRootDaemon/tlgc/cmd"
 	"github.com/stretchr/testify/assert"
 )
 
-func TestCollectFiles(t *testing.T) {
+func TestLintPages(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
-		name  string
-		setup func(*testing.T) ([]string, []string, bool)
+		name       string
+		setup      func(*testing.T) ([]string, *cmd.CLI)
+		wantCode   int
+		wantStderr []string
 	}{
 		{
-			name: "file_and_directory_combined",
-			setup: func(t *testing.T) ([]string, []string, bool) {
-				dir := filepath.Join(t.TempDir(), "pages")
-				assert.NoError(t, mkdirall(dir))
-
-				solo := filepath.Join(t.TempDir(), "solo.md")
-				md := filepath.Join(dir, "a.md")
-				other := filepath.Join(dir, "b.txt")
-
-				touch(t, solo)
-				touch(t, md)
-				touch(t, other)
-
-				return []string{solo, dir}, []string{solo, md}, false
+			name: "valid_file_returns_zero",
+			setup: func(t *testing.T) ([]string, *cmd.CLI) {
+				path := writePage(t, t.TempDir(), "tar.md", validPage)
+				return []string{path}, &cmd.CLI{}
 			},
+			wantCode: 0,
 		},
 		{
-			name: "nonexistent_aborts",
-			setup: func(t *testing.T) ([]string, []string, bool) {
+			name: "invalid_file_reports_to_stderr",
+			setup: func(t *testing.T) ([]string, *cmd.CLI) {
+				path := writePage(t, t.TempDir(), "bad.md", "x tar\n> no\n")
+				return []string{path}, &cmd.CLI{}
+			},
+			wantCode:   1,
+			wantStderr: []string{"bad.md"},
+		},
+		{
+			name: "directory_walk_skips_non_md",
+			setup: func(t *testing.T) ([]string, *cmd.CLI) {
 				dir := t.TempDir()
-				md := filepath.Join(dir, "a.md")
-				touch(t, md)
-
-				return []string{md, filepath.Join(dir, "nope")}, nil, true
+				writePage(t, dir, "bad.txt", "x tar\n> no\n")
+				writePage(t, dir, "good.md", validPage)
+				return []string{dir}, &cmd.CLI{}
 			},
+			wantCode: 0,
 		},
 		{
-			name: "empty_input",
-			setup: func(t *testing.T) ([]string, []string, bool) {
-				return nil, nil, false
+			name: "non_md_direct_file_still_linted",
+			setup: func(t *testing.T) ([]string, *cmd.CLI) {
+				path := writePage(t, t.TempDir(), "page.txt", validPage)
+				return []string{path}, &cmd.CLI{}
 			},
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(
-			tt.name,
-			func(t *testing.T) {
-				paths, want, wantErr := tt.setup(t)
-
-				got, err := collectFiles(paths)
-
-				if wantErr {
-					assert.Error(t, err)
-					return
-				}
-
-				assert.NoError(t, err)
-				sort.Strings(got)
-				sort.Strings(want)
-				assert.Equal(t, want, got)
-			},
-		)
-	}
-}
-
-func TestCollectPathFiles(t *testing.T) {
-	t.Parallel()
-
-	tests := []struct {
-		name  string
-		setup func(*testing.T) (string, []string, bool)
-	}{
-		{
-			name: "single_md_file",
-			setup: func(t *testing.T) (string, []string, bool) {
-				path := filepath.Join(t.TempDir(), "a.md")
-				touch(t, path)
-				return path, []string{path}, false
-			},
+			wantCode:   1,
+			wantStderr: []string{"page.txt"},
 		},
 		{
-			name: "non_md_file_ignored",
-			setup: func(t *testing.T) (string, []string, bool) {
-				path := filepath.Join(t.TempDir(), "a.txt")
-				touch(t, path)
-				return path, nil, false
+			name: "ignore_codes_suppress_errors",
+			setup: func(t *testing.T) ([]string, *cmd.CLI) {
+				path := writePage(t, t.TempDir(), "bad.md", "x tar\n> no\n")
+				return []string{path}, &cmd.CLI{Ignore: []string{"TLDR106"}}
 			},
+			wantCode: 0,
 		},
 		{
-			name: "directory_walked_recursively",
-			setup: func(t *testing.T) (string, []string, bool) {
-				dir := t.TempDir()
-				sub := filepath.Join(dir, "sub")
-				assert.NoError(t, mkdirall(sub))
-
-				files := []string{
-					filepath.Join(dir, "a.md"),
-					filepath.Join(dir, "b.txt"),
-					filepath.Join(sub, "c.md"),
-				}
-
-				for _, f := range files {
-					touch(t, f)
-				}
-				return dir, []string{files[0], files[2]}, false
+			name: "nonexistent_path_returns_one",
+			setup: func(t *testing.T) ([]string, *cmd.CLI) {
+				return []string{filepath.Join(t.TempDir(), "nope")}, &cmd.CLI{}
 			},
-		},
-		{
-			name: "empty_directory",
-			setup: func(t *testing.T) (string, []string, bool) {
-				return t.TempDir(), nil, false
-			},
-		},
-		{
-			name: "nonexistent_path",
-			setup: func(t *testing.T) (string, []string, bool) {
-				return filepath.Join(t.TempDir(), "nope"), nil, true
-			},
+			wantCode: 1,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			path, want, wantErr := tt.setup(t)
+			paths, cli := tt.setup(t)
+			a, _, stderr := newTestApp()
+			cli.Page = paths
 
-			got, err := collectPathFiles(path)
+			got := a.lintPages(cli)
 
-			if wantErr {
-				assert.Error(t, err)
-				return
+			assert.Equal(t, tt.wantCode, got)
+			out := stderr.String()
+			for _, want := range tt.wantStderr {
+				assert.Contains(t, out, want)
 			}
 
-			assert.NoError(t, err)
-			sort.Strings(got)
-			sort.Strings(want)
-			assert.Equal(t, want, got)
+			if len(tt.wantStderr) == 0 {
+				assert.Empty(t, out, strings.TrimSpace(out))
+			}
 		})
 	}
-}
-
-func TestWriteLintError(t *testing.T) {
-	t.Parallel()
-
-	tests := []struct {
-		name    string
-		path    string
-		err     lint.Error
-		tabular bool
-		want    string
-	}{
-		{
-			name: "plain_format",
-			path: "pages/a.md",
-			err:  lint.Error{Code: "TLDR001", Line: 1, Description: "leading whitespace"},
-			want: "pages/a.md:1: TLDR001 leading whitespace\n",
-		},
-		{
-			name:    "tabular_format",
-			path:    "pages/a.md",
-			err:     lint.Error{Code: "TLDR001", Line: 1, Description: "leading whitespace"},
-			tabular: true,
-			want:    "pages/a.md\t1\tTLDR001\tleading whitespace\t\n",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(
-			tt.name,
-			func(t *testing.T) {
-				var buf bytes.Buffer
-				a := &App{
-					Stderr: &buf,
-				}
-
-				a.writeLintError(tt.path, tt.err, tt.tabular)
-				assert.Equal(t, tt.want, buf.String())
-			},
-		)
-	}
-}
-
-// touch creates an empty file at path with permissions 0600.
-// It is intended for use in tests.
-func touch(t *testing.T, path string) {
-	t.Helper()
-	assert.NoError(t, os.WriteFile(path, nil, 0o600))
-}
-
-// mkdirall creates path and any missing parent directories
-// with permissions 0750.
-func mkdirall(path string) error {
-	return os.MkdirAll(path, 0o750)
 }

@@ -11,7 +11,12 @@ import (
 	"github.com/TheRootDaemon/tlgc/platform"
 )
 
-// App is the main application struct that holds I/O streams and configuration.
+// App is the main application struct
+// that holds I/O streams and configuration.
+//
+// It is constructed with New,
+// which fills the streams with the process defaults,
+// and customized through the With* options.
 type App struct {
 	// Stdin is the reader for standard input.
 	Stdin io.Reader
@@ -74,6 +79,16 @@ func New(opts ...Option) *App {
 
 // Run initializes the configuration when required and dispatches
 // the parsed CLI command to the appropriate handler.
+//
+// Configuration is loaded
+// unless the command is one of the few that must work without it
+// (printing help, the version, or config-file paths).
+//
+// A configuration load failure is logged
+// and turns into an exit code of 1.
+// Otherwise the command is delegated
+// to dispatch, whose result becomes the exit code.
+//
 // It returns 0 on success and 1 on error.
 func (a *App) Run(cli *cmd.CLI) int {
 	needsConfig := !cli.GenConfig && !cli.ConfigPath && !cli.ShowVersion && !cli.ShowHelp
@@ -90,6 +105,13 @@ func (a *App) Run(cli *cmd.CLI) int {
 
 // dispatch routes the parsed CLI command to the corresponding handler
 // based on the provided flags.
+//
+// The cases are evaluated in order,
+// so mutually exclusive operations resolve to the first matching flag:
+// explicit operations (update, list, lint, format, search, and the rest)
+// win over the bare page-lookup that handles positional arguments in cli.Page.
+// When no case matches, the command is a no-op and returns 0.
+//
 // It returns 0 on success and 1 on error.
 func (a *App) dispatch(cli *cmd.CLI) int {
 	switch {
@@ -101,6 +123,8 @@ func (a *App) dispatch(cli *cmd.CLI) int {
 		return a.listAllPages()
 	case cli.Lint:
 		return a.lintPages(cli)
+	case cli.Format:
+		return a.formatPages(cli)
 	case cli.Search != "":
 		return a.searchPages(cli)
 	case cli.ListPlatforms:
