@@ -19,8 +19,9 @@ func checkLeadingWhitespace(p *parsedPage, r *Result) {
 			(l.rawLine[0] == ' ' || l.rawLine[0] == '\t') {
 			addError(r, "TLDR001", l.lineNumber)
 		} else if i > 0 {
-			// leading blank line triggers TLDR001.
-			addError(r, "TLDR001", 0)
+			// leading blank line triggers TLDR001
+			// at the start of the leading-whitespace region.
+			addError(r, "TLDR001", p.lines[0].lineNumber)
 		}
 
 		break
@@ -79,17 +80,20 @@ func checkNoTrailingWhitespaceAtEOF(p *parsedPage, r *Result) {
 // It reports an error if the page does not end with a newline.
 func checkEndsWithNewline(p *parsedPage, r *Result) {
 	if !strings.HasSuffix(p.rawContent, "\n") {
-		addError(r, "TLDR009", 0)
+		addError(r, "TLDR009", 1)
 	}
 }
 
 // checkUnixLineEndings enforces TLDR010.
 //
-// It reports an error if the page contains carriage returns,
-// that is, non-Unix (CRLF or CR) line endings.
+// It reports an error for every line
+// that contains a carriage return,
+// that is, a non-Unix (CRLF or CR) line ending.
 func checkUnixLineEndings(p *parsedPage, r *Result) {
-	if strings.Contains(p.rawContent, "\r") {
-		addError(r, "TLDR010", 0)
+	for _, l := range p.lines {
+		if strings.Contains(l.rawLine, "\r") {
+			addError(r, "TLDR010", l.lineNumber)
+		}
 	}
 }
 
@@ -100,14 +104,18 @@ func checkUnixLineEndings(p *parsedPage, r *Result) {
 // A trailing run at EOF is consumed by TLDR008's
 // whitespace-at-end-of-file rule and is not reported here.
 func checkConsecutiveBlankLines(p *parsedPage, r *Result) {
+	runStart := 0
 	run := 0
 	for _, l := range p.lines {
 		if l.kind == kindBlank {
+			if run == 0 {
+				runStart = l.lineNumber
+			}
 			run++
 			continue
 		}
 		if run > 1 {
-			addError(r, "TLDR011", l.lineNumber)
+			addError(r, "TLDR011", runStart)
 		}
 		run = 0
 	}

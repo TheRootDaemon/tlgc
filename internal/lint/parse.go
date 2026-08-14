@@ -17,7 +17,7 @@ type parsedLine struct {
 	// kindBlank, kindTitle, kindDescription, kindExampleDesc, kindCommand, or kindText
 	kind lineKind
 
-	// 0-indexed line number within the raw content
+	// 1-indexed line number within the raw content
 	lineNumber int
 
 	// original line text (without trailing \n)
@@ -35,7 +35,7 @@ type commandSection struct {
 	// example description text (after "- ")
 	description string
 
-	// 0-indexed line number of the description
+	// 1-indexed line number of the description
 	descriptionLineNumber int
 
 	// command lines that belong to the example
@@ -53,7 +53,7 @@ type parsedPage struct {
 	// first title text (without the leading '#')
 	title string
 
-	// 0-indexed line number of the title
+	// 1-indexed line number of the title
 	titleLineNumber int
 
 	// consecutive description lines following the title

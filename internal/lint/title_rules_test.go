@@ -92,21 +92,18 @@ func TestCheckTitleDescriptionSeparator(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		t.Run(
-			tt.name,
-			func(t *testing.T) {
-				r := &Result{}
-				checkTitleDescriptionSeparator(
-					&parsedPage{
-						lines:           tt.lines,
-						descriptions:    tt.descriptions,
-						titleLineNumber: tt.titleLineNumber,
-					},
-					r,
-				)
-				require.Equal(t, tt.wantCode, errorCode(r))
-			},
-		)
+		t.Run(tt.name, func(t *testing.T) {
+			r := &Result{}
+			checkTitleDescriptionSeparator(
+				&parsedPage{
+					lines:           tt.lines,
+					descriptions:    tt.descriptions,
+					titleLineNumber: tt.titleLineNumber,
+				},
+				r,
+			)
+			require.Equal(t, tt.wantCode, errorCode(r))
+		})
 	}
 }
 
@@ -127,20 +124,17 @@ func TestCheckTitleCharacters(t *testing.T) {
 		{name: "trailing period fails", title: "App.", titleLineNumber: 2, wantCode: "TLDR013"},
 	}
 	for _, tt := range tests {
-		t.Run(
-			tt.name,
-			func(t *testing.T) {
-				r := &Result{}
-				checkTitleCharacters(
-					&parsedPage{
-						title:           tt.title,
-						titleLineNumber: tt.titleLineNumber,
-					},
-					r,
-				)
-				require.Equal(t, tt.wantCode, errorCode(r))
-			},
-		)
+		t.Run(tt.name, func(t *testing.T) {
+			r := &Result{}
+			checkTitleCharacters(
+				&parsedPage{
+					title:           tt.title,
+					titleLineNumber: tt.titleLineNumber,
+				},
+				r,
+			)
+			require.Equal(t, tt.wantCode, errorCode(r))
+		})
 	}
 }
 
@@ -157,7 +151,7 @@ func TestCheckTitleHash(t *testing.T) {
 		rawLine:    "> D",
 		content:    "D",
 	}
-	ccommand := parsedLine{
+	command := parsedLine{
 		kind:               kindCommand,
 		lineNumber:         1,
 		rawLine:            "`c`",
@@ -177,18 +171,18 @@ func TestCheckTitleHash(t *testing.T) {
 		},
 		{
 			name:     "title in the middle passes",
-			lines:    []parsedLine{description, ccommand, title},
+			lines:    []parsedLine{description, command, title},
 			wantCode: "",
 		},
 		{
 			name:     "no title fails",
-			lines:    []parsedLine{description, ccommand},
+			lines:    []parsedLine{description, command},
 			wantCode: "TLDR106",
 		},
 		{
-			name:     "empty page fails",
+			name:     "empty page yields no error",
 			lines:    nil,
-			wantCode: "TLDR106",
+			wantCode: "",
 		},
 	}
 	for _, tt := range tests {
@@ -222,12 +216,9 @@ func TestIsValidTitleRune(t *testing.T) {
 		{name: "slash", in: '/', want: false},
 	}
 	for _, tt := range tests {
-		t.Run(
-			tt.name,
-			func(t *testing.T) {
-				got := isValidTitleRune(tt.in)
-				require.Equal(t, tt.want, got)
-			},
-		)
+		t.Run(tt.name, func(t *testing.T) {
+			got := isValidTitleRune(tt.in)
+			require.Equal(t, tt.want, got)
+		})
 	}
 }

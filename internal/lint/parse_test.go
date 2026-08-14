@@ -11,68 +11,68 @@ func TestParse(t *testing.T) {
 
 	title := parsedLine{
 		kind:       kindTitle,
-		lineNumber: 0,
+		lineNumber: 1,
 		rawLine:    "# App",
 		content:    "App",
 	}
 	blank_1 := parsedLine{
 		kind:       kindBlank,
-		lineNumber: 1,
+		lineNumber: 2,
 		rawLine:    "",
 	}
 	desc := parsedLine{
 		kind:       kindDescription,
-		lineNumber: 2,
+		lineNumber: 3,
 		rawLine:    "> Brief description.",
 		content:    "Brief description.",
 	}
 	link := parsedLine{
 		kind:       kindDescription,
-		lineNumber: 3,
+		lineNumber: 4,
 		rawLine:    "> More information: https://example.com",
 		content:    "More information: https://example.com",
 	}
 	blank_4 := parsedLine{
 		kind:       kindBlank,
-		lineNumber: 4,
+		lineNumber: 5,
 		rawLine:    "",
 	}
 	copyDescription := parsedLine{
 		kind:       kindExampleDesc,
-		lineNumber: 5,
+		lineNumber: 6,
 		rawLine:    "- Copy files",
 		content:    "Copy files",
 	}
 	blank_6 := parsedLine{
 		kind:       kindBlank,
-		lineNumber: 6,
+		lineNumber: 7,
 		rawLine:    "",
 	}
 	copyCommand := parsedLine{
 		kind:       kindCommand,
-		lineNumber: 7,
+		lineNumber: 8,
 		rawLine:    "`cp file file.bak`",
 		content:    "cp file file.bak", hasClosingBacktick: true,
 	}
 	blank_8 := parsedLine{
 		kind:       kindBlank,
-		lineNumber: 8,
+		lineNumber: 9,
 		rawLine:    "",
 	}
 	backupDescription := parsedLine{
 		kind:       kindExampleDesc,
-		lineNumber: 9,
+		lineNumber: 10,
 		rawLine:    "- Create a backup",
 		content:    "Create a backup",
 	}
 	blank_10 := parsedLine{
 		kind:       kindBlank,
-		lineNumber: 10,
+		lineNumber: 11,
 		rawLine:    "",
 	}
 	backupCommand := parsedLine{
 		kind:               kindCommand,
-		lineNumber:         11,
+		lineNumber:         12,
 		rawLine:            "`tar czf backup.tar.gz file`",
 		content:            "tar czf backup.tar.gz file",
 		hasClosingBacktick: true,
@@ -99,8 +99,8 @@ func TestParse(t *testing.T) {
 			want: &parsedPage{
 				rawContent: "some text\n",
 				lines: []parsedLine{
-					{kind: kindText, lineNumber: 0, rawLine: "some text", content: "some text"},
-					{kind: kindBlank, lineNumber: 1, rawLine: ""}, // trailing newline splits into a blank line
+					{kind: kindText, lineNumber: 1, rawLine: "some text", content: "some text"},
+					{kind: kindBlank, lineNumber: 2, rawLine: ""}, // trailing newline splits into a blank line
 				},
 			},
 		},
@@ -111,12 +111,12 @@ func TestParse(t *testing.T) {
 				rawContent:      raw,
 				lines:           []parsedLine{title, blank_1, desc, link, blank_4, copyDescription, blank_6, copyCommand, blank_8, backupDescription, blank_10, backupCommand},
 				title:           "App",
-				titleLineNumber: 0,
+				titleLineNumber: 1,
 				descriptions:    []parsedLine{desc, link},
 				infoLinks:       []parsedLine{link},
 				exampleSections: []commandSection{
-					{description: "Copy files", descriptionLineNumber: 5, commands: []parsedLine{copyCommand}},
-					{description: "Create a backup", descriptionLineNumber: 9, commands: []parsedLine{backupCommand}},
+					{description: "Copy files", descriptionLineNumber: 6, commands: []parsedLine{copyCommand}},
+					{description: "Create a backup", descriptionLineNumber: 10, commands: []parsedLine{backupCommand}},
 				},
 			},
 		},
@@ -126,27 +126,24 @@ func TestParse(t *testing.T) {
 			want: &parsedPage{
 				rawContent: "# T\r\n\r\n> D\r\n",
 				lines: []parsedLine{
-					{kind: kindTitle, lineNumber: 0, rawLine: "# T\r", content: "T"},
-					{kind: kindBlank, lineNumber: 1, rawLine: "\r"},
-					{kind: kindDescription, lineNumber: 2, rawLine: "> D\r", content: "D"},
-					{kind: kindBlank, lineNumber: 3, rawLine: ""},
+					{kind: kindTitle, lineNumber: 1, rawLine: "# T\r", content: "T"},
+					{kind: kindBlank, lineNumber: 2, rawLine: "\r"},
+					{kind: kindDescription, lineNumber: 3, rawLine: "> D\r", content: "D"},
+					{kind: kindBlank, lineNumber: 4, rawLine: ""},
 				},
 				title:           "T",
-				titleLineNumber: 0,
-				descriptions:    []parsedLine{{kind: kindDescription, lineNumber: 2, rawLine: "> D\r", content: "D"}},
+				titleLineNumber: 1,
+				descriptions:    []parsedLine{{kind: kindDescription, lineNumber: 3, rawLine: "> D\r", content: "D"}},
 				infoLinks:       []parsedLine{},
 				exampleSections: nil,
 			},
 		},
 	}
 	for _, tt := range tests {
-		t.Run(
-			tt.name,
-			func(t *testing.T) {
-				got := parse(tt.raw)
-				require.Equal(t, tt.want, got)
-			},
-		)
+		t.Run(tt.name, func(t *testing.T) {
+			got := parse(tt.raw)
+			require.Equal(t, tt.want, got)
+		})
 	}
 }
 
@@ -297,12 +294,9 @@ func TestBuildPage(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		t.Run(
-			tt.name,
-			func(t *testing.T) {
-				got := buildPage(tt.raw, tt.lines)
-				require.Equal(t, tt.want, got)
-			},
-		)
+		t.Run(tt.name, func(t *testing.T) {
+			got := buildPage(tt.raw, tt.lines)
+			require.Equal(t, tt.want, got)
+		})
 	}
 }

@@ -23,3 +23,17 @@ func errorCodes(r *Result) []string {
 	}
 	return codes
 }
+
+// errorLines returns the line numbers of all reported errors,
+// in report order.
+// It returns nil if the result is clean.
+func errorLines(r *Result) []int {
+	if len(r.Errors) == 0 {
+		return nil
+	}
+	lines := make([]int, len(r.Errors))
+	for i, e := range r.Errors {
+		lines[i] = e.Line
+	}
+	return lines
+}

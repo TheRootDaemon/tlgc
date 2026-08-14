@@ -28,7 +28,7 @@ func TestLintSpecsFailing(t *testing.T) {
 		{"failing/007.md", []string{"TLDR007"}, 2, false},
 		{"failing/008.md", []string{"TLDR008"}, 1, false},
 		{"failing/009.md", []string{"TLDR009"}, 1, false},
-		{"failing/010.md", []string{"TLDR010"}, 1, false},
+		{"failing/010.md", []string{"TLDR010"}, 7, false},
 		{"failing/011.md", []string{"TLDR011"}, 2, false},
 		{"failing/012.md", []string{"TLDR012"}, 2, false},
 		{"failing/013.md", []string{"TLDR013"}, 1, false},
@@ -53,20 +53,17 @@ func TestLintSpecsFailing(t *testing.T) {
 		{"failing/112.md", []string{"TLDR112"}, 7, false},
 	}
 	for _, tt := range tests {
-		t.Run(
-			tt.name,
-			func(t *testing.T) {
-				f, err := os.Open(filepath.Join("specs", "pages", tt.name))
-				require.NoError(t, err)
-				defer func() {
-					_ = f.Close()
-				}()
+		t.Run(tt.name, func(t *testing.T) {
+			f, err := os.Open(filepath.Join("specs", "pages", tt.name))
+			require.NoError(t, err)
+			defer func() {
+				_ = f.Close()
+			}()
 
-				r, err := Lint(f)
-				require.NoError(t, err)
-				assertSpecErrors(t, r, tt.want, tt.count, tt.subset)
-			},
-		)
+			r, err := Lint(f)
+			require.NoError(t, err)
+			assertSpecErrors(t, r, tt.want, tt.count, tt.subset)
+		})
 	}
 }
 
@@ -75,13 +72,10 @@ func TestLintSpecsForbiddenFilenameCharacters(t *testing.T) {
 	require.NoError(t, err)
 
 	for _, char := range `<>:"/\|?*` {
-		t.Run(
-			"111"+string(char),
-			func(t *testing.T) {
-				r := lint("111"+string(char)+".md", content)
-				assertSpecErrors(t, r, []string{"TLDR111"}, 1, false)
-			},
-		)
+		t.Run("111"+string(char), func(t *testing.T) {
+			r := lint("111"+string(char)+".md", content)
+			assertSpecErrors(t, r, []string{"TLDR111"}, 1, false)
+		})
 	}
 }
 
@@ -89,20 +83,17 @@ func TestLintSpecsPassing(t *testing.T) {
 	entries, err := os.ReadDir(filepath.Join("specs", "pages", "passing"))
 	require.NoError(t, err)
 	for _, entry := range entries {
-		t.Run(
-			entry.Name(),
-			func(t *testing.T) {
-				f, err := os.Open(filepath.Join("specs", "pages", "passing", entry.Name()))
-				require.NoError(t, err)
-				defer func() {
-					_ = f.Close()
-				}()
+		t.Run(entry.Name(), func(t *testing.T) {
+			f, err := os.Open(filepath.Join("specs", "pages", "passing", entry.Name()))
+			require.NoError(t, err)
+			defer func() {
+				_ = f.Close()
+			}()
 
-				r, err := Lint(f)
-				require.NoError(t, err)
-				assertSpecErrors(t, r, nil, 0, false)
-			},
-		)
+			r, err := Lint(f)
+			require.NoError(t, err)
+			assertSpecErrors(t, r, nil, 0, false)
+		})
 	}
 }
 
@@ -159,13 +150,10 @@ func TestString(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(
-			tt.name,
-			func(t *testing.T) {
-				got := tt.err.String()
-				require.Equal(t, tt.want, got)
-			},
-		)
+		t.Run(tt.name, func(t *testing.T) {
+			got := tt.err.String()
+			require.Equal(t, tt.want, got)
+		})
 	}
 }
 
