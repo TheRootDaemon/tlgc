@@ -72,6 +72,20 @@ func printFlags() {
 			description: "Ignore comma-separated lint error codes",
 		},
 		{
+			long:        "--format",
+			arg:         "<FILE|DIR>",
+			description: "Format the specified tldr pages",
+		},
+		{
+			long:        "--output",
+			arg:         "<FILE>",
+			description: "Write formatted output to the specified file",
+		},
+		{
+			long:        "--in-place",
+			description: "Format pages in place",
+		},
+		{
 			short:       "-s",
 			long:        "--search",
 			arg:         "<KEYWORD>",

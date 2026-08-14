@@ -6,7 +6,8 @@ _tldr() {
 
     local opts="-u -l -a -s -b -i -r -p -L -o -c -R -q -v -h \
     --update --list --list-all --lint --tabular \
-    --ignore --search --browse --list-platforms --list-languages \
+    --ignore --format --output --in-place --search \
+    --browse --list-platforms --list-languages \
     --info --render --clean-cache --gen-config --config-path --platform \
     --language --short-options --long-options --edit --offline --compact \
     --no-compact --raw --no-raw --quiet --verbose --color --config --version --help"
@@ -17,7 +18,7 @@ _tldr() {
     fi
 
     case $prev in
-    -r | --render | --config | --lint)
+    -r | --render | --config | --lint | --format | --output)
         mapfile -t COMPREPLY < <(compgen -f -- "$cur")
         ;;
     --color)

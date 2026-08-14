@@ -23,6 +23,9 @@ _tldr() {
         --lint"[Validate the specified tldr pages]:FILE:_files" \
         --tabular"[Display lint errors in a tabular format]" \
         --ignore"[Ignore comma-separated lint error codes]" \
+        --format"[Format the specified tldr pages]:FILE:_files" \
+        --output"[Write formatted output to the specified file]:FILE:_files" \
+        --in-place"[Format pages in place]" \
         {-s,--search}"[Search for pages containing a keyword]" \
         {-b,--browse}"[Open page in the default web browser]" \
         --list-platforms"[List available platforms]" \
