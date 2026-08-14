@@ -4,11 +4,19 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strconv"
 
 	"github.com/TheRootDaemon/tlgc/cmd"
 	"github.com/TheRootDaemon/tlgc/internal/lint"
 	"github.com/TheRootDaemon/tlgc/logger"
+	"github.com/TheRootDaemon/tlgc/termcolor"
 )
+
+// lintViolation couples a lint violation with the page it was found in.
+type lintViolation struct {
+	path string
+	err  lint.Error
+}
 
 // lintPages runs the linter over every page reachable
 // from the CLI paths and reports each violation to stderr.
@@ -24,6 +32,7 @@ func (a *App) lintPages(cli *cmd.CLI) int {
 	}
 
 	failed := false
+	var rows []lintViolation
 	for _, file := range files {
 		result, err := a.lintFile(file, cli.Ignore...)
 		if err != nil {
@@ -33,9 +42,17 @@ func (a *App) lintPages(cli *cmd.CLI) int {
 		}
 
 		for _, e := range result.Errors {
-			a.writeLintError(file, e, cli.Tabular)
+			if cli.Tabular {
+				rows = append(rows, lintViolation{path: file, err: e})
+			} else {
+				a.writeLintError(file, e)
+			}
 			failed = true
 		}
+	}
+
+	if cli.Tabular {
+		a.writeTabular(rows)
 	}
 
 	if failed {
@@ -75,23 +92,7 @@ func (a *App) lintFile(
 }
 
 // writeLintError reports a single lint violation for path to a.Stderr.
-func (a *App) writeLintError(
-	path string,
-	e lint.Error,
-	tabular bool,
-) {
-	if tabular {
-		_, _ = fmt.Fprintf(
-			a.Stderr,
-			"%s\t%d\t%s\t%s\t\n",
-			path,
-			e.Line,
-			e.Code,
-			e.Description,
-		)
-		return
-	}
-
+func (a *App) writeLintError(path string, e lint.Error) {
 	_, _ = fmt.Fprintf(
 		a.Stderr,
 		"%s:%d: %s %s\n",
@@ -100,4 +101,61 @@ func (a *App) writeLintError(
 		e.Code,
 		e.Description,
 	)
+}
+
+// writeTabular writes a decorated,
+// aligned table of lint violations to a.Stderr,
+// mirroring the header style of the search table.
+// It writes nothing when there are no rows.
+func (a *App) writeTabular(rows []lintViolation) {
+	if len(rows) == 0 {
+		return
+	}
+
+	fileW, lineW, codeW := lintColumnWidths(rows)
+
+	_, _ = fmt.Fprintln(
+		a.Stderr,
+		termcolor.Fprintf(
+			"bold",
+			"%-*s %-*s %-*s %s",
+			fileW,
+			"File",
+			lineW,
+			"Line",
+			codeW,
+			"Code",
+			"Description",
+		),
+	)
+
+	for _, r := range rows {
+		_, _ = fmt.Fprintf(
+			a.Stderr,
+			"%-*s %-*d %-*s %s\n",
+			fileW,
+			r.path,
+			lineW,
+			r.err.Line,
+			codeW,
+			r.err.Code,
+			r.err.Description,
+		)
+	}
+}
+
+// lintColumnWidths returns the widths required to display the
+// File, Line, and Code columns without truncation.
+func lintColumnWidths(rows []lintViolation) (int, int, int) {
+	fileW := len("File")
+	lineW := len("Line")
+	codeW := len("Code")
+
+	for _, r := range rows {
+		fileW = max(fileW, len(r.path))
+		lineW = max(lineW, len(strconv.Itoa(r.err.Line)))
+		codeW = max(codeW, len(r.err.Code))
+	}
+
+	return fileW, lineW, codeW
 }

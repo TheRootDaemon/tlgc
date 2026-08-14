@@ -1,11 +1,13 @@
 package app
 
 import (
+	"bytes"
 	"path/filepath"
 	"strings"
 	"testing"
 
 	"github.com/TheRootDaemon/tlgc/cmd"
+	"github.com/TheRootDaemon/tlgc/internal/lint"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -88,6 +90,128 @@ func TestLintPages(t *testing.T) {
 			if len(tt.wantStderr) == 0 {
 				assert.Empty(t, out, strings.TrimSpace(out))
 			}
+		})
+	}
+}
+
+func TestWriteLintError(t *testing.T) {
+	t.Parallel()
+
+	var buf bytes.Buffer
+	a := &App{
+		Stderr: &buf,
+	}
+
+	a.writeLintError(
+		"pages/a.md",
+		lint.Error{Code: "TLDR001", Line: 1, Description: "leading whitespace"},
+	)
+
+	assert.Equal(t, "pages/a.md:1: TLDR001 leading whitespace\n", buf.String())
+}
+
+func TestWriteTabular(t *testing.T) {
+	t.Parallel()
+
+	a, _, stderr := newTestApp()
+
+	a.writeTabular(
+		[]lintViolation{
+			{
+				path: "a.md",
+				err:  lint.Error{Line: 1, Code: "TLDR001", Description: "leading whitespace"},
+			},
+			{
+				path: "b.md",
+				err:  lint.Error{Line: 2, Code: "TLDR002", Description: "space"},
+			},
+		},
+	)
+
+	assert.Equal(
+		t,
+		"File Line Code    Description\n"+
+			"a.md 1    TLDR001 leading whitespace\n"+
+			"b.md 2    TLDR002 space\n",
+		stderr.String(),
+	)
+}
+
+func TestWriteTabularNoRows(t *testing.T) {
+	t.Parallel()
+
+	a, _, stderr := newTestApp()
+
+	a.writeTabular(nil)
+
+	assert.Empty(t, stderr.String())
+}
+
+func TestLintColumnWidths(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name     string
+		rows     []lintViolation
+		wantFile int
+		wantLine int
+		wantCode int
+	}{
+		{
+			name:     "empty_rows_uses_header_widths",
+			rows:     nil,
+			wantFile: len("File"),
+			wantLine: len("Line"),
+			wantCode: len("Code"),
+		},
+		{
+			name: "header_wins_over_short_values",
+			rows: []lintViolation{
+				{
+					path: "a.md",
+					err:  lint.Error{Line: 1, Code: "TLDR001", Description: "x"},
+				},
+			},
+			wantFile: len("File"),
+			wantLine: len("Line"),
+			wantCode: len("TLDR001"),
+		},
+		{
+			name: "long_values_widen_columns",
+			rows: []lintViolation{
+				{
+					path: "pages/somepage.md",
+					err:  lint.Error{Line: 123, Code: "TLDR102", Description: "some very long description"},
+				},
+			},
+			wantFile: len("pages/somepage.md"),
+			wantLine: len("Line"),
+			wantCode: len("TLDR102"),
+		},
+		{
+			name: "picks_max_across_all_rows",
+			rows: []lintViolation{
+				{
+					path: "a.md",
+					err:  lint.Error{Line: 1, Code: "TLDR001", Description: "short"},
+				},
+				{
+					path: "pages/very/long/path.md",
+					err:  lint.Error{Line: 4567, Code: "TLDR104", Description: "a much longer description than before"},
+				},
+			},
+			wantFile: len("pages/very/long/path.md"),
+			wantLine: len("4567"),
+			wantCode: len("TLDR104"),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotFile, gotLine, gotCode := lintColumnWidths(tt.rows)
+			assert.Equal(t, tt.wantFile, gotFile)
+			assert.Equal(t, tt.wantLine, gotLine)
+			assert.Equal(t, tt.wantCode, gotCode)
 		})
 	}
 }
