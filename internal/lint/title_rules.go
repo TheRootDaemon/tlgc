@@ -70,13 +70,18 @@ func checkTitleCharacters(p *parsedPage, r *Result) {
 // It reports an error if the page does not contain a title line,
 // that is, a line beginning with '#'.
 func checkTitleHash(p *parsedPage, r *Result) {
-	// if the page has no title, error at line 0.
+	// if the page has no title, error at the first non-blank line.
 	for _, l := range p.lines {
 		if l.kind == kindTitle {
 			return
 		}
 	}
-	addError(r, "TLDR106", 0)
+	for _, l := range p.lines {
+		if l.kind != kindBlank {
+			addError(r, "TLDR106", l.lineNumber)
+			return
+		}
+	}
 }
 
 // isValidTitleRune reports whether ch is permitted in a page title.

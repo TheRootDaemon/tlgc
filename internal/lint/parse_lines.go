@@ -13,10 +13,10 @@ func parseLines(raw string) []parsedLine {
 
 	parts := strings.Split(raw, "\n")
 	lines := make([]parsedLine, 0, len(parts))
-	for lineNumber, part := range parts {
+	for idx, part := range parts {
 		lines = append(
 			lines,
-			parseLine(lineNumber, part),
+			parseLine(idx+1, part),
 		)
 	}
 

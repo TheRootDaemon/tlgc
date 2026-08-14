@@ -26,50 +26,50 @@ func TestParseLines(t *testing.T) {
 			name: "single line",
 			raw:  "> Hello",
 			want: []parsedLine{
-				{kind: kindDescription, lineNumber: 0, rawLine: "> Hello", content: "Hello"},
+				{kind: kindDescription, lineNumber: 1, rawLine: "> Hello", content: "Hello"},
 			},
 		},
 		{
 			name: "consecutive lines are numbered in order",
 			raw:  "# App\n> D\n`c`",
 			want: []parsedLine{
-				{kind: kindTitle, lineNumber: 0, rawLine: "# App", content: "App"},
-				{kind: kindDescription, lineNumber: 1, rawLine: "> D", content: "D"},
-				{kind: kindCommand, lineNumber: 2, rawLine: "`c`", content: "c", hasClosingBacktick: true},
+				{kind: kindTitle, lineNumber: 1, rawLine: "# App", content: "App"},
+				{kind: kindDescription, lineNumber: 2, rawLine: "> D", content: "D"},
+				{kind: kindCommand, lineNumber: 3, rawLine: "`c`", content: "c", hasClosingBacktick: true},
 			},
 		},
 		{
 			name: "trailing newline yields a trailing blank line",
 			raw:  "> A\n",
 			want: []parsedLine{
-				{kind: kindDescription, lineNumber: 0, rawLine: "> A", content: "A"},
-				{kind: kindBlank, lineNumber: 1, rawLine: ""},
+				{kind: kindDescription, lineNumber: 1, rawLine: "> A", content: "A"},
+				{kind: kindBlank, lineNumber: 2, rawLine: ""},
 			},
 		},
 		{
 			name: "crlf endings classify correctly but keep raw",
 			raw:  "> A\r\n`B`\r\n",
 			want: []parsedLine{
-				{kind: kindDescription, lineNumber: 0, rawLine: "> A\r", content: "A"},
-				{kind: kindCommand, lineNumber: 1, rawLine: "`B`\r", content: "B", hasClosingBacktick: true},
-				{kind: kindBlank, lineNumber: 2, rawLine: ""},
+				{kind: kindDescription, lineNumber: 1, rawLine: "> A\r", content: "A"},
+				{kind: kindCommand, lineNumber: 2, rawLine: "`B`\r", content: "B", hasClosingBacktick: true},
+				{kind: kindBlank, lineNumber: 3, rawLine: ""},
 			},
 		},
 		{
 			name: "leading blank line is preserved",
 			raw:  "\n# T",
 			want: []parsedLine{
-				{kind: kindBlank, lineNumber: 0, rawLine: ""},
-				{kind: kindTitle, lineNumber: 1, rawLine: "# T", content: "T"},
+				{kind: kindBlank, lineNumber: 1, rawLine: ""},
+				{kind: kindTitle, lineNumber: 2, rawLine: "# T", content: "T"},
 			},
 		},
 		{
 			name: "empty middle line is a blank",
 			raw:  "# T\n\n> D",
 			want: []parsedLine{
-				{kind: kindTitle, lineNumber: 0, rawLine: "# T", content: "T"},
-				{kind: kindBlank, lineNumber: 1, rawLine: ""},
-				{kind: kindDescription, lineNumber: 2, rawLine: "> D", content: "D"},
+				{kind: kindTitle, lineNumber: 1, rawLine: "# T", content: "T"},
+				{kind: kindBlank, lineNumber: 2, rawLine: ""},
+				{kind: kindDescription, lineNumber: 3, rawLine: "> D", content: "D"},
 			},
 		},
 	}
