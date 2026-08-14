@@ -34,14 +34,20 @@ func (a *App) formatPages(cli *cmd.CLI) int {
 	}
 
 	failed := false
+	var rows []lintViolation
 	for _, file := range files {
-		hasErrors, err := a.formatFile(file, cli)
+		hasErrors, err, fileRows := a.formatFile(file, cli)
 		if err != nil {
 			logger.Error("%v", err)
 		}
 		if hasErrors {
 			failed = true
 		}
+		rows = append(rows, fileRows...)
+	}
+
+	if cli.Tabular {
+		a.writeTabular(rows)
 	}
 
 	if failed {
@@ -57,19 +63,24 @@ func (a *App) formatPages(cli *cmd.CLI) int {
 func (a *App) formatFile(
 	file string,
 	cli *cmd.CLI,
-) (bool, error) {
+) (bool, error, []lintViolation) {
 	result, err := a.lintFile(file, cli.Ignore...)
 	if err != nil {
-		return true, err
+		return true, err, nil
 	}
 
+	var rows []lintViolation
 	for _, e := range result.Errors {
-		a.writeLintError(file, e, cli.Tabular)
+		if cli.Tabular {
+			rows = append(rows, lintViolation{path: file, err: e})
+		} else {
+			a.writeLintError(file, e)
+		}
 	}
 
 	root, err := os.OpenRoot(filepath.Dir(file))
 	if err != nil {
-		return true, err
+		return true, err, nil
 	}
 	defer func() {
 		_ = root.Close()
@@ -77,7 +88,7 @@ func (a *App) formatFile(
 
 	content, err := root.ReadFile(filepath.Base(file))
 	if err != nil {
-		return true, err
+		return true, err, nil
 	}
 
 	formatted := lint.Format(string(content))
@@ -86,11 +97,11 @@ func (a *App) formatFile(
 			a.Stderr,
 			"refraining from formatting because of a fatal error",
 		)
-		return true, nil
+		return true, nil, nil
 	}
 
 	err = a.writeFormatted(root, file, formatted, cli)
-	return len(result.Errors) > 0 || err != nil, err
+	return len(result.Errors) > 0 || err != nil, err, rows
 }
 
 // writeFormatted emits the formatted page content
