@@ -37,25 +37,22 @@ func TestNew(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(
-			tt.name,
-			func(t *testing.T) {
-				config.ResetForTesting()
-				defer config.ResetForTesting()
+		t.Run(tt.name, func(t *testing.T) {
+			config.ResetForTesting()
+			defer config.ResetForTesting()
 
-				dir := t.TempDir()
-				cfgPath := filepath.Join(dir, "config.toml")
-				err := os.WriteFile(cfgPath, tt.config, 0o600)
-				require.NoError(t, err)
+			dir := t.TempDir()
+			cfgPath := filepath.Join(dir, "config.toml")
+			err := os.WriteFile(cfgPath, tt.config, 0o600)
+			require.NoError(t, err)
 
-				t.Setenv("TLGC_CONFIG", cfgPath)
-				err = config.Initialize()
-				require.NoError(t, err)
+			t.Setenv("TLGC_CONFIG", cfgPath)
+			err = config.Initialize()
+			require.NoError(t, err)
 
-				c := New()
-				assert.Equal(t, tt.want, c.Dir())
-			},
-		)
+			c := New()
+			assert.Equal(t, tt.want, c.Dir())
+		})
 	}
 }
 
@@ -67,9 +64,21 @@ func TestDir(t *testing.T) {
 		dir  string
 		want string
 	}{
-		{name: "simple_path", dir: "/tmp/cache", want: "/tmp/cache"},
-		{name: "empty_string", dir: "", want: ""},
-		{name: "relative_path", dir: "./test/cache", want: "./test/cache"},
+		{
+			name: "simple_path",
+			dir:  "/tmp/cache",
+			want: "/tmp/cache",
+		},
+		{
+			name: "empty_string",
+			dir:  "",
+			want: "",
+		},
+		{
+			name: "relative_path",
+			dir:  "./test/cache",
+			want: "./test/cache",
+		},
 	}
 
 	for _, tt := range tests {

@@ -55,14 +55,11 @@ func TestCheckCommandWhitespace(t *testing.T) {
 		{name: "escaped trailing space passes", lines: []parsedLine{escapedTrailingSpace}, wantCodes: nil},
 	}
 	for _, tt := range tests {
-		t.Run(
-			tt.name,
-			func(t *testing.T) {
-				r := &Result{}
-				checkCommandWhitespace(&parsedPage{lines: tt.lines}, r)
-				require.Equal(t, tt.wantCodes, errorCodes(r))
-			},
-		)
+		t.Run(tt.name, func(t *testing.T) {
+			r := &Result{}
+			checkCommandWhitespace(&parsedPage{lines: tt.lines}, r)
+			require.Equal(t, tt.wantCodes, errorCodes(r))
+		})
 	}
 }
 
@@ -115,14 +112,11 @@ func TestCheckCommandDescriptionAnnotated(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		t.Run(
-			tt.name,
-			func(t *testing.T) {
-				r := &Result{}
-				checkCommandDescriptionAnnotated(&parsedPage{lines: tt.lines}, r)
-				require.Equal(t, tt.wantCodes, errorCodes(r))
-			},
-		)
+		t.Run(tt.name, func(t *testing.T) {
+			r := &Result{}
+			checkCommandDescriptionAnnotated(&parsedPage{lines: tt.lines}, r)
+			require.Equal(t, tt.wantCodes, errorCodes(r))
+		})
 	}
 }
 
@@ -180,14 +174,11 @@ func TestCheckExampleDescriptionAnnotated(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		t.Run(
-			tt.name,
-			func(t *testing.T) {
-				r := &Result{}
-				checkExampleDescriptionAnnotated(&parsedPage{lines: tt.lines}, r)
-				require.Equal(t, tt.wantCodes, errorCodes(r))
-			},
-		)
+		t.Run(tt.name, func(t *testing.T) {
+			r := &Result{}
+			checkExampleDescriptionAnnotated(&parsedPage{lines: tt.lines}, r)
+			require.Equal(t, tt.wantCodes, errorCodes(r))
+		})
 	}
 }
 
@@ -224,14 +215,11 @@ func TestCheckCommandClosingBacktick(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		t.Run(
-			tt.name,
-			func(t *testing.T) {
-				r := &Result{}
-				checkCommandClosingBacktick(&parsedPage{lines: tt.lines}, r)
-				require.Equal(t, tt.wantCodes, errorCodes(r))
-			},
-		)
+		t.Run(tt.name, func(t *testing.T) {
+			r := &Result{}
+			checkCommandClosingBacktick(&parsedPage{lines: tt.lines}, r)
+			require.Equal(t, tt.wantCodes, errorCodes(r))
+		})
 	}
 }
 
@@ -268,13 +256,10 @@ func TestCheckCommandNotEmpty(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		t.Run(
-			tt.name,
-			func(t *testing.T) {
-				r := &Result{}
-				checkCommandNotEmpty(&parsedPage{lines: tt.lines}, r)
-				require.Equal(t, tt.wantCodes, errorCodes(r))
-			},
-		)
+		t.Run(tt.name, func(t *testing.T) {
+			r := &Result{}
+			checkCommandNotEmpty(&parsedPage{lines: tt.lines}, r)
+			require.Equal(t, tt.wantCodes, errorCodes(r))
+		})
 	}
 }

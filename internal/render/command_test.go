@@ -89,94 +89,108 @@ func TestRenderCommand(t *testing.T) {
 			assert.Equal(t, tt.want, buf.String())
 		})
 	}
+}
 
-	t.Run("wrapping produces multiple lines", func(t *testing.T) {
-		r := &Renderer{
-			useColor: false,
-			output: config.OutputConfig{
-				OptionStyle: config.OptionStyleLong,
-				LineLength:  15,
-			},
-			indent: config.IndentConfig{
-				Example: 4,
-			},
-		}
-		var buf strings.Builder
-		err := r.renderCommand(&buf, ParseCommand("some very long command"))
-		assert.NoError(t, err)
-		assert.Equal(t, "    some very long\n    command\n", buf.String())
-	})
+func TestRenderCommand_Wrapping(t *testing.T) {
+	t.Parallel()
 
-	t.Run("option rendered with short style", func(t *testing.T) {
-		r := &Renderer{
-			useColor: false,
-			output: config.OutputConfig{
-				OptionStyle: config.OptionStyleShort,
-				LineLength:  0,
-			},
-			indent: config.IndentConfig{
-				Example: 4,
-			},
-		}
-		var buf strings.Builder
-		err := r.renderCommand(&buf, ParseCommand("cmd {{[-s|--long]}}"))
-		assert.NoError(t, err)
-		assert.Equal(t, "    cmd -s\n", buf.String())
-	})
+	r := &Renderer{
+		useColor: false,
+		output: config.OutputConfig{
+			OptionStyle: config.OptionStyleLong,
+			LineLength:  15,
+		},
+		indent: config.IndentConfig{
+			Example: 4,
+		},
+	}
 
-	t.Run("option rendered with combined style", func(t *testing.T) {
-		r := &Renderer{
-			useColor: false,
-			output: config.OutputConfig{
-				OptionStyle: config.OptionStyleCombined,
-				LineLength:  0,
-			},
-			indent: config.IndentConfig{
-				Example: 4,
-			},
-		}
-		var buf strings.Builder
-		err := r.renderCommand(&buf, ParseCommand("cmd {{[-s|--long]}}"))
-		assert.NoError(t, err)
-		assert.Equal(t, "    cmd [-s|--long]\n", buf.String())
-	})
+	var buf strings.Builder
+	err := r.renderCommand(&buf, ParseCommand("some very long command"))
+	assert.NoError(t, err)
+	assert.Equal(t, "    some very long\n    command\n", buf.String())
+}
 
-	t.Run("colorized output contains ANSI sequences", func(t *testing.T) {
-		r := &Renderer{
-			useColor: true,
-			style:    config.DefaultStyleConfig(),
-			output: config.OutputConfig{
-				OptionStyle: config.OptionStyleLong,
-				LineLength:  0,
-			},
-			indent: config.IndentConfig{
-				Example: 4,
-			},
-		}
-		var buf strings.Builder
-		err := r.renderCommand(&buf, ParseCommand("echo hello"))
-		assert.NoError(t, err)
-		output := buf.String()
-		assert.Contains(t, output, "\x1b[36m")
-		assert.Contains(t, output, "\x1b[0m")
-		assert.Contains(t, output, "echo")
-		assert.Contains(t, output, "hello")
-	})
+func TestRenderCommand_ShortOption(t *testing.T) {
+	t.Parallel()
 
-	t.Run("error from renderCommandLine propagates", func(t *testing.T) {
-		r := &Renderer{
-			useColor: false,
-			output: config.OutputConfig{
-				OptionStyle: config.OptionStyleLong,
-				LineLength:  0,
-			},
-			indent: config.IndentConfig{
-				Example: 4,
-			},
-		}
-		err := r.renderCommand(&errorWriter{err: errors.New("write error")}, ParseCommand("echo hi"))
-		assert.ErrorContains(t, err, "write error")
-	})
+	r := &Renderer{
+		useColor: false,
+		output: config.OutputConfig{
+			OptionStyle: config.OptionStyleShort,
+			LineLength:  0,
+		},
+		indent: config.IndentConfig{
+			Example: 4,
+		},
+	}
+
+	var buf strings.Builder
+	err := r.renderCommand(&buf, ParseCommand("cmd {{[-s|--long]}}"))
+	assert.NoError(t, err)
+	assert.Equal(t, "    cmd -s\n", buf.String())
+}
+
+func TestRenderCommand_CombinedOption(t *testing.T) {
+	t.Parallel()
+
+	r := &Renderer{
+		useColor: false,
+		output: config.OutputConfig{
+			OptionStyle: config.OptionStyleCombined,
+			LineLength:  0,
+		},
+		indent: config.IndentConfig{
+			Example: 4,
+		},
+	}
+	var buf strings.Builder
+	err := r.renderCommand(&buf, ParseCommand("cmd {{[-s|--long]}}"))
+	assert.NoError(t, err)
+	assert.Equal(t, "    cmd [-s|--long]\n", buf.String())
+}
+
+func TestRenderCommand_Colorized(t *testing.T) {
+	t.Parallel()
+
+	r := &Renderer{
+		useColor: true,
+		style:    config.DefaultStyleConfig(),
+		output: config.OutputConfig{
+			OptionStyle: config.OptionStyleLong,
+			LineLength:  0,
+		},
+		indent: config.IndentConfig{
+			Example: 4,
+		},
+	}
+
+	var buf strings.Builder
+	err := r.renderCommand(&buf, ParseCommand("echo hello"))
+	assert.NoError(t, err)
+	output := buf.String()
+	assert.Contains(t, output, "\x1b[36m")
+	assert.Contains(t, output, "\x1b[0m")
+	assert.Contains(t, output, "echo")
+	assert.Contains(t, output, "hello")
+}
+
+func TestRenderCommand_WriteError(t *testing.T) {
+	t.Parallel()
+
+	r := &Renderer{
+		useColor: false,
+		output: config.OutputConfig{
+			OptionStyle: config.OptionStyleLong,
+			LineLength:  0,
+		},
+		indent: config.IndentConfig{
+			Example: 4,
+		},
+	}
+
+	err := r.renderCommand(&errorWriter{err: errors.New("write error")}, ParseCommand("echo hi"))
+	assert.ErrorContains(t, err, "write error")
 }
 
 func TestRenderCommandLine(t *testing.T) {

@@ -137,127 +137,128 @@ func TestLoadChecksums(t *testing.T) {
 func TestSaveChecksums(t *testing.T) {
 	t.Parallel()
 
-	t.Run("saves_single_entry", func(t *testing.T) {
-		dir := t.TempDir()
-		c := &Cache{dir: dir}
+	tests := []struct {
+		name     string
+		setupDir func(t *testing.T) string
+		data     map[string]string
+		wantFile string
+	}{
+		{
+			name: "saves_single_entry",
+			setupDir: func(t *testing.T) string {
+				return t.TempDir()
+			},
+			data: map[string]string{
+				"en.zip": "abc",
+			},
+			wantFile: "abc  en.zip\n",
+		},
+		{
+			name: "empty_map",
+			setupDir: func(t *testing.T) string {
+				return t.TempDir()
+			},
+			data:     map[string]string{},
+			wantFile: "",
+		},
+		{
+			name: "special_chars_in_filename",
+			setupDir: func(t *testing.T) string {
+				return t.TempDir()
+			},
+			data: map[string]string{
+				"f!@#.zip": "abc123",
+			},
+			wantFile: "abc123  f!@#.zip\n",
+		},
+		{
+			name: "overwrites_existing_file",
+			setupDir: func(t *testing.T) string {
+				dir := t.TempDir()
+				err := os.WriteFile(
+					filepath.Join(dir, checksumFile),
+					[]byte("oldhash  old.zip\n"),
+					0o600,
+				)
+				require.NoError(t, err)
+				return dir
+			},
+			data: map[string]string{
+				"new.zip": "newhash",
+			},
+			wantFile: "newhash  new.zip\n",
+		},
+		{
+			name: "creates_directory",
+			setupDir: func(t *testing.T) string {
+				return filepath.Join(t.TempDir(), "sub", "dir")
+			},
+			data: map[string]string{
+				"a.zip": "h",
+			},
+			wantFile: "h  a.zip\n",
+		},
+	}
 
-		err := c.saveChecksums(map[string]string{
-			"en.zip": "abc",
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			dir := tt.setupDir(t)
+			c := &Cache{dir: dir}
+
+			err := c.saveChecksums(tt.data)
+			require.NoError(t, err)
+
+			data, err := os.ReadFile(filepath.Join(dir, checksumFile))
+			require.NoError(t, err)
+			assert.Equal(t, tt.wantFile, string(data))
 		})
-		require.NoError(t, err)
+	}
+}
 
-		data, err := os.ReadFile(filepath.Join(dir, checksumFile))
-		require.NoError(t, err)
-		assert.Equal(t, "abc  en.zip\n", string(data))
-	})
+func TestSaveChecksumsRoundTrip(t *testing.T) {
+	t.Parallel()
 
-	t.Run("saves_multiple_entries_and_round_trip", func(t *testing.T) {
-		dir := t.TempDir()
-		c := &Cache{dir: dir}
+	tests := []struct {
+		name string
+		data map[string]string
+	}{
+		{
+			name: "multiple_entries",
+			data: map[string]string{
+				"en.zip": "abc",
+				"de.zip": "def",
+				"zh.zip": "ghi",
+			},
+		},
+		{
+			name: "empty_map",
+			data: map[string]string{},
+		},
+		{
+			name: "large_map",
+			data: func() map[string]string {
+				data := make(map[string]string)
+				for i := range 20 {
+					name := fmt.Sprintf("tldr-pages.%d.zip", i)
+					hash := fmt.Sprintf("%064d", i)
+					data[name] = hash
+				}
+				return data
+			}(),
+		},
+	}
 
-		original := map[string]string{
-			"en.zip": "abc",
-			"de.zip": "def",
-			"zh.zip": "ghi",
-		}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			dir := t.TempDir()
+			c := &Cache{dir: dir}
 
-		err := c.saveChecksums(original)
-		require.NoError(t, err)
+			require.NoError(t, c.saveChecksums(tt.data))
 
-		got := c.loadChecksums()
-		assert.Equal(t, original, got)
-	})
-
-	t.Run("overwrites_existing_file", func(t *testing.T) {
-		dir := t.TempDir()
-		c := &Cache{dir: dir}
-
-		err := os.WriteFile(
-			filepath.Join(dir, checksumFile),
-			[]byte("oldhash  old.zip\n"),
-			0o600,
-		)
-		require.NoError(t, err)
-
-		err = c.saveChecksums(map[string]string{
-			"new.zip": "newhash",
+			got := c.loadChecksums()
+			assert.Equal(t, tt.data, got)
 		})
-		require.NoError(t, err)
-
-		data, err := os.ReadFile(filepath.Join(dir, checksumFile))
-		require.NoError(t, err)
-		assert.Equal(t, "newhash  new.zip\n", string(data))
-	})
-
-	t.Run("creates_directory", func(t *testing.T) {
-		base := t.TempDir()
-		nested := filepath.Join(base, "sub", "dir")
-		c := &Cache{dir: nested}
-
-		err := c.saveChecksums(map[string]string{
-			"a.zip": "h",
-		})
-		require.NoError(t, err)
-
-		data, err := os.ReadFile(filepath.Join(nested, checksumFile))
-		require.NoError(t, err)
-		assert.Equal(t, "h  a.zip\n", string(data))
-	})
-
-	t.Run("empty_map", func(t *testing.T) {
-		dir := t.TempDir()
-		c := &Cache{dir: dir}
-
-		err := c.saveChecksums(map[string]string{})
-		require.NoError(t, err)
-
-		data, err := os.ReadFile(filepath.Join(dir, checksumFile))
-		require.NoError(t, err)
-		assert.Empty(t, data)
-	})
-
-	t.Run("special_chars_in_filename", func(t *testing.T) {
-		dir := t.TempDir()
-		c := &Cache{dir: dir}
-
-		err := c.saveChecksums(map[string]string{
-			"f!@#.zip": "abc123",
-		})
-		require.NoError(t, err)
-
-		data, err := os.ReadFile(filepath.Join(dir, checksumFile))
-		require.NoError(t, err)
-		assert.Equal(t, "abc123  f!@#.zip\n", string(data))
-	})
-
-	t.Run("round_trip_empty_map", func(t *testing.T) {
-		dir := t.TempDir()
-		c := &Cache{dir: dir}
-
-		err := c.saveChecksums(map[string]string{})
-		require.NoError(t, err)
-
-		got := c.loadChecksums()
-		assert.Equal(t, map[string]string{}, got)
-	})
-
-	t.Run("round_trip_large_map", func(t *testing.T) {
-		dir := t.TempDir()
-		c := &Cache{dir: dir}
-
-		original := make(map[string]string)
-		for i := range 20 {
-			name := fmt.Sprintf("tldr-pages.%d.zip", i)
-			hash := fmt.Sprintf("%064d", i)
-			original[name] = hash
-		}
-
-		err := c.saveChecksums(original)
-		require.NoError(t, err)
-
-		got := c.loadChecksums()
-		assert.Equal(t, original, got)
-	})
+	}
 }
 
 func TestDownloadChecksum(t *testing.T) {

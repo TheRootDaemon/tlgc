@@ -44,14 +44,11 @@ func TestCheckFileExtension(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		t.Run(
-			tt.name,
-			func(t *testing.T) {
-				r := &Result{}
-				checkFileExtension(tt.filename, r)
-				require.Equal(t, tt.wantCode, errorCode(r))
-			},
-		)
+		t.Run(tt.name, func(t *testing.T) {
+			r := &Result{}
+			checkFileExtension(tt.filename, r)
+			require.Equal(t, tt.wantCode, errorCode(r))
+		})
 	}
 }
 
@@ -83,14 +80,11 @@ func TestCheckFilenameWhitespace(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		t.Run(
-			tt.name,
-			func(t *testing.T) {
-				r := &Result{}
-				checkFilenameWhitespace(tt.filename, r)
-				require.Equal(t, tt.wantCode, errorCode(r))
-			},
-		)
+		t.Run(tt.name, func(t *testing.T) {
+			r := &Result{}
+			checkFilenameWhitespace(tt.filename, r)
+			require.Equal(t, tt.wantCode, errorCode(r))
+		})
 	}
 }
 
@@ -168,13 +162,10 @@ func TestCheckForbiddenFilenameCharacters(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		t.Run(
-			tt.name,
-			func(t *testing.T) {
-				r := &Result{}
-				checkForbiddenFilenameCharacters(tt.filename, r)
-				require.Equal(t, tt.wantCode, errorCode(r))
-			},
-		)
+		t.Run(tt.name, func(t *testing.T) {
+			r := &Result{}
+			checkForbiddenFilenameCharacters(tt.filename, r)
+			require.Equal(t, tt.wantCode, errorCode(r))
+		})
 	}
 }
