@@ -59,13 +59,15 @@ func TestApplyStyle(t *testing.T) {
 			}
 		})
 	}
+}
 
-	t.Run("useColor true with empty style returns input unchanged", func(t *testing.T) {
-		r := &Renderer{useColor: true}
-		input := "some text"
-		got := r.applyStyle(config.OutputStyle{}, input)
-		assert.Equal(t, input, got)
-	})
+func TestApplyStyle_WithEmptyStyle(t *testing.T) {
+	t.Parallel()
+
+	r := &Renderer{useColor: true}
+	input := "some text"
+	got := r.applyStyle(config.OutputStyle{}, input)
+	assert.Equal(t, input, got)
 }
 
 func TestStyleForSegment(t *testing.T) {

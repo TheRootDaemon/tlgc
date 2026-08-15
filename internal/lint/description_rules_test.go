@@ -50,14 +50,11 @@ func TestCheckDescriptionStartsWithCapital(t *testing.T) {
 		{name: "empty description passes", descriptions: []parsedLine{empty}, wantCodes: nil},
 	}
 	for _, tt := range tests {
-		t.Run(
-			tt.name,
-			func(t *testing.T) {
-				r := &Result{}
-				checkDescriptionStartsWithCapital(&parsedPage{descriptions: tt.descriptions}, r)
-				require.Equal(t, tt.wantCodes, errorCodes(r))
-			},
-		)
+		t.Run(tt.name, func(t *testing.T) {
+			r := &Result{}
+			checkDescriptionStartsWithCapital(&parsedPage{descriptions: tt.descriptions}, r)
+			require.Equal(t, tt.wantCodes, errorCodes(r))
+		})
 	}
 }
 
@@ -98,14 +95,11 @@ func TestCheckDescriptionEndsWithPeriod(t *testing.T) {
 		{name: "empty description passes", descriptions: []parsedLine{empty}, wantCodes: nil},
 	}
 	for _, tt := range tests {
-		t.Run(
-			tt.name,
-			func(t *testing.T) {
-				r := &Result{}
-				checkDescriptionEndsWithPeriod(&parsedPage{descriptions: tt.descriptions}, r)
-				require.Equal(t, tt.wantCodes, errorCodes(r))
-			},
-		)
+		t.Run(tt.name, func(t *testing.T) {
+			r := &Result{}
+			checkDescriptionEndsWithPeriod(&parsedPage{descriptions: tt.descriptions}, r)
+			require.Equal(t, tt.wantCodes, errorCodes(r))
+		})
 	}
 }
 
@@ -153,14 +147,11 @@ func TestCheckInformationLinkLabel(t *testing.T) {
 		{name: "lowercase label fails", descriptions: []parsedLine{lowercase}, wantCodes: []string{"TLDR016"}},
 	}
 	for _, tt := range tests {
-		t.Run(
-			tt.name,
-			func(t *testing.T) {
-				r := &Result{}
-				checkInformationLinkLabel(&parsedPage{descriptions: tt.descriptions}, r)
-				require.Equal(t, tt.wantCodes, errorCodes(r))
-			},
-		)
+		t.Run(tt.name, func(t *testing.T) {
+			r := &Result{}
+			checkInformationLinkLabel(&parsedPage{descriptions: tt.descriptions}, r)
+			require.Equal(t, tt.wantCodes, errorCodes(r))
+		})
 	}
 }
 
@@ -194,14 +185,11 @@ func TestCheckInformationLinkBrackets(t *testing.T) {
 		{name: "missing opening bracket fails", infoLinks: []parsedLine{missingOpen}, wantCodes: []string{"TLDR017"}},
 	}
 	for _, tt := range tests {
-		t.Run(
-			tt.name,
-			func(t *testing.T) {
-				r := &Result{}
-				checkInformationLinkBrackets(&parsedPage{infoLinks: tt.infoLinks}, r)
-				require.Equal(t, tt.wantCodes, errorCodes(r))
-			},
-		)
+		t.Run(tt.name, func(t *testing.T) {
+			r := &Result{}
+			checkInformationLinkBrackets(&parsedPage{infoLinks: tt.infoLinks}, r)
+			require.Equal(t, tt.wantCodes, errorCodes(r))
+		})
 	}
 }
 
@@ -240,14 +228,11 @@ func TestCheckSingleInformationLink(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		t.Run(
-			tt.name,
-			func(t *testing.T) {
-				r := &Result{}
-				checkSingleInformationLink(&parsedPage{infoLinks: tt.infoLinks}, r)
-				require.Equal(t, tt.wantCodes, errorCodes(r))
-			},
-		)
+		t.Run(tt.name, func(t *testing.T) {
+			r := &Result{}
+			checkSingleInformationLink(&parsedPage{infoLinks: tt.infoLinks}, r)
+			require.Equal(t, tt.wantCodes, errorCodes(r))
+		})
 	}
 }
 
@@ -299,20 +284,17 @@ func TestCheckNoteLabelFormat(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		t.Run(
-			tt.name,
-			func(t *testing.T) {
-				r := &Result{}
-				checkNoteLabelFormat(
-					&parsedPage{
-						descriptions:    tt.descriptions,
-						exampleSections: tt.exampleSections,
-					},
-					r,
-				)
-				require.Equal(t, tt.wantCodes, errorCodes(r))
-			},
-		)
+		t.Run(tt.name, func(t *testing.T) {
+			r := &Result{}
+			checkNoteLabelFormat(
+				&parsedPage{
+					descriptions:    tt.descriptions,
+					exampleSections: tt.exampleSections,
+				},
+				r,
+			)
+			require.Equal(t, tt.wantCodes, errorCodes(r))
+		})
 	}
 }
 
@@ -399,19 +381,16 @@ func TestCheckStandardTermsInBackticks(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		t.Run(
-			tt.name,
-			func(t *testing.T) {
-				r := &Result{}
-				checkStandardTermsInBackticks(
-					&parsedPage{
-						descriptions:    tt.descriptions,
-						exampleSections: tt.exampleSections,
-					},
-					r,
-				)
-				require.Equal(t, tt.wantCodes, errorCodes(r))
-			},
-		)
+		t.Run(tt.name, func(t *testing.T) {
+			r := &Result{}
+			checkStandardTermsInBackticks(
+				&parsedPage{
+					descriptions:    tt.descriptions,
+					exampleSections: tt.exampleSections,
+				},
+				r,
+			)
+			require.Equal(t, tt.wantCodes, errorCodes(r))
+		})
 	}
 }

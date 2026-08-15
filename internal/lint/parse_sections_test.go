@@ -70,13 +70,10 @@ func TestIndexOfTitle(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		t.Run(
-			tt.name,
-			func(t *testing.T) {
-				got := indexOfTitle(tt.lines)
-				require.Equal(t, tt.want, got)
-			},
-		)
+		t.Run(tt.name, func(t *testing.T) {
+			got := indexOfTitle(tt.lines)
+			require.Equal(t, tt.want, got)
+		})
 	}
 }
 
@@ -143,13 +140,10 @@ func TestNextContentIndex(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		t.Run(
-			tt.name,
-			func(t *testing.T) {
-				got := nextContentIndex(tt.lines, tt.i)
-				require.Equal(t, tt.want, got)
-			},
-		)
+		t.Run(tt.name, func(t *testing.T) {
+			got := nextContentIndex(tt.lines, tt.i)
+			require.Equal(t, tt.want, got)
+		})
 	}
 }
 
@@ -260,15 +254,12 @@ func TestCollectDescriptions(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		t.Run(
-			tt.name,
-			func(t *testing.T) {
-				description, info, next := collectDescriptions(tt.lines, tt.i)
-				require.Equal(t, tt.wantDescription, description)
-				require.Equal(t, tt.wantInfo, info)
-				require.Equal(t, tt.wantNext, next)
-			},
-		)
+		t.Run(tt.name, func(t *testing.T) {
+			description, info, next := collectDescriptions(tt.lines, tt.i)
+			require.Equal(t, tt.wantDescription, description)
+			require.Equal(t, tt.wantInfo, info)
+			require.Equal(t, tt.wantNext, next)
+		})
 	}
 }
 
@@ -387,13 +378,10 @@ func TestCollectExampleSections(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		t.Run(
-			tt.name,
-			func(t *testing.T) {
-				got := collectExampleSections(tt.lines, tt.i)
-				require.Equal(t, tt.want, got)
-			},
-		)
+		t.Run(tt.name, func(t *testing.T) {
+			got := collectExampleSections(tt.lines, tt.i)
+			require.Equal(t, tt.want, got)
+		})
 	}
 }
 
@@ -488,14 +476,11 @@ func TestBuildExampleSection(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		t.Run(
-			tt.name,
-			func(t *testing.T) {
-				got, next := buildExampleSection(tt.lines, tt.i)
-				require.Equal(t, tt.want, got)
-				require.Equal(t, tt.wantNext, next)
-			},
-		)
+		t.Run(tt.name, func(t *testing.T) {
+			got, next := buildExampleSection(tt.lines, tt.i)
+			require.Equal(t, tt.want, got)
+			require.Equal(t, tt.wantNext, next)
+		})
 	}
 }
 

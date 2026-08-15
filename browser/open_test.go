@@ -81,9 +81,16 @@ func TestOpenOnWSL(t *testing.T) {
 
 	err := openOnWSL("https://example.com")
 	assert.NoError(t, err)
-	assert.Equal(t, []call{
-		{name: "explorer.exe", args: []string{"https://example.com"}},
-	}, calls)
+	assert.Equal(
+		t,
+		[]call{
+			{
+				name: "explorer.exe",
+				args: []string{"https://example.com"},
+			},
+		},
+		calls,
+	)
 }
 
 func TestOpen(t *testing.T) {
@@ -126,7 +133,12 @@ func TestOpen(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(
 			t,
-			[]call{{name: "open", args: []string{"https://example.com"}}},
+			[]call{
+				{
+					name: "open",
+					args: []string{"https://example.com"},
+				},
+			},
 			calls,
 		)
 	case "windows":
@@ -140,7 +152,12 @@ func TestOpen(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(
 			t,
-			[]call{{name: "explorer.exe", args: []string{"https://example.com"}}},
+			[]call{
+				{
+					name: "explorer.exe",
+					args: []string{"https://example.com"},
+				},
+			},
 			calls,
 		)
 	}
@@ -153,10 +170,30 @@ func TestHasDisplay(t *testing.T) {
 		wayland string
 		want    bool
 	}{
-		{name: "neither set", display: "", wayland: "", want: false},
-		{name: "x11 only", display: ":0", wayland: "", want: true},
-		{name: "wayland only", display: "", wayland: "wayland-0", want: true},
-		{name: "both set", display: ":0", wayland: "wayland-0", want: true},
+		{
+			name:    "neither set",
+			display: "",
+			wayland: "",
+			want:    false,
+		},
+		{
+			name:    "x11 only",
+			display: ":0",
+			wayland: "",
+			want:    true,
+		},
+		{
+			name:    "wayland only",
+			display: "",
+			wayland: "wayland-0",
+			want:    true,
+		},
+		{
+			name:    "both set",
+			display: ":0",
+			wayland: "wayland-0",
+			want:    true,
+		},
 	}
 
 	for _, tt := range tests {

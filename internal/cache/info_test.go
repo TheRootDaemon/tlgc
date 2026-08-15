@@ -13,61 +13,98 @@ import (
 func TestAge(t *testing.T) {
 	t.Parallel()
 
-	t.Run("uses_checksum_file_mtime", func(t *testing.T) {
-		dir := t.TempDir()
-		sumPath := filepath.Join(dir, checksumFile)
-		err := os.WriteFile(sumPath, []byte("sums"), 0o644)
-		require.NoError(t, err)
-		err = os.Chtimes(
-			sumPath,
-			time.Now().Add(-1*time.Hour),
-			time.Now().Add(-1*time.Hour),
-		)
-		require.NoError(t, err)
+	tests := []struct {
+		name     string
+		setupDir func(t *testing.T) string
+		wantMin  time.Duration
+		wantMax  time.Duration
+	}{
+		{
+			name: "uses_checksum_file_mtime",
+			setupDir: func(t *testing.T) string {
+				dir := t.TempDir()
+				checksumPath := filepath.Join(dir, checksumFile)
 
-		c := &Cache{dir: dir}
-		age, err := c.Age()
-		require.NoError(t, err)
-		assert.Greater(t, age, 55*time.Minute)
-		assert.Less(t, age, 65*time.Minute)
-	})
+				err := os.WriteFile(checksumPath, []byte("sums"), 0o644)
+				require.NoError(t, err)
 
-	t.Run("falls_back_to_cache_dir_mtime", func(t *testing.T) {
-		dir := t.TempDir()
-		err := os.Chtimes(
-			dir,
-			time.Now().Add(-2*time.Hour),
-			time.Now().Add(-2*time.Hour),
-		)
-		require.NoError(t, err)
+				past := time.Now().Add(-1 * time.Hour)
+				require.NoError(t, os.Chtimes(checksumPath, past, past))
 
-		c := &Cache{dir: dir}
-		age, err := c.Age()
-		require.NoError(t, err)
-		assert.Greater(t, age, 115*time.Minute)
-		assert.Less(t, age, 125*time.Minute)
-	})
+				return dir
+			},
+			wantMin: 55 * time.Minute,
+			wantMax: 65 * time.Minute,
+		},
+		{
+			name: "falls_back_to_cache_dir_mtime",
+			setupDir: func(t *testing.T) string {
+				dir := t.TempDir()
+				past := time.Now().Add(-2 * time.Hour)
+				require.NoError(t, os.Chtimes(dir, past, past))
+				return dir
+			},
+			wantMin: 115 * time.Minute,
+			wantMax: 125 * time.Minute,
+		},
+	}
 
-	t.Run("error_on_non_existent_dir", func(t *testing.T) {
-		c := &Cache{dir: "/nonexistent/path"}
-		_, err := c.Age()
-		assert.Error(t, err)
-	})
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			dir := tt.setupDir(t)
+			c := &Cache{dir: dir}
 
-	t.Run("error_on_future_mtime", func(t *testing.T) {
-		dir := t.TempDir()
-		future := time.Now().Add(1 * time.Hour)
-		err := os.Chtimes(dir, future, future)
-		require.NoError(t, err)
+			age, err := c.Age()
+			require.NoError(t, err)
+			assert.Greater(t, age, tt.wantMin)
+			assert.Less(t, age, tt.wantMax)
+		})
+	}
+}
 
-		c := &Cache{dir: dir}
-		_, err = c.Age()
-		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "future")
-	})
+func TestAge_Errors(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name     string
+		setupDir func(t *testing.T) string
+		wantMsg  string
+	}{
+		{
+			name: "error_on_non_existent_dir",
+			setupDir: func(t *testing.T) string {
+				return "/nonexistent/path"
+			},
+		},
+		{
+			name: "error_on_future_mtime",
+			setupDir: func(t *testing.T) string {
+				dir := t.TempDir()
+				future := time.Now().Add(1 * time.Hour)
+				require.NoError(t, os.Chtimes(dir, future, future))
+				return dir
+			},
+			wantMsg: "future",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			c := &Cache{dir: tt.setupDir(t)}
+
+			_, err := c.Age()
+			assert.Error(t, err)
+
+			if tt.wantMsg != "" {
+				assert.Contains(t, err.Error(), tt.wantMsg)
+			}
+		})
+	}
 }
 
 func TestInfo(t *testing.T) {
+	t.Parallel()
+
 	t.Run("returns_info_for_valid_cache", func(t *testing.T) {
 		dir := t.TempDir()
 		require.NoError(t, os.MkdirAll(filepath.Join(dir, "pages.en", "common"), 0o755))
@@ -103,31 +140,6 @@ func TestInfo(t *testing.T) {
 		assert.Equal(t, 2, info.LanguageStats[0].Platforms[1].Pages)
 	})
 
-	t.Run("error_on_non_existent_dir", func(t *testing.T) {
-		c := &Cache{dir: "/nonexistent/path"}
-		_, err := c.Info()
-		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "cache directory")
-	})
-
-	t.Run("error_on_file_instead_of_dir", func(t *testing.T) {
-		dir := t.TempDir()
-		filePath := filepath.Join(dir, "not_a_dir")
-		require.NoError(t, os.WriteFile(filePath, nil, 0o644))
-
-		c := &Cache{dir: filePath}
-		_, err := c.Info()
-		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "not a directory")
-	})
-
-	t.Run("empty_cache_returns_zero_pages", func(t *testing.T) {
-		dir := t.TempDir()
-		c := &Cache{dir: dir}
-		_, err := c.Info()
-		assert.Error(t, err)
-	})
-
 	t.Run("cache_with_multiple_languages", func(t *testing.T) {
 		dir := t.TempDir()
 		require.NoError(t, os.MkdirAll(filepath.Join(dir, "pages.en", "common"), 0o755))
@@ -144,6 +156,53 @@ func TestInfo(t *testing.T) {
 		assert.Equal(t, "common", info.LanguageStats[0].Platforms[0].Name)
 		assert.Equal(t, 1, info.LanguageStats[0].Platforms[0].Pages)
 	})
+}
+
+func TestInfo_Errors(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name     string
+		setupDir func(t *testing.T) string
+		wantMsg  string
+	}{
+		{
+			name: "error_on_non_existent_dir",
+			setupDir: func(t *testing.T) string {
+				return "/nonexistent/path"
+			},
+			wantMsg: "cache directory",
+		},
+		{
+			name: "error_on_file_instead_of_dir",
+			setupDir: func(t *testing.T) string {
+				dir := t.TempDir()
+				filePath := filepath.Join(dir, "not_a_dir")
+				require.NoError(t, os.WriteFile(filePath, nil, 0o644))
+				return filePath
+			},
+			wantMsg: "not a directory",
+		},
+		{
+			name: "empty_cache_returns_zero_pages",
+			setupDir: func(t *testing.T) string {
+				return t.TempDir()
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			c := &Cache{dir: tt.setupDir(t)}
+
+			_, err := c.Info()
+
+			assert.Error(t, err)
+			if tt.wantMsg != "" {
+				assert.Contains(t, err.Error(), tt.wantMsg)
+			}
+		})
+	}
 }
 
 func TestLanguageStats(t *testing.T) {

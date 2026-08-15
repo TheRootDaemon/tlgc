@@ -52,24 +52,21 @@ func TestCollectFiles(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(
-			tt.name,
-			func(t *testing.T) {
-				paths, want, wantErr := tt.setup(t)
+		t.Run(tt.name, func(t *testing.T) {
+			paths, want, wantErr := tt.setup(t)
 
-				got, err := collectFiles(paths)
+			got, err := collectFiles(paths)
 
-				if wantErr {
-					assert.Error(t, err)
-					return
-				}
+			if wantErr {
+				assert.Error(t, err)
+				return
+			}
 
-				assert.NoError(t, err)
-				sort.Strings(got)
-				sort.Strings(want)
-				assert.Equal(t, want, got)
-			},
-		)
+			assert.NoError(t, err)
+			sort.Strings(got)
+			sort.Strings(want)
+			assert.Equal(t, want, got)
+		})
 	}
 }
 

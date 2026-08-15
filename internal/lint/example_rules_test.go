@@ -30,19 +30,11 @@ func TestCheckExampleDescriptionEndsWithColon(t *testing.T) {
 		{name: "empty description passes", exampleSections: []commandSection{empty}, wantCodes: nil},
 	}
 	for _, tt := range tests {
-		t.Run(
-			tt.name,
-			func(t *testing.T) {
-				r := &Result{}
-				checkExampleDescriptionEndsWithColon(
-					&parsedPage{
-						exampleSections: tt.exampleSections,
-					},
-					r,
-				)
-				require.Equal(t, tt.wantCodes, errorCodes(r))
-			},
-		)
+		t.Run(tt.name, func(t *testing.T) {
+			r := &Result{}
+			checkExampleDescriptionEndsWithColon(&parsedPage{exampleSections: tt.exampleSections}, r)
+			require.Equal(t, tt.wantCodes, errorCodes(r))
+		})
 	}
 }
 
@@ -163,20 +155,17 @@ func TestCheckExampleDescriptionSurroundedByBlankLines(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		t.Run(
-			tt.name,
-			func(t *testing.T) {
-				r := &Result{}
-				checkExampleDescriptionSurroundedByBlankLines(
-					&parsedPage{
-						lines:           tt.lines,
-						exampleSections: tt.exampleSections,
-					},
-					r,
-				)
-				require.Equal(t, tt.wantCodes, errorCodes(r))
-			},
-		)
+		t.Run(tt.name, func(t *testing.T) {
+			r := &Result{}
+			checkExampleDescriptionSurroundedByBlankLines(
+				&parsedPage{
+					lines:           tt.lines,
+					exampleSections: tt.exampleSections,
+				},
+				r,
+			)
+			require.Equal(t, tt.wantCodes, errorCodes(r))
+		})
 	}
 }
 
@@ -209,19 +198,11 @@ func TestCheckExampleDescriptionStartsWithCapital(t *testing.T) {
 		{name: "empty description passes", exampleSections: []commandSection{empty}, wantCodes: nil},
 	}
 	for _, tt := range tests {
-		t.Run(
-			tt.name,
-			func(t *testing.T) {
-				r := &Result{}
-				checkExampleDescriptionStartsWithCapital(
-					&parsedPage{
-						exampleSections: tt.exampleSections,
-					},
-					r,
-				)
-				require.Equal(t, tt.wantCodes, errorCodes(r))
-			},
-		)
+		t.Run(tt.name, func(t *testing.T) {
+			r := &Result{}
+			checkExampleDescriptionStartsWithCapital(&parsedPage{exampleSections: tt.exampleSections}, r)
+			require.Equal(t, tt.wantCodes, errorCodes(r))
+		})
 	}
 }
 
@@ -240,14 +221,11 @@ func TestCheckMaximumExampleCount(t *testing.T) {
 		{name: "nine examples fail", exampleSections: makeExampleSections(section, 9), wantCode: "TLDR019"},
 	}
 	for _, tt := range tests {
-		t.Run(
-			tt.name,
-			func(t *testing.T) {
-				r := &Result{}
-				checkMaximumExampleCount(&parsedPage{exampleSections: tt.exampleSections}, r)
-				require.Equal(t, tt.wantCode, errorCode(r))
-			},
-		)
+		t.Run(tt.name, func(t *testing.T) {
+			r := &Result{}
+			checkMaximumExampleCount(&parsedPage{exampleSections: tt.exampleSections}, r)
+			require.Equal(t, tt.wantCode, errorCode(r))
+		})
 	}
 }
 
@@ -275,19 +253,11 @@ func TestCheckInfinitiveTense(t *testing.T) {
 		{name: "gerund fails", exampleSections: []commandSection{gerund}, wantCodes: []string{"TLDR104"}},
 	}
 	for _, tt := range tests {
-		t.Run(
-			tt.name,
-			func(t *testing.T) {
-				r := &Result{}
-				checkInfinitiveTense(
-					&parsedPage{
-						exampleSections: tt.exampleSections,
-					},
-					r,
-				)
-				require.Equal(t, tt.wantCodes, errorCodes(r))
-			},
-		)
+		t.Run(tt.name, func(t *testing.T) {
+			r := &Result{}
+			checkInfinitiveTense(&parsedPage{exampleSections: tt.exampleSections}, r)
+			require.Equal(t, tt.wantCodes, errorCodes(r))
+		})
 	}
 }
 
@@ -338,17 +308,11 @@ func TestCheckSingleCommandPerExample(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		t.Run(
-			tt.name,
-			func(t *testing.T) {
-				r := &Result{}
-				checkSingleCommandPerExample(
-					&parsedPage{exampleSections: tt.exampleSections},
-					r,
-				)
-				require.Equal(t, tt.wantCodes, errorCodes(r))
-			},
-		)
+		t.Run(tt.name, func(t *testing.T) {
+			r := &Result{}
+			checkSingleCommandPerExample(&parsedPage{exampleSections: tt.exampleSections}, r)
+			require.Equal(t, tt.wantCodes, errorCodes(r))
+		})
 	}
 }
 
@@ -391,13 +355,10 @@ func TestLineIndex(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		t.Run(
-			tt.name,
-			func(t *testing.T) {
-				got := lineIndex(tt.lines, tt.lineNumber)
-				require.Equal(t, tt.want, got)
-			},
-		)
+		t.Run(tt.name, func(t *testing.T) {
+			got := lineIndex(tt.lines, tt.lineNumber)
+			require.Equal(t, tt.want, got)
+		})
 	}
 }
 
