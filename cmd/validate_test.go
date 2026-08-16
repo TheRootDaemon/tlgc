@@ -98,18 +98,118 @@ func TestValidate(t *testing.T) {
 			cli:  CLI{Color: "auto", Format: true, Output: "out.md", Page: []string{"file.md"}},
 		},
 		{
+			name:    "in_place_without_format",
+			cli:     CLI{Color: "auto", InPlace: true, Page: []string{"file.md"}},
+			wantErr: true,
+		},
+		{
+			name: "in_place_with_format",
+			cli:  CLI{Color: "auto", Format: true, InPlace: true, Page: []string{"file.md"}},
+		},
+		{
+			name: "tabular_with_lint",
+			cli:  CLI{Color: "auto", Lint: true, Tabular: true, Page: []string{"file.md"}},
+		},
+		{
+			name: "tabular_with_format",
+			cli:  CLI{Color: "auto", Format: true, Tabular: true, Page: []string{"file.md"}},
+		},
+		{
+			name:    "tabular_alone",
+			cli:     CLI{Color: "auto", HasArgs: true, Tabular: true},
+			wantErr: true,
+		},
+		{
+			name: "ignore_with_lint",
+			cli:  CLI{Color: "auto", Lint: true, Ignore: []string{"TLDR001"}, Page: []string{"file.md"}},
+		},
+		{
+			name: "ignore_with_format",
+			cli:  CLI{Color: "auto", Format: true, Ignore: []string{"TLDR001"}, Page: []string{"file.md"}},
+		},
+		{
+			name:    "ignore_alone",
+			cli:     CLI{Color: "auto", HasArgs: true, Ignore: []string{"TLDR001"}},
+			wantErr: true,
+		},
+		{
+			name: "platform_with_page",
+			cli:  CLI{Color: "auto", Platform: "linux", Page: []string{"tar"}},
+		},
+		{
+			name: "platform_with_browse",
+			cli:  CLI{Color: "auto", Platform: "linux", Browse: true, Page: []string{"tar"}},
+		},
+		{
+			name: "platform_with_list",
+			cli:  CLI{Color: "auto", Platform: "linux", List: true},
+		},
+		{
+			name: "platform_with_search",
+			cli:  CLI{Color: "auto", Platform: "linux", Search: "ngi"},
+		},
+		{
+			name:    "platform_with_update",
+			cli:     CLI{Color: "auto", Platform: "linux", Update: true},
+			wantErr: true,
+		},
+		{
+			name: "language_with_update",
+			cli:  CLI{Color: "auto", Languages: []string{"en"}, Update: true},
+		},
+		{
+			name: "language_with_search",
+			cli:  CLI{Color: "auto", Languages: []string{"en"}, Search: "ngi"},
+		},
+		{
+			name:    "language_with_list",
+			cli:     CLI{Color: "auto", Languages: []string{"en"}, List: true},
+			wantErr: true,
+		},
+		{
+			name: "offline_with_browse",
+			cli:  CLI{Color: "auto", Offline: true, Browse: true, Page: []string{"tar"}},
+		},
+		{
+			name:    "offline_with_update",
+			cli:     CLI{Color: "auto", Offline: true, Update: true},
+			wantErr: true,
+		},
+		{
+			name: "compact_with_render",
+			cli:  CLI{Color: "auto", Compact: true, Render: "file.md"},
+		},
+		{
+			name:    "compact_with_search",
+			cli:     CLI{Color: "auto", Compact: true, Search: "ngi"},
+			wantErr: true,
+		},
+		{
+			name: "edit_with_render",
+			cli:  CLI{Color: "auto", Edit: true, Render: "file.md"},
+		},
+		{
+			name: "color_with_page",
+			cli:  CLI{Color: "always", Page: []string{"tar"}},
+		},
+		{
+			name:    "color_with_update",
+			cli:     CLI{Color: "always", Update: true},
+			wantErr: true,
+		},
+		{
 			name:    "valid_color_auto",
 			cli:     CLI{Color: "auto", Update: true},
 			wantErr: false,
 		},
 		{
 			name:    "valid_color_always",
-			cli:     CLI{Color: "always", Update: true},
+			cli:     CLI{Color: "always", Page: []string{"tar"}},
 			wantErr: false,
 		},
 		{
 			name:    "valid_color_never",
-			cli:     CLI{Color: "never", Update: true},
+			cli:     CLI{Color: "never", Page: []string{"tar"}},
 			wantErr: false,
 		},
 	}
@@ -119,6 +219,159 @@ func TestValidate(t *testing.T) {
 			err := validate(&tt.cli)
 			if tt.wantErr {
 				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestValidateColor(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name      string
+		color     string
+		wantErr   bool
+		errString string
+	}{
+		{
+			name:  "auto",
+			color: "auto",
+		},
+		{
+			name:  "always",
+			color: "always",
+		},
+		{
+			name:  "never",
+			color: "never",
+		},
+		{
+			name:      "invalid",
+			color:     "invalid",
+			wantErr:   true,
+			errString: "invalid value for --color",
+		},
+		{
+			name:      "empty",
+			color:     "",
+			wantErr:   true,
+			errString: "invalid value for --color",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := validateColor(&CLI{Color: tt.color})
+			if tt.wantErr {
+				assert.ErrorContains(t, err, tt.errString)
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestValidateOperations(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name      string
+		cli       CLI
+		wantErr   bool
+		errString string
+	}{
+		{
+			name: "one_operation",
+			cli:  CLI{HasArgs: true, Update: true},
+		},
+		{
+			name:      "no_operations_with_args",
+			cli:       CLI{HasArgs: true},
+			wantErr:   true,
+			errString: "no operation specified",
+		},
+		{
+			name:      "two_operations",
+			cli:       CLI{HasArgs: true, Update: true, List: true},
+			wantErr:   true,
+			errString: "cannot be used with",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := validateOperations(&tt.cli)
+			if tt.wantErr {
+				assert.ErrorContains(t, err, tt.errString)
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestValidateOperationArguments(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name      string
+		cli       CLI
+		wantErr   bool
+		errString string
+	}{
+		{
+			name: "browse_with_page",
+			cli:  CLI{Browse: true, Page: []string{"tar"}},
+		},
+		{
+			name:      "browse_without_page",
+			cli:       CLI{Browse: true},
+			wantErr:   true,
+			errString: "flag --browse requires a page",
+		},
+		{
+			name: "lint_with_path",
+			cli:  CLI{Lint: true, Page: []string{"pages/"}},
+		},
+		{
+			name:      "lint_without_path",
+			cli:       CLI{Lint: true},
+			wantErr:   true,
+			errString: "flag --lint requires a file or directory",
+		},
+		{
+			name: "format_with_path",
+			cli:  CLI{Format: true, Page: []string{"file.md"}},
+		},
+		{
+			name:      "format_without_path",
+			cli:       CLI{Format: true},
+			wantErr:   true,
+			errString: "flag --format requires a file or directory",
+		},
+		{
+			name: "output_with_format",
+			cli:  CLI{Format: true, Output: "out.md", Page: []string{"file.md"}},
+		},
+		{
+			name:      "output_without_format",
+			cli:       CLI{Output: "out.md", Page: []string{"file.md"}},
+			wantErr:   true,
+			errString: "flag --output requires --format",
+		},
+		{
+			name: "no_operation",
+			cli:  CLI{},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := validateOperationArguments(&tt.cli)
+			if tt.wantErr {
+				assert.ErrorContains(t, err, tt.errString)
 			} else {
 				assert.NoError(t, err)
 			}
