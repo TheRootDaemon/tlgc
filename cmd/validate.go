@@ -30,24 +30,13 @@ func Validate(cli *CLI, fs *flag.FlagSet, args []string) (*CLI, error) {
 
 // validate checks that the parsed CLI has valid flags.
 func validate(cli *CLI) error {
-	switch cli.Color {
-	case "auto", "always", "never":
-	default:
-		return fmtUsage(
-			"invalid value for %s (expected %s, %s, %s)",
-			termcolor.Sprint("bold blue", "--color"),
-			termcolor.Sprint("blue", "auto"),
-			termcolor.Sprint("blue", "always"),
-			termcolor.Sprint("blue", "never"),
-		)
+	if err := validateColor(cli); err != nil {
+		return err
 	}
 
 	// show version
 	if cli.ShowVersion {
-		fmt.Printf(
-			"tlgc %s (implementing client specification v2.3)\n",
-			version.String(),
-		)
+		fmt.Printf("tlgc %s (implementing client specification v2.3)\n", version.String())
 		return nil
 	}
 
@@ -57,19 +46,53 @@ func validate(cli *CLI) error {
 		return nil
 	}
 
+	// modifier flags require one of their parent operations
+	if err := validateFlagDependencies(cli); err != nil {
+		return err
+	}
+
 	// validate that exactly one operation is active
-	ops := cli.operationCount()
-	if ops == 0 {
+	if err := validateOperations(cli); err != nil {
+		return err
+	}
+
+	return validateOperationArguments(cli)
+}
+
+// validateColor validates the value of the --color flag.
+func validateColor(cli *CLI) error {
+	switch cli.Color {
+	case "auto", "always", "never":
+		return nil
+	default:
+		return fmtUsage(
+			"invalid value for %s (expected %s, %s, %s)",
+			termcolor.Sprint("bold blue", "--color"),
+			termcolor.Sprint("blue", "auto"),
+			termcolor.Sprint("blue", "always"),
+			termcolor.Sprint("blue", "never"),
+		)
+	}
+}
+
+// validateOperations validates that the CLI specifies exactly one operation.
+func validateOperations(cli *CLI) error {
+	switch ops := cli.operationCount(); {
+	case ops == 0:
 		if cli.HasArgs {
 			return fmtUsage("no operation specified")
 		}
 		help()
 		return nil
-	}
-	if ops > 1 {
+	case ops > 1:
 		return fmtConflictError(cli)
+	default:
+		return nil
 	}
+}
 
+// validateOperationArguments validates the arguments required by the active operation.
+func validateOperationArguments(cli *CLI) error {
 	// browse requires a page
 	if cli.Browse && len(cli.Page) == 0 {
 		return fmtUsage(

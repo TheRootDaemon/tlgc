@@ -191,14 +191,14 @@ func TestParse(t *testing.T) {
 		// options
 		{
 			name: "platform_short",
-			args: []string{"-p", "linux", "-u"},
+			args: []string{"-p", "linux", "tar"},
 			check: func(t *testing.T, cli *CLI) {
 				assert.Equal(t, "linux", cli.Platform)
 			},
 		},
 		{
 			name: "platform_long",
-			args: []string{"--platform", "osx", "-u"},
+			args: []string{"--platform", "osx", "tar"},
 			check: func(t *testing.T, cli *CLI) {
 				assert.Equal(t, "osx", cli.Platform)
 			},
@@ -233,56 +233,56 @@ func TestParse(t *testing.T) {
 		},
 		{
 			name: "offline_short",
-			args: []string{"-o", "-u"},
+			args: []string{"-o", "tar"},
 			check: func(t *testing.T, cli *CLI) {
 				assert.True(t, cli.Offline)
 			},
 		},
 		{
 			name: "offline_long",
-			args: []string{"--offline", "-u"},
+			args: []string{"--offline", "tar"},
 			check: func(t *testing.T, cli *CLI) {
 				assert.True(t, cli.Offline)
 			},
 		},
 		{
 			name: "compact_short",
-			args: []string{"-c", "-u"},
+			args: []string{"-c", "tar"},
 			check: func(t *testing.T, cli *CLI) {
 				assert.True(t, cli.Compact)
 			},
 		},
 		{
 			name: "compact_long",
-			args: []string{"--compact", "-u"},
+			args: []string{"--compact", "tar"},
 			check: func(t *testing.T, cli *CLI) {
 				assert.True(t, cli.Compact)
 			},
 		},
 		{
 			name: "no_compact",
-			args: []string{"--no-compact", "-u"},
+			args: []string{"--no-compact", "tar"},
 			check: func(t *testing.T, cli *CLI) {
 				assert.True(t, cli.NoCompact)
 			},
 		},
 		{
 			name: "raw_short",
-			args: []string{"-R", "-u"},
+			args: []string{"-R", "tar"},
 			check: func(t *testing.T, cli *CLI) {
 				assert.True(t, cli.Raw)
 			},
 		},
 		{
 			name: "raw_long",
-			args: []string{"--raw", "-u"},
+			args: []string{"--raw", "tar"},
 			check: func(t *testing.T, cli *CLI) {
 				assert.True(t, cli.Raw)
 			},
 		},
 		{
 			name: "no_raw",
-			args: []string{"--no-raw", "-u"},
+			args: []string{"--no-raw", "tar"},
 			check: func(t *testing.T, cli *CLI) {
 				assert.True(t, cli.NoRaw)
 			},
@@ -324,14 +324,14 @@ func TestParse(t *testing.T) {
 		},
 		{
 			name: "color_always",
-			args: []string{"--color", "always", "-u"},
+			args: []string{"--color", "always", "tar"},
 			check: func(t *testing.T, cli *CLI) {
 				assert.Equal(t, "always", cli.Color)
 			},
 		},
 		{
 			name: "color_never",
-			args: []string{"--color", "never", "-u"},
+			args: []string{"--color", "never", "tar"},
 			check: func(t *testing.T, cli *CLI) {
 				assert.Equal(t, "never", cli.Color)
 			},
@@ -352,21 +352,21 @@ func TestParse(t *testing.T) {
 		},
 		{
 			name: "edit",
-			args: []string{"--edit", "-u"},
+			args: []string{"--edit", "tar"},
 			check: func(t *testing.T, cli *CLI) {
 				assert.True(t, cli.Edit)
 			},
 		},
 		{
 			name: "short_options",
-			args: []string{"--short-options", "-u"},
+			args: []string{"--short-options", "tar"},
 			check: func(t *testing.T, cli *CLI) {
 				assert.True(t, cli.ShortOptions)
 			},
 		},
 		{
 			name: "long_options",
-			args: []string{"--long-options", "-u"},
+			args: []string{"--long-options", "tar"},
 			check: func(t *testing.T, cli *CLI) {
 				assert.True(t, cli.LongOptions)
 			},
@@ -408,10 +408,9 @@ func TestParse(t *testing.T) {
 		},
 		{
 			name: "lint_with_all_options",
-			args: []string{"--lint", "file.md", "--in-place", "--tabular", "--ignore", "TLDR001"},
+			args: []string{"--lint", "file.md", "--tabular", "--ignore", "TLDR001"},
 			check: func(t *testing.T, cli *CLI) {
 				assert.True(t, cli.Lint)
-				assert.True(t, cli.InPlace)
 				assert.True(t, cli.Tabular)
 				assert.Equal(t, []string{"TLDR001"}, cli.Ignore)
 			},
@@ -487,10 +486,26 @@ func TestParse(t *testing.T) {
 		},
 		{
 			name:    "only_modifiers_no_operation",
-			args:    []string{"--compact", "--edit", "--offline", "--no-raw"},
+			args:    []string{"--quiet", "--verbose"},
 			wantErr: true,
 			errCheck: func(t *testing.T, err error) {
 				assert.ErrorContains(t, err, "no operation specified")
+			},
+		},
+		{
+			name:    "compact_without_parent",
+			args:    []string{"--compact"},
+			wantErr: true,
+			errCheck: func(t *testing.T, err error) {
+				assert.ErrorContains(t, err, "flag --compact requires a page or --render")
+			},
+		},
+		{
+			name:    "edit_without_parent",
+			args:    []string{"--edit"},
+			wantErr: true,
+			errCheck: func(t *testing.T, err error) {
+				assert.ErrorContains(t, err, "flag --edit requires a page or --render")
 			},
 		},
 
@@ -525,6 +540,86 @@ func TestParse(t *testing.T) {
 			wantErr: true,
 			errCheck: func(t *testing.T, err error) {
 				assert.ErrorContains(t, err, "requires --format")
+			},
+		},
+		{
+			name:    "in_place_with_lint",
+			args:    []string{"--in-place", "--lint", "file.md"},
+			wantErr: true,
+			errCheck: func(t *testing.T, err error) {
+				assert.ErrorContains(t, err, "flag --in-place requires --format")
+			},
+		},
+		{
+			name:    "in_place_without_format",
+			args:    []string{"--in-place", "file.md"},
+			wantErr: true,
+			errCheck: func(t *testing.T, err error) {
+				assert.ErrorContains(t, err, "flag --in-place requires --format")
+			},
+		},
+		{
+			name:    "tabular_without_lint_or_format",
+			args:    []string{"--tabular", "-u"},
+			wantErr: true,
+			errCheck: func(t *testing.T, err error) {
+				assert.ErrorContains(t, err, "flag --tabular requires --lint or --format")
+			},
+		},
+		{
+			name:    "ignore_without_lint_or_format",
+			args:    []string{"--ignore", "TLDR001", "-u"},
+			wantErr: true,
+			errCheck: func(t *testing.T, err error) {
+				assert.ErrorContains(t, err, "flag --ignore requires --lint or --format")
+			},
+		},
+		{
+			name:    "platform_with_update",
+			args:    []string{"--platform", "linux", "-u"},
+			wantErr: true,
+			errCheck: func(t *testing.T, err error) {
+				assert.ErrorContains(t, err, "flag --platform requires a page, --browse, --list or --search")
+			},
+		},
+		{
+			name:    "offline_with_update",
+			args:    []string{"--offline", "-u"},
+			wantErr: true,
+			errCheck: func(t *testing.T, err error) {
+				assert.ErrorContains(t, err, "flag --offline requires a page or --browse")
+			},
+		},
+		{
+			name:    "color_with_update",
+			args:    []string{"--color", "always", "-u"},
+			wantErr: true,
+			errCheck: func(t *testing.T, err error) {
+				assert.ErrorContains(t, err, "flag --color requires a page or --render")
+			},
+		},
+		{
+			name:    "no_raw_with_search",
+			args:    []string{"--no-raw", "-s", "ngi"},
+			wantErr: true,
+			errCheck: func(t *testing.T, err error) {
+				assert.ErrorContains(t, err, "flag --no-raw requires a page or --render")
+			},
+		},
+		{
+			name:    "language_with_list",
+			args:    []string{"-L", "en", "-l"},
+			wantErr: true,
+			errCheck: func(t *testing.T, err error) {
+				assert.ErrorContains(t, err, "flag --language requires a page, --browse, --search or --update")
+			},
+		},
+		{
+			name:    "compact_with_search",
+			args:    []string{"--compact", "-s", "ngi"},
+			wantErr: true,
+			errCheck: func(t *testing.T, err error) {
+				assert.ErrorContains(t, err, "flag --compact requires a page or --render")
 			},
 		},
 		{
