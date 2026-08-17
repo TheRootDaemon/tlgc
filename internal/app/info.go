@@ -63,7 +63,11 @@ func (a *App) printCacheHeader(info *cache.InfoResult) error {
 // printAutoUpdate prints the automatic cache update configuration.
 func (a *App) printAutoUpdate(info *cache.InfoResult) error {
 	if !info.AutoUpdate {
-		_, err := fmt.Fprintln(a.Stdout, "Auto update: disabled")
+		_, err := fmt.Fprintf(
+			a.Stdout,
+			"Auto update: %s\n",
+			termcolor.Sprint("bold red", "disabled"),
+		)
 		return err
 	}
 

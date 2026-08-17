@@ -100,6 +100,13 @@ func (a *App) Run(cli *cmd.CLI) int {
 		}
 	}
 
+	if shouldAutoUpdate(cli) {
+		if err := a.autoUpdate(cli); err != nil {
+			logger.Error("failed to update cache: %v", err)
+			return 1
+		}
+	}
+
 	return a.dispatch(cli)
 }
 
