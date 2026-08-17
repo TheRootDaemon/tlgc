@@ -1,7 +1,6 @@
 package app
 
 import (
-	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -12,7 +11,6 @@ import (
 	"github.com/TheRootDaemon/tlgc/internal/cache"
 	"github.com/TheRootDaemon/tlgc/internal/config"
 	"github.com/TheRootDaemon/tlgc/internal/render"
-	"github.com/TheRootDaemon/tlgc/internal/upstream"
 	"github.com/TheRootDaemon/tlgc/logger"
 	"github.com/TheRootDaemon/tlgc/pathutil"
 	"github.com/TheRootDaemon/tlgc/termcolor"
@@ -24,16 +22,6 @@ func (a *App) lookupAndRenderPage(cli *cmd.CLI) int {
 	p := a.resolvePlatform(cli.Platform)
 	langs := a.resolveLanguages(cli.Languages)
 	c := cache.New()
-
-	if !cli.Offline {
-		cfg := config.Cache()
-		if cfg.AutoUpdate && c.NeedsUpdate(cfg.MaxAge) {
-			client := upstream.New()
-			if err := c.Update(context.Background(), langs, client); err != nil {
-				logger.Warn("auto-update failed: %v", err)
-			}
-		}
-	}
 
 	query := strings.Join(cli.Page, "-")
 	results, err := c.Find(query, p, langs)
@@ -72,16 +60,6 @@ func (a *App) browsePage(cli *cmd.CLI) int {
 	p := a.resolvePlatform(cli.Platform)
 	langs := a.resolveLanguages(cli.Languages)
 	c := cache.New()
-
-	if !cli.Offline {
-		cfg := config.Cache()
-		if cfg.AutoUpdate && c.NeedsUpdate(cfg.MaxAge) {
-			client := upstream.New()
-			if err := c.Update(context.Background(), langs, client); err != nil {
-				logger.Warn("auto-update failed: %v", err)
-			}
-		}
-	}
 
 	query := strings.Join(cli.Page, "-")
 	results, err := c.Find(query, p, langs)
@@ -127,6 +105,9 @@ func (a *App) renderLocalFile(cli *cmd.CLI) int {
 	return 0
 }
 
+// renderPage renders a parsed TLDR page
+// to the terminal using the output options
+// specified by the CLI.
 func (a *App) renderPage(
 	cli *cmd.CLI,
 	platform string,
