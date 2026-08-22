@@ -18,7 +18,7 @@ func TestShouldAutoUpdate(t *testing.T) {
 		{
 			name: "default_invocation",
 			cli:  &cmd.CLI{},
-			want: true,
+			want: false,
 		},
 		{
 			name: "offline_suppresses",
@@ -48,6 +48,81 @@ func TestShouldAutoUpdate(t *testing.T) {
 				Offline:    true,
 				CleanCache: true,
 			}, want: false,
+		},
+		{
+			name: "page_lookup",
+			cli:  &cmd.CLI{Page: []string{"tar"}},
+			want: true,
+		},
+		{
+			name: "browse",
+			cli:  &cmd.CLI{Browse: true, Page: []string{"tar"}},
+			want: true,
+		},
+		{
+			name: "search",
+			cli:  &cmd.CLI{Search: "ngi"},
+			want: true,
+		},
+		{
+			name: "list",
+			cli:  &cmd.CLI{List: true},
+			want: true,
+		},
+		{
+			name: "help_suppresses",
+			cli:  &cmd.CLI{ShowHelp: true},
+			want: false,
+		},
+		{
+			name: "version_suppresses",
+			cli:  &cmd.CLI{ShowVersion: true},
+			want: false,
+		},
+		{
+			name: "info_suppresses",
+			cli:  &cmd.CLI{Info: true},
+			want: false,
+		},
+		{
+			name: "list_all_suppresses",
+			cli:  &cmd.CLI{ListAll: true},
+			want: false,
+		},
+		{
+			name: "list_platforms_suppresses",
+			cli:  &cmd.CLI{ListPlatforms: true},
+			want: false,
+		},
+		{
+			name: "list_languages_suppresses",
+			cli:  &cmd.CLI{ListLanguages: true},
+			want: false,
+		},
+		{
+			name: "render_suppresses",
+			cli:  &cmd.CLI{Render: "file.md"},
+			want: false,
+		},
+		{
+			name: "lint_suppresses",
+			cli:  &cmd.CLI{Lint: true, Page: []string{"pages/"}},
+			want: false,
+		},
+		{
+			name: "format_suppresses",
+			cli:  &cmd.CLI{Format: true, Page: []string{"file.md"}},
+			want: false,
+		},
+		{
+			name: "gen_config_suppresses",
+			cli:  &cmd.CLI{GenConfig: true},
+			want: false,
+		},
+		{
+			name: "config_path_suppresses",
+			cli:  &cmd.CLI{ConfigPath: true},
+			want: false,
 		},
 	}
 
