@@ -144,6 +144,16 @@ func extractZipEntry(
 		return false, false, root.MkdirAll(name, 0o750)
 	}
 
+	// pages always live under a platform subdir,
+	// root-level entries like the other miscellaneous files gets skipped
+	if filepath.Dir(name) == "." {
+		logger.Debug(
+			"skipping root-level zip entry: %s",
+			f.Name,
+		)
+		return false, false, nil
+	}
+
 	if err := root.MkdirAll(filepath.Dir(name), 0o750); err != nil {
 		return false, false, fmt.Errorf("creating directory for %s: %w", f.Name, err)
 	}

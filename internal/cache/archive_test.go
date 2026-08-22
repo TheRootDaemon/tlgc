@@ -197,6 +197,20 @@ func TestExtractArchive(t *testing.T) {
 			},
 		},
 		{
+			name:              "skips_root_level_files",
+			languageDirectory: "pages.en",
+			buildZip: func(t *testing.T) []byte {
+				return createTestZip(t, map[string]string{
+					"LICENSE.md":    "license",
+					"common/git.md": "",
+				})
+			},
+			check: func(t *testing.T, c *Cache) {
+				assert.NoFileExists(t, filepath.Join(c.dir, "pages.en", "LICENSE.md"))
+				assert.FileExists(t, filepath.Join(c.dir, "pages.en", "common", "git.md"))
+			},
+		},
+		{
 			name:              "removes_existing_directory",
 			languageDirectory: "pages.en",
 			buildZip: func(t *testing.T) []byte {
@@ -449,6 +463,15 @@ func TestExtractZip(t *testing.T) {
 			wantNew:   1,
 		},
 		{
+			name: "skips_root_level_files",
+			files: map[string]string{
+				"LICENSE.md":    "",
+				"common/git.md": "",
+			},
+			wantTotal: 1,
+			wantNew:   1,
+		},
+		{
 			name:    "invalid_zip",
 			rawData: []byte("not a zip file"),
 			wantErr: true,
@@ -576,6 +599,15 @@ func TestExtractZipEntry(t *testing.T) {
 			files:    map[string]string{"../escape.md": "EVIL"},
 			wantFile: false,
 			wantNew:  false,
+		},
+		{
+			name:     "skips_root_level_file",
+			files:    map[string]string{"LICENSE.md": "license"},
+			wantFile: false,
+			wantNew:  false,
+			check: func(t *testing.T, dir string) {
+				assert.NoFileExists(t, filepath.Join(dir, "LICENSE.md"))
+			},
 		},
 	}
 
