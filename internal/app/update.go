@@ -26,10 +26,17 @@ func (a *App) updateCache(cli *cmd.CLI) int {
 
 // shouldAutoUpdate reports whether a stale cache maybe updated
 // automatically for the current invocation.
-// Automatic updates are disabled in offline mode
-// and when explicit cache 	maintenance was requested.
+// Automatic updates run only for page-serving operations
+// and are disabled in offline mode,
+// and when explicit cache maintenance was requested.
 func shouldAutoUpdate(cli *cmd.CLI) bool {
-	return !cli.Offline && !cli.Update && !cli.CleanCache
+	if cli.Offline || cli.Update || cli.CleanCache {
+		return false
+	}
+	return (len(cli.Page) > 0 && !cli.Browse && !cli.Lint && !cli.Format) ||
+		cli.Browse ||
+		cli.Search != "" ||
+		cli.List
 }
 
 // autoUpdate downloads the latest tldr-pages
