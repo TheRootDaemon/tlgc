@@ -19,6 +19,13 @@ import (
 	"github.com/TheRootDaemon/tlgc/internal/upstream"
 )
 
+// contentHash returns the hex-encoded sha256 of s,
+// matching the hashes produced by the cache package.
+func contentHash(s string) string {
+	sum := sha256.Sum256([]byte(s))
+	return hex.EncodeToString(sum[:])
+}
+
 func TestDownloadArchive(t *testing.T) {
 	t.Parallel()
 
@@ -257,7 +264,7 @@ func TestExtractArchive(t *testing.T) {
 			}
 
 			zipData := tt.buildZip(t)
-			_, _, err := c.extractArchive(tt.languageDirectory, zipData)
+			_, err := c.extractArchive(tt.languageDirectory, zipData)
 
 			if tt.wantErr {
 				assert.Error(t, err)
@@ -301,8 +308,9 @@ func TestExtractFile(t *testing.T) {
 			require.Len(t, zipReader.File, 1)
 
 			f := zipReader.File[0]
-			err = extractFile(root, f)
+			hash, err := extractFile(root, f)
 			require.NoError(t, err)
+			assert.Equal(t, contentHash(tt.content), hash)
 
 			got, err := os.ReadFile(filepath.Join(dir, "test.md"))
 			require.NoError(t, err)
@@ -317,7 +325,7 @@ func TestExtractArchive_MkdirAllError(t *testing.T) {
 	require.NoError(t, os.WriteFile(filePath, nil, 0o644))
 
 	c := &Cache{dir: filePath}
-	_, _, err := c.extractArchive("pages.en", createEmptyZip(t))
+	_, err := c.extractArchive("pages.en", createEmptyZip(t))
 	assert.Error(t, err)
 }
 
@@ -342,51 +350,50 @@ func TestExtractFile_OpenFileError(t *testing.T) {
 	require.Len(t, zipReader.File, 1)
 
 	f := zipReader.File[0]
-	err = extractFile(root, f)
+	_, err = extractFile(root, f)
 	assert.Error(t, err)
 }
 
-func TestExistingFiles(t *testing.T) {
+func TestHashPages(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
 		name  string
 		setup func(t *testing.T, dir string)
-		want  map[string]struct{}
+		want  map[string]string
 	}{
 		{
 			name:  "nonexistent_directory",
 			setup: nil,
-			want:  map[string]struct{}{},
+			want:  map[string]string{},
 		},
 		{
 			name: "empty_directory",
 			setup: func(t *testing.T, dir string) {
 				require.NoError(t, os.MkdirAll(dir, 0o750))
 			},
-			want: map[string]struct{}{},
+			want: map[string]string{},
 		},
 		{
-			name: "flat_files",
-			setup: func(t *testing.T, dir string) {
-				require.NoError(t, os.MkdirAll(dir, 0o750))
-				require.NoError(t, os.WriteFile(filepath.Join(dir, "a.md"), nil, 0o644))
-				require.NoError(t, os.WriteFile(filepath.Join(dir, "b.md"), nil, 0o644))
-			},
-			want: map[string]struct{}{
-				"a.md": {},
-				"b.md": {},
-			},
-		},
-		{
-			name: "nested_files",
+			name: "hashes_nested_pages",
 			setup: func(t *testing.T, dir string) {
 				require.NoError(t, os.MkdirAll(filepath.Join(dir, "common"), 0o750))
-				require.NoError(t, os.WriteFile(filepath.Join(dir, "common", "git.md"), nil, 0o644))
+				require.NoError(t, os.WriteFile(filepath.Join(dir, "common", "git.md"), []byte("# git\n"), 0o644))
+				require.NoError(t, os.WriteFile(filepath.Join(dir, "common", "ls.md"), nil, 0o644))
 			},
-			want: map[string]struct{}{
-				filepath.Join("common", "git.md"): {},
+			want: map[string]string{
+				filepath.Join("common", "git.md"): contentHash("# git\n"),
+				filepath.Join("common", "ls.md"):  contentHash(""),
 			},
+		},
+		{
+			name: "ignores_non_pages",
+			setup: func(t *testing.T, dir string) {
+				require.NoError(t, os.MkdirAll(filepath.Join(dir, "common"), 0o750))
+				require.NoError(t, os.WriteFile(filepath.Join(dir, "LICENSE.md"), []byte("license"), 0o644))
+				require.NoError(t, os.WriteFile(filepath.Join(dir, "common", "notes.txt"), []byte("notes"), 0o644))
+			},
+			want: map[string]string{},
 		},
 	}
 
@@ -397,7 +404,7 @@ func TestExistingFiles(t *testing.T) {
 				tt.setup(t, dir)
 			}
 
-			got, err := existingFiles(dir)
+			got, err := hashPages(dir)
 			require.NoError(t, err)
 			assert.Equal(t, tt.want, got)
 		})
@@ -408,13 +415,15 @@ func TestExtractZip(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
-		name        string
-		files       map[string]string
-		rawData     []byte // when set, used instead of building a zip from files
-		preExisting []string
-		wantTotal   int
-		wantNew     int
-		wantErr     bool
+		name         string
+		files        map[string]string
+		rawData      []byte            // when set, used instead of building a zip from files
+		oldPages     map[string]string // relative page path -> old content
+		wantTotal    int
+		wantAdded    int
+		wantModified int
+		wantRemoved  int
+		wantErr      bool
 	}{
 		{
 			name: "all_new",
@@ -423,26 +432,49 @@ func TestExtractZip(t *testing.T) {
 				"common/ls.md":  "",
 			},
 			wantTotal: 2,
-			wantNew:   2,
+			wantAdded: 2,
 		},
 		{
-			name: "all_existing",
+			name:      "all_existing",
+			files:     map[string]string{"common/git.md": ""},
+			oldPages:  map[string]string{"common/git.md": ""},
+			wantTotal: 1,
+		},
+		{
+			name: "modified_content",
 			files: map[string]string{
-				"common/git.md": "",
+				"common/git.md": "# git v2\n",
 			},
-			preExisting: []string{filepath.Clean("common/git.md")},
+			oldPages:     map[string]string{"common/git.md": "# git v1\n"},
+			wantTotal:    1,
+			wantModified: 1,
+		},
+		{
+			name: "added_and_removed",
+			files: map[string]string{
+				"common/ls.md": "",
+			},
+			oldPages:    map[string]string{"common/git.md": ""},
 			wantTotal:   1,
-			wantNew:     0,
+			wantAdded:   1,
+			wantRemoved: 1,
 		},
 		{
-			name: "mixed_new_and_existing",
+			name: "mixed_changes",
 			files: map[string]string{
-				"common/git.md": "",
-				"common/ls.md":  "",
+				"common/a.md": "a",
+				"common/b.md": "b2",
+				"common/c.md": "c",
 			},
-			preExisting: []string{filepath.Clean("common/git.md")},
-			wantTotal:   2,
-			wantNew:     1,
+			oldPages: map[string]string{
+				"common/b.md": "b1",
+				"common/c.md": "c",
+				"common/d.md": "d",
+			},
+			wantTotal:    3,
+			wantAdded:    1,
+			wantModified: 1,
+			wantRemoved:  1,
 		},
 		{
 			name: "directory_entries_not_counted",
@@ -451,7 +483,7 @@ func TestExtractZip(t *testing.T) {
 				"common/git.md": "",
 			},
 			wantTotal: 1,
-			wantNew:   1,
+			wantAdded: 1,
 		},
 		{
 			name: "skips_unsafe_entries",
@@ -460,7 +492,7 @@ func TestExtractZip(t *testing.T) {
 				"common/git.md": "",
 			},
 			wantTotal: 1,
-			wantNew:   1,
+			wantAdded: 1,
 		},
 		{
 			name: "skips_root_level_files",
@@ -469,7 +501,21 @@ func TestExtractZip(t *testing.T) {
 				"common/git.md": "",
 			},
 			wantTotal: 1,
-			wantNew:   1,
+			wantAdded: 1,
+		},
+		{
+			name: "skips_nested_non_page_files",
+			files: map[string]string{
+				"common/notes.txt": "notes",
+				"common/git.md":    "",
+			},
+			wantTotal: 1,
+			wantAdded: 1,
+		},
+		{
+			name:        "empty_archive_removes_all",
+			oldPages:    map[string]string{"common/git.md": ""},
+			wantRemoved: 1,
 		},
 		{
 			name:    "invalid_zip",
@@ -485,9 +531,9 @@ func TestExtractZip(t *testing.T) {
 			require.NoError(t, err)
 			defer func() { _ = root.Close() }()
 
-			preExisting := make(map[string]struct{}, len(tt.preExisting))
-			for _, p := range tt.preExisting {
-				preExisting[p] = struct{}{}
+			oldPages := make(map[string]string, len(tt.oldPages))
+			for name, content := range tt.oldPages {
+				oldPages[name] = contentHash(content)
 			}
 
 			var zipData []byte
@@ -499,7 +545,7 @@ func TestExtractZip(t *testing.T) {
 				zipData = createEmptyZip(t)
 			}
 
-			total, newCount, err := extractZip(root, zipData, preExisting)
+			st, err := extractZip(root, zipData, oldPages)
 
 			if tt.wantErr {
 				assert.Error(t, err)
@@ -507,8 +553,10 @@ func TestExtractZip(t *testing.T) {
 			}
 
 			require.NoError(t, err)
-			assert.Equal(t, tt.wantTotal, total)
-			assert.Equal(t, tt.wantNew, newCount)
+			assert.Equal(t, tt.wantTotal, st.totalPages)
+			assert.Equal(t, tt.wantAdded, st.added)
+			assert.Equal(t, tt.wantModified, st.modified)
+			assert.Equal(t, tt.wantRemoved, st.removed)
 		})
 	}
 }
@@ -558,18 +606,17 @@ func TestExtractZipEntry(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
-		name        string
-		files       map[string]string
-		preExisting map[string]struct{}
-		wantFile    bool
-		wantNew     bool
-		check       func(t *testing.T, dir string)
+		name     string
+		files    map[string]string
+		wantPage bool
+		wantHash string
+		check    func(t *testing.T, dir string)
 	}{
 		{
 			name:     "extracts_file",
 			files:    map[string]string{"common/git.md": "# git\n"},
-			wantFile: true,
-			wantNew:  true,
+			wantPage: true,
+			wantHash: contentHash("# git\n"),
 			check: func(t *testing.T, dir string) {
 				got, err := os.ReadFile(filepath.Join(dir, "common", "git.md"))
 				require.NoError(t, err)
@@ -577,19 +624,9 @@ func TestExtractZipEntry(t *testing.T) {
 			},
 		},
 		{
-			name:  "existing_file",
-			files: map[string]string{"common/git.md": "# git\n"},
-			preExisting: map[string]struct{}{
-				filepath.Clean("common/git.md"): {},
-			},
-			wantFile: true,
-			wantNew:  false,
-		},
-		{
 			name:     "directory_entry",
 			files:    map[string]string{"common/": ""},
-			wantFile: false,
-			wantNew:  false,
+			wantPage: false,
 			check: func(t *testing.T, dir string) {
 				assert.DirExists(t, filepath.Join(dir, "common"))
 			},
@@ -597,17 +634,20 @@ func TestExtractZipEntry(t *testing.T) {
 		{
 			name:     "unsafe_entry",
 			files:    map[string]string{"../escape.md": "EVIL"},
-			wantFile: false,
-			wantNew:  false,
+			wantPage: false,
 		},
 		{
 			name:     "skips_root_level_file",
 			files:    map[string]string{"LICENSE.md": "license"},
-			wantFile: false,
-			wantNew:  false,
+			wantPage: false,
 			check: func(t *testing.T, dir string) {
 				assert.NoFileExists(t, filepath.Join(dir, "LICENSE.md"))
 			},
+		},
+		{
+			name:     "skips_nested_non_page_file",
+			files:    map[string]string{"common/notes.txt": "notes"},
+			wantPage: false,
 		},
 	}
 
@@ -623,10 +663,10 @@ func TestExtractZipEntry(t *testing.T) {
 			require.NoError(t, err)
 			require.Len(t, zr.File, 1)
 
-			isFile, isNew, err := extractZipEntry(root, zr.File[0], tt.preExisting)
+			isPage, hash, err := extractZipEntry(root, zr.File[0])
 			require.NoError(t, err)
-			assert.Equal(t, tt.wantFile, isFile)
-			assert.Equal(t, tt.wantNew, isNew)
+			assert.Equal(t, tt.wantPage, isPage)
+			assert.Equal(t, tt.wantHash, hash)
 
 			if tt.check != nil {
 				tt.check(t, dir)
