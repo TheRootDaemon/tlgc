@@ -273,7 +273,7 @@ func TestUpdateLanguage(t *testing.T) {
 			c := &Cache{dir: cacheDir}
 			client := upstream.New(upstream.WithHTTPClient(ts.Client()))
 
-			gotUpdated, _, _, err := c.updateLanguage(
+			gotUpdated, _, err := c.updateLanguage(
 				ctx, client, tt.language,
 				tt.oldChecksums, tt.newChecksums,
 			)

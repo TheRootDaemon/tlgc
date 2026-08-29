@@ -31,9 +31,9 @@ func (c *Cache) Update(
 
 	logger.Debug("checking %d languages for updates", len(languages))
 
-	var totalPages, newPages int
+	var pageStats pageStats
 	for _, language := range languages {
-		updated, pages, np, err := c.updateLanguage(
+		updated, stats, err := c.updateLanguage(
 			ctx,
 			client,
 			language,
@@ -45,8 +45,10 @@ func (c *Cache) Update(
 		}
 
 		if updated {
-			totalPages += pages
-			newPages += np
+			pageStats.totalPages += stats.totalPages
+			pageStats.added += stats.added
+			pageStats.modified += stats.modified
+			pageStats.removed += stats.removed
 		}
 	}
 
@@ -54,15 +56,19 @@ func (c *Cache) Update(
 		return fmt.Errorf("saving checksums: %w", err)
 	}
 
-	if totalPages == 0 {
+	if pageStats.totalPages == 0 {
 		logger.Info("pages are up to date")
 		return nil
 	}
 
 	c.platforms.Store([]string(nil))
-	logger.Info("cache update successful (total: %s pages, %s new)",
-		termcolor.Sprint("bold blue", strconv.Itoa(totalPages)),
-		termcolor.Sprint("bold blue", strconv.Itoa(newPages)))
+	logger.Info(
+		"cache update successful (total: %s pages, %s new, %s removed, %s modified)",
+		termcolor.Sprint("bold blue", strconv.Itoa(pageStats.totalPages)),
+		termcolor.Sprint("bold blue", strconv.Itoa(pageStats.added)),
+		termcolor.Sprint("bold blue", strconv.Itoa(pageStats.removed)),
+		termcolor.Sprint("bold blue", strconv.Itoa(pageStats.modified)),
+	)
 	return nil
 }
 
@@ -75,7 +81,7 @@ func (c *Cache) updateLanguage(
 	language string,
 	oldChecksums,
 	newChecksums map[string]string,
-) (updated bool, pages, newPages int, err error) {
+) (bool, pageStats, error) {
 	languageDirectory := "pages." + language
 	archiveName := fmt.Sprintf("tldr-pages.%s.zip", language)
 	if !needsUpdate(
@@ -85,7 +91,7 @@ func (c *Cache) updateLanguage(
 		newChecksums,
 	) {
 		logger.Debug("language %q: up to date, skipped", language)
-		return false, 0, 0, nil
+		return false, pageStats{}, nil
 	}
 
 	logger.Debug("language %q: downloading", language)
@@ -98,15 +104,15 @@ func (c *Cache) updateLanguage(
 		hash,
 	)
 	if err != nil {
-		return false, 0, 0, fmt.Errorf("downloading %s: %w", archiveName, err)
+		return false, pageStats{}, fmt.Errorf("downloading %s: %w", archiveName, err)
 	}
 
-	pages, np, err := c.extractArchive(languageDirectory, data)
+	stats, err := c.extractArchive(languageDirectory, data)
 	if err != nil {
-		return false, 0, 0, fmt.Errorf("extracting %s: %w", languageDirectory, err)
+		return false, pageStats{}, fmt.Errorf("extracting %s: %w", languageDirectory, err)
 	}
 
-	return true, pages, np, nil
+	return true, stats, nil
 }
 
 // needsUpdate reports whether an archive should be downloaded,
