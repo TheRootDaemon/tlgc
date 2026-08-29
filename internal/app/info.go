@@ -3,7 +3,6 @@ package app
 import (
 	"fmt"
 	"strings"
-	"time"
 
 	"github.com/TheRootDaemon/tlgc/format"
 	"github.com/TheRootDaemon/tlgc/internal/cache"
@@ -82,12 +81,10 @@ func (a *App) printAutoUpdate(info *cache.InfoResult) error {
 	)
 	remaining := termcolor.Sprint(
 		"bold blue",
-		format.DurationFmt(
-			max(
-				0,
-				maxAge*time.Hour-info.AgeDuration,
-			),
-		),
+		format.DurationFmt(max(
+			0,
+			maxAge-info.AgeDuration,
+		)),
 	)
 
 	_, err = fmt.Fprintf(
