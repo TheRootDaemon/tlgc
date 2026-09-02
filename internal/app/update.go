@@ -34,6 +34,7 @@ func shouldAutoUpdate(cli *cmd.CLI) bool {
 		return false
 	}
 	return (len(cli.Page) > 0 && !cli.Browse && !cli.Lint && !cli.Format) ||
+		cli.Info ||
 		cli.Browse ||
 		cli.Search != "" ||
 		cli.List
