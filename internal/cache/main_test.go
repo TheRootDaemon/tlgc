@@ -3,7 +3,10 @@ package cache
 import (
 	"archive/zip"
 	"bytes"
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
@@ -12,6 +15,39 @@ import (
 	"github.com/TheRootDaemon/tlgc/internal/config"
 	"github.com/stretchr/testify/require"
 )
+
+// contentHash returns the hex-encoded sha256 of s,
+// matching the hashes produced by the cache package.
+func contentHash(s string) string {
+	sum := sha256.Sum256([]byte(s))
+	return hex.EncodeToString(sum[:])
+}
+
+// archiveServer returns a handler serving the checksum file
+// and the given archives, keyed by archive name.
+// Each checksum entry is "<hash>  <name>".
+func archiveServer(t *testing.T, checksums map[string]string, archives map[string][]byte) http.Handler {
+	t.Helper()
+
+	var sumLines strings.Builder
+	for name, hash := range checksums {
+		fmt.Fprintf(&sumLines, "%s  %s\n", hash, name)
+	}
+
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/" + checksumFile:
+			_, _ = w.Write([]byte(sumLines.String()))
+		default:
+			data, ok := archives[strings.TrimPrefix(r.URL.Path, "/")]
+			if !ok {
+				w.WriteHeader(http.StatusNotFound)
+				return
+			}
+			_, _ = w.Write(data)
+		}
+	})
+}
 
 // createTestZip builds an in-memory ZIP from a path→content map.
 // Entries whose path ends with "/" are created as proper directory entries.
