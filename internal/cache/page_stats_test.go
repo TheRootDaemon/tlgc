@@ -17,31 +17,11 @@ func TestIsPageFile(t *testing.T) {
 		path string
 		want bool
 	}{
-		{
-			name: "page_in_platform_dir",
-			path: "common/git.md",
-			want: true,
-		},
-		{
-			name: "nested_page",
-			path: "linux/arch/git.md",
-			want: true,
-		},
-		{
-			name: "root_level_md",
-			path: "LICENSE.md",
-			want: false,
-		},
-		{
-			name: "non_md_in_dir",
-			path: "common/notes.txt",
-			want: false,
-		},
-		{
-			name: "root_non_md",
-			path: "README",
-			want: false,
-		},
+		{name: "page_in_platform_dir", path: "common/git.md", want: true},
+		{name: "nested_page", path: "linux/arch/git.md", want: true},
+		{name: "root_level_md", path: "LICENSE.md", want: false},
+		{name: "non_md_in_dir", path: "common/notes.txt", want: false},
+		{name: "root_non_md", path: "README", want: false},
 	}
 
 	for _, tt := range tests {
@@ -104,43 +84,4 @@ func TestHashPages(t *testing.T) {
 			assert.Equal(t, tt.want, got)
 		})
 	}
-}
-
-func TestHashFile(t *testing.T) {
-	t.Parallel()
-
-	tests := []struct {
-		name    string
-		content string
-	}{
-		{
-			name:    "content",
-			content: "# git\n",
-		},
-		{
-			name:    "empty",
-			content: "",
-		},
-		{
-			name:    "binary",
-			content: "\x00\x01\x02",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			path := filepath.Join(t.TempDir(), "page.md")
-			require.NoError(t, os.WriteFile(path, []byte(tt.content), 0o600))
-
-			got, err := hashFile(path)
-			require.NoError(t, err)
-			assert.Equal(t, contentHash(tt.content), got)
-		})
-	}
-}
-
-func TestHashFile_Missing(t *testing.T) {
-	t.Parallel()
-	_, err := hashFile(filepath.Join(t.TempDir(), "missing.md"))
-	assert.Error(t, err)
 }

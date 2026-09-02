@@ -39,45 +39,37 @@ func isPageFile(path string) bool {
 // A missing directory yields an empty snapshot with no error,
 // so first-time extraction works.
 func hashPages(directory string) (map[string]string, error) {
+	root, err := os.OpenRoot(directory)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return map[string]string{}, nil
+		}
+		return nil, err
+	}
+	defer func() {
+		_ = root.Close()
+	}()
+
 	pages := make(map[string]string)
 
-	if err := filepath.WalkDir(directory, func(path string, d fs.DirEntry, err error) error {
+	err = fs.WalkDir(root.FS(), ".", func(path string, d fs.DirEntry, err error) error {
 		if err != nil || d.IsDir() {
 			return err
 		}
 
-		relativePath, err := filepath.Rel(directory, path)
-		if err != nil {
-			return err
-		}
-
-		if !isPageFile(relativePath) {
+		if !isPageFile(path) {
 			return nil
 		}
 
-		hash, err := hashFile(path)
+		content, err := fs.ReadFile(root.FS(), path)
 		if err != nil {
 			return err
 		}
 
-		pages[relativePath] = hash
+		sum := sha256.Sum256(content)
+		pages[path] = hex.EncodeToString(sum[:])
 		return nil
-	}); err != nil && !os.IsNotExist(err) {
-		return nil, err
-	}
+	})
 
-	return pages, nil
-}
-
-// hashFile reads the file at path
-// and returns its SHA-256 hash encoded
-// as a hexadecimal string.
-func hashFile(path string) (string, error) {
-	content, err := os.ReadFile(path)
-	if err != nil {
-		return "", err
-	}
-
-	checksum := sha256.Sum256(content)
-	return hex.EncodeToString(checksum[:]), nil
+	return pages, err
 }
