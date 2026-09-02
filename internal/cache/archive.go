@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path"
 	"path/filepath"
 
 	"github.com/TheRootDaemon/tlgc/internal/upstream"
@@ -97,7 +98,7 @@ func extractZip(
 			continue
 		}
 
-		name := filepath.Clean(f.Name)
+		name := path.Clean(f.Name)
 		st.totalPages++
 		extracted[name] = struct{}{}
 
