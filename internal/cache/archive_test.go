@@ -4,8 +4,6 @@ import (
 	"archive/zip"
 	"bytes"
 	"context"
-	"crypto/sha256"
-	"encoding/hex"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -18,13 +16,6 @@ import (
 
 	"github.com/TheRootDaemon/tlgc/internal/upstream"
 )
-
-// contentHash returns the hex-encoded sha256 of s,
-// matching the hashes produced by the cache package.
-func contentHash(s string) string {
-	sum := sha256.Sum256([]byte(s))
-	return hex.EncodeToString(sum[:])
-}
 
 func TestDownloadArchive(t *testing.T) {
 	t.Parallel()
@@ -58,10 +49,7 @@ func TestDownloadArchive(t *testing.T) {
 		{
 			name:        "hash_matches",
 			archiveName: "tldr-pages.de.zip",
-			hash: func() string {
-				h := sha256.Sum256([]byte("de-content"))
-				return hex.EncodeToString(h[:])
-			}(),
+			hash:        contentHash("de-content"),
 			handler: func(w http.ResponseWriter, r *http.Request) {
 				_, _ = w.Write([]byte("de-content"))
 			},
@@ -352,63 +340,6 @@ func TestExtractFile_OpenFileError(t *testing.T) {
 	f := zipReader.File[0]
 	_, err = extractFile(root, f)
 	assert.Error(t, err)
-}
-
-func TestHashPages(t *testing.T) {
-	t.Parallel()
-
-	tests := []struct {
-		name  string
-		setup func(t *testing.T, dir string)
-		want  map[string]string
-	}{
-		{
-			name:  "nonexistent_directory",
-			setup: nil,
-			want:  map[string]string{},
-		},
-		{
-			name: "empty_directory",
-			setup: func(t *testing.T, dir string) {
-				require.NoError(t, os.MkdirAll(dir, 0o750))
-			},
-			want: map[string]string{},
-		},
-		{
-			name: "hashes_nested_pages",
-			setup: func(t *testing.T, dir string) {
-				require.NoError(t, os.MkdirAll(filepath.Join(dir, "common"), 0o750))
-				require.NoError(t, os.WriteFile(filepath.Join(dir, "common", "git.md"), []byte("# git\n"), 0o644))
-				require.NoError(t, os.WriteFile(filepath.Join(dir, "common", "ls.md"), nil, 0o644))
-			},
-			want: map[string]string{
-				filepath.Join("common", "git.md"): contentHash("# git\n"),
-				filepath.Join("common", "ls.md"):  contentHash(""),
-			},
-		},
-		{
-			name: "ignores_non_pages",
-			setup: func(t *testing.T, dir string) {
-				require.NoError(t, os.MkdirAll(filepath.Join(dir, "common"), 0o750))
-				require.NoError(t, os.WriteFile(filepath.Join(dir, "LICENSE.md"), []byte("license"), 0o644))
-				require.NoError(t, os.WriteFile(filepath.Join(dir, "common", "notes.txt"), []byte("notes"), 0o644))
-			},
-			want: map[string]string{},
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			dir := filepath.Join(t.TempDir(), "subdir")
-			if tt.setup != nil {
-				tt.setup(t, dir)
-			}
-
-			got, err := hashPages(dir)
-			require.NoError(t, err)
-			assert.Equal(t, tt.want, got)
-		})
-	}
 }
 
 func TestExtractZip(t *testing.T) {

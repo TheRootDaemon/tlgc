@@ -2,9 +2,6 @@ package cache
 
 import (
 	"context"
-	"crypto/sha256"
-	"encoding/hex"
-	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -20,44 +17,34 @@ import (
 func TestUpdate(t *testing.T) {
 	ctx := context.Background()
 
-	// pre-compute a valid ZIP for english and its hash.
-	zipData := createTestZip(t, map[string]string{"common/git.md": ""})
-	h := sha256.Sum256(zipData)
-	correctHash := hex.EncodeToString(h[:])
+	zipEn := createTestZip(t, map[string]string{"common/git.md": ""})
+	hashEn := contentHash(string(zipEn))
 
-	// pre-compute a valid ZIP for german and its hash.
-	zipDataDe := createTestZip(t, map[string]string{"common/apt.md": ""})
-	hDe := sha256.Sum256(zipDataDe)
-	correctHashDe := hex.EncodeToString(hDe[:])
+	zipDe := createTestZip(t, map[string]string{"common/apt.md": ""})
+	hashDe := contentHash(string(zipDe))
 
 	tests := []struct {
 		name      string
 		languages []string
 		preExist  func(t *testing.T, c *Cache)
-		handler   http.HandlerFunc
+		checksums map[string]string
+		archives  map[string][]byte
+		handler   http.Handler
 		wantErr   bool
 		check     func(t *testing.T, c *Cache)
 	}{
 		{
 			name:      "fresh_update",
 			languages: []string{"en"},
-			handler: func(w http.ResponseWriter, r *http.Request) {
-				switch r.URL.Path {
-				case "/" + checksumFile:
-					_, _ = fmt.Fprintf(w, "%s  %s\n", correctHash, "tldr-pages.en.zip")
-				case "/tldr-pages.en.zip":
-					_, _ = w.Write(zipData)
-				default:
-					w.WriteHeader(http.StatusNotFound)
-				}
-			},
+			checksums: map[string]string{"tldr-pages.en.zip": hashEn},
+			archives:  map[string][]byte{"tldr-pages.en.zip": zipEn},
 			check: func(t *testing.T, c *Cache) {
 				assert.DirExists(t, filepath.Join(c.dir, "pages.en", "common"))
 				assert.FileExists(t, filepath.Join(c.dir, "pages.en", "common", "git.md"))
 
 				data, err := os.ReadFile(filepath.Join(c.dir, checksumFile))
 				require.NoError(t, err)
-				assert.Contains(t, string(data), correctHash)
+				assert.Contains(t, string(data), hashEn)
 			},
 		},
 		{
@@ -65,16 +52,9 @@ func TestUpdate(t *testing.T) {
 			languages: []string{"en"},
 			preExist: func(t *testing.T, c *Cache) {
 				require.NoError(t, os.MkdirAll(filepath.Join(c.dir, "pages.en", "common"), 0o750))
-				require.NoError(t, c.saveChecksums(map[string]string{"tldr-pages.en.zip": correctHash}))
+				require.NoError(t, c.saveChecksums(map[string]string{"tldr-pages.en.zip": hashEn}))
 			},
-			handler: func(w http.ResponseWriter, r *http.Request) {
-				switch r.URL.Path {
-				case "/" + checksumFile:
-					_, _ = fmt.Fprintf(w, "%s  %s\n", correctHash, "tldr-pages.en.zip")
-				default:
-					w.WriteHeader(http.StatusNotFound)
-				}
-			},
+			checksums: map[string]string{"tldr-pages.en.zip": hashEn},
 			check: func(t *testing.T, c *Cache) {
 				assert.DirExists(t, filepath.Join(c.dir, "pages.en", "common"))
 			},
@@ -88,22 +68,13 @@ func TestUpdate(t *testing.T) {
 					filepath.Join(c.dir, "pages.en", "common", "git.md"),
 					[]byte("# git\n"), 0o640,
 				))
-				require.NoError(t, c.saveChecksums(map[string]string{"tldr-pages.en.zip": correctHash}))
+				require.NoError(t, c.saveChecksums(map[string]string{"tldr-pages.en.zip": hashEn}))
 			},
-			handler: func(w http.ResponseWriter, r *http.Request) {
-				switch r.URL.Path {
-				case "/" + checksumFile:
-					_, _ = fmt.Fprintf(
-						w, "%s  %s\n%s  %s\n",
-						correctHash, "tldr-pages.en.zip",
-						correctHashDe, "tldr-pages.de.zip",
-					)
-				case "/tldr-pages.de.zip":
-					_, _ = w.Write(zipDataDe)
-				default:
-					w.WriteHeader(http.StatusNotFound)
-				}
+			checksums: map[string]string{
+				"tldr-pages.en.zip": hashEn,
+				"tldr-pages.de.zip": hashDe,
 			},
+			archives: map[string][]byte{"tldr-pages.de.zip": zipDe},
 			check: func(t *testing.T, c *Cache) {
 				assert.DirExists(t, filepath.Join(c.dir, "pages.en", "common"))
 				assert.FileExists(t, filepath.Join(c.dir, "pages.en", "common", "git.md"))
@@ -113,23 +84,28 @@ func TestUpdate(t *testing.T) {
 
 				data, err := os.ReadFile(filepath.Join(c.dir, checksumFile))
 				require.NoError(t, err)
-				assert.Contains(t, string(data), correctHash)
-				assert.Contains(t, string(data), correctHashDe)
+				assert.Contains(t, string(data), hashEn)
+				assert.Contains(t, string(data), hashDe)
 			},
 		},
 		{
 			name:      "checksum_download_fails",
 			languages: []string{"en"},
-			handler: func(w http.ResponseWriter, r *http.Request) {
+			handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(http.StatusInternalServerError)
-			},
+			}),
 			wantErr: true,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			ts := httptest.NewServer(tt.handler)
+			handler := tt.handler
+			if handler == nil {
+				handler = archiveServer(t, tt.checksums, tt.archives)
+			}
+
+			ts := httptest.NewServer(handler)
 			defer ts.Close()
 
 			cacheDir := t.TempDir()
@@ -163,15 +139,11 @@ func TestUpdate(t *testing.T) {
 func TestUpdateLanguage(t *testing.T) {
 	ctx := context.Background()
 
-	// pre-compute a valid ZIP and its SHA256 hash.
 	zipData := createTestZip(t, map[string]string{"common/git.md": ""})
-	h := sha256.Sum256(zipData)
-	correctHash := hex.EncodeToString(h[:])
+	correctHash := contentHash(string(zipData))
 
-	// pre-compute garbage data and its hash for the invalid-zip case.
 	invalidZipData := []byte("not a valid zip file")
-	hi := sha256.Sum256(invalidZipData)
-	invalidHash := hex.EncodeToString(hi[:])
+	invalidHash := contentHash(string(invalidZipData))
 
 	tests := []struct {
 		name         string

@@ -35,6 +35,9 @@ func isPageFile(path string) bool {
 // keyed by their paths relative to directory.
 //
 // Only page files are included (see isPageFile).
+//
+// A missing directory yields an empty snapshot with no error,
+// so first-time extraction works.
 func hashPages(directory string) (map[string]string, error) {
 	pages := make(map[string]string)
 
@@ -59,7 +62,7 @@ func hashPages(directory string) (map[string]string, error) {
 
 		pages[relativePath] = hash
 		return nil
-	}); err != nil {
+	}); err != nil && !os.IsNotExist(err) {
 		return nil, err
 	}
 
