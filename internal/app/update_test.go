@@ -80,9 +80,9 @@ func TestShouldAutoUpdate(t *testing.T) {
 			want: false,
 		},
 		{
-			name: "info_suppresses",
+			name: "info",
 			cli:  &cmd.CLI{Info: true},
-			want: false,
+			want: true,
 		},
 		{
 			name: "list_all_suppresses",
