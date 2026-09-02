@@ -59,8 +59,8 @@ func TestHashPages(t *testing.T) {
 				require.NoError(t, os.WriteFile(filepath.Join(dir, "common", "ls.md"), nil, 0o600))
 			},
 			want: map[string]string{
-				filepath.Join("common", "git.md"): contentHash("# git\n"),
-				filepath.Join("common", "ls.md"):  contentHash(""),
+				"common/git.md": contentHash("# git\n"),
+				"common/ls.md":  contentHash(""),
 			},
 		},
 		{
