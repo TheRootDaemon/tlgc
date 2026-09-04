@@ -127,7 +127,7 @@ func (a *App) dispatch(cli *cmd.CLI) int {
 	case cli.List:
 		return a.listPages(cli)
 	case cli.ListAll:
-		return a.listAllPages()
+		return a.listAllPages(cli)
 	case cli.Lint:
 		return a.lintPages(cli)
 	case cli.Format:

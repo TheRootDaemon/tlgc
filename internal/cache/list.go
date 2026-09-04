@@ -11,46 +11,67 @@ import (
 )
 
 // ListFor returns all page names in the give platform (plus common).
-func (c *Cache) ListFor(platform string) ([]string, error) {
-	logger.Debug("platform=%q", platform)
+// across the specified languages.
+//
+// If nothing languages is empty it defaults to pages.en.
+func (c *Cache) ListFor(platform string, languages []string) ([]string, error) {
+	logger.Debug("platform=%q, language=%q", platform, languages)
 	if _, err := c.getPlatforms(); err != nil {
 		return nil, err
 	}
 
-	pages, err := c.listDirectory(platform, englishDirectory)
-	if err != nil {
-		return nil, err
+	languageDirectories := c.languagesToDirectories(languages, false)
+	if len(languageDirectories) == 0 {
+		languageDirectories = append(languageDirectories, englishDirectory)
 	}
 
-	if platform != "common" {
-		common, err := c.listDirectory("common", englishDirectory)
+	var pages []string
+	for _, languageDirectory := range languageDirectories {
+		platformPages, err := c.listDirectory(platform, languageDirectory)
 		if err != nil {
 			return nil, err
 		}
 
-		pages = append(pages, common...)
+		pages = append(pages, platformPages...)
+		if platform != "common" {
+			commonPages, err := c.listDirectory("common", languageDirectory)
+			if err != nil {
+				return nil, err
+			}
+			pages = append(pages, commonPages...)
+		}
 	}
 
 	sort.Strings(pages)
 	return slice.Dedup(pages), nil
 }
 
-// ListAll returns all page names across all platforms in English.
-func (c *Cache) ListAll() ([]string, error) {
+// ListAll returns all page names across all platforms
+// for the specified languages.
+//
+// If nothing languages is empty it defaults to pages.en.
+func (c *Cache) ListAll(languages []string) ([]string, error) {
 	platforms, err := c.getPlatforms()
 	logger.Debug("%d platforms", len(platforms))
 	if err != nil {
 		return nil, err
 	}
 
-	var pages []string
-	for _, platform := range platforms {
-		platformPages, err := c.listDirectory(platform, englishDirectory)
-		if err != nil {
-			return nil, err
-		}
+	languageDirectories := c.languagesToDirectories(languages, false)
+	if len(languageDirectories) == 0 {
+		languageDirectories = append(languageDirectories, englishDirectory)
+	}
 
-		pages = append(pages, platformPages...)
+	var pages []string
+	for _, languageDirectory := range languageDirectories {
+		for _, platform := range platforms {
+			platformPages, err := c.listDirectory(platform, languageDirectory)
+			if err != nil {
+				return nil, err
+			}
+
+			pages = append(pages, platformPages...)
+		}
 	}
 
 	sort.Strings(pages)

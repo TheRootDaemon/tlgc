@@ -13,7 +13,8 @@ import (
 func (a *App) listPages(cli *cmd.CLI) int {
 	c := cache.New()
 	p := a.resolvePlatform(cli.Platform)
-	pages, err := c.ListFor(p)
+	languages := a.resolveLanguages(cli.Languages)
+	pages, err := c.ListFor(p, languages)
 	if err != nil {
 		logger.Error("failed to list pages: %v", err)
 		return 1
@@ -30,9 +31,10 @@ func (a *App) listPages(cli *cmd.CLI) int {
 
 // listAllPages lists all cached pages across all platforms.
 // Returns 0 on success, 1 on error.
-func (a *App) listAllPages() int {
+func (a *App) listAllPages(cli *cmd.CLI) int {
 	c := cache.New()
-	pages, err := c.ListAll()
+	languages := a.resolveLanguages(cli.Languages)
+	pages, err := c.ListAll(languages)
 	if err != nil {
 		logger.Error("failed to list pages: %v", err)
 		return 1
