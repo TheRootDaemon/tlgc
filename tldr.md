@@ -53,10 +53,12 @@ Search all cached pages (all languages) for pages containing the given keyword.
 Results are displayed in a highlighted table.
 
 _-l, --list_
-List all pages available for the current platform (English only).
+List all pages available for the available platforms.
+The languages used are the resolved from _--language_, config, or locale.
 
 _-a, --list-all_
-List all pages across all platforms (English only).
+List all pages across all platforms for the available languages.
+The languages used are the resolved from _--language_, config, or locale.
 
 _--list-platforms_
 List available platforms: common, linux, osx, windows, android.
@@ -64,11 +66,11 @@ List available platforms: common, linux, osx, windows, android.
 _--list-languages_
 List installed languages (i.e. languages that have a local cache).
 
-_--lint_ <FILE|DIR>
+_--lint_ \<FILE|DIR>
 Validate tldr pages against the tldr-pages style guide. Prints
 each violation with its error code and line number.
 
-_--format_ <FILE|DIR>
+_--format_ \<FILE|DIR>
 Reformat tldr pages to canonical style. Output goes to stdout
 by default; use _--output_ or _--in-place_ to redirect it.
 
@@ -97,7 +99,7 @@ Applies to: page lookup, _--browse_, _--list_, _--search_.
 _-L, --language_ <CODE>
 Override the auto-detected language(s).
 May be specified multiple times.
-Applies to: page lookup, _--browse_, _--search_, _--update_.
+Applies to: page lookup, _--browse_, _--search_, _--update_, _--list_, _--list-all_.
 
 _-o, --offline_
 Do not update the cache, even if it is stale.
@@ -201,27 +203,39 @@ An error occurred (invalid arguments, cache failure, config error, page not foun
 
 Look up the `tar` page:
 
-	tldr tar
+```
+tldr tar
+```
 
 Force the Linux platform:
 
-	tldr -p linux tar
+```
+tldr -p linux tar
+```
 
 Search for pages that contains the string `ngin`:
 
-	tldr -s ngin
+```
+tldr -s ngin
+```
 
 Lint a tldr page:
 
-	tldr --lint path/to/page.md
+```
+tldr --lint path/to/page.md
+```
 
 Reformat a page in place:
 
-	tldr --format --in-place pages/to/page.md
+```
+tldr --format --in-place pages/to/page.md
+```
 
 Open a page in the browser:
 
-	tldr -b git
+```
+tldr -b git
+```
 
 # SEE ALSO
 

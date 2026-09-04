@@ -60,10 +60,12 @@ Search all cached pages (all languages) for pages containing the given keyword.\
 Results are displayed in a highlighted table.\&
 .PP
 \fI\-l, \-\-list\fR
-List all pages available for the current platform (English only).\&
+List all pages available for the available platforms.\&
+The languages used are the resolved from \fI\-\-language\fR, config, or locale.\&
 .PP
 \fI\-a, \-\-list\-all\fR
-List all pages across all platforms (English only).\&
+List all pages across all platforms for the available languages.\&
+The languages used are the resolved from \fI\-\-language\fR, config, or locale.\&
 .PP
 \fI\-\-list\-platforms\fR
 List available platforms: common, linux, osx, windows, android.\&
@@ -104,7 +106,7 @@ Applies to: page lookup, \fI\-\-browse\fR, \fI\-\-list\fR, \fI\-\-search\fR.\&
 \fI\-L, \-\-language\fR <CODE>
 Override the auto\-detected language(s).\&
 May be specified multiple times.\&
-Applies to: page lookup, \fI\-\-browse\fR, \fI\-\-search\fR, \fI\-\-update\fR.\&
+Applies to: page lookup, \fI\-\-browse\fR, \fI\-\-search\fR, \fI\-\-update\fR, \fI\-\-list\fR, \fI\-\-list\-all\fR.\&
 .PP
 \fI\-o, \-\-offline\fR
 Do not update the cache, even if it is stale.\&
@@ -213,40 +215,52 @@ An error occurred (invalid arguments, cache failure, config error, page not foun
 .PP
 Look up the `tar` page:
 .PP
+.nf
 .RS 4
 tldr tar
-.PP
+.fi
 .RE
+.PP
 Force the Linux platform:
 .PP
+.nf
 .RS 4
 tldr \-p linux tar
-.PP
+.fi
 .RE
+.PP
 Search for pages that contains the string `ngin`:
 .PP
+.nf
 .RS 4
 tldr \-s ngin
-.PP
+.fi
 .RE
+.PP
 Lint a tldr page:
 .PP
+.nf
 .RS 4
-tldr \-\-lint path/to/page.\&md
-.PP
+tldr \-\-lint path/to/page\&.md
+.fi
 .RE
+.PP
 Reformat a page in place:
 .PP
+.nf
 .RS 4
-tldr \-\-format \-\-in\-place pages/to/page.\&md
-.PP
+tldr \-\-format \-\-in\-place pages/to/page\&.md
+.fi
 .RE
+.PP
 Open a page in the browser:
 .PP
+.nf
 .RS 4
 tldr \-b git
-.PP
+.fi
 .RE
+.PP
 .SH SEE ALSO
 .PP
 tldr client specification
