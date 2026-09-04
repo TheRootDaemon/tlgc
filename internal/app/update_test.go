@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/TheRootDaemon/tlgc/cmd"
+	"github.com/TheRootDaemon/tlgc/internal/config"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -131,4 +132,15 @@ func TestShouldAutoUpdate(t *testing.T) {
 			assert.Equal(t, tt.want, shouldAutoUpdate(tt.cli))
 		})
 	}
+}
+
+func TestShouldAutoUpdateDisabledByConfig(t *testing.T) {
+	cfg := config.Default()
+	cfg.Cache.AutoUpdate = false
+
+	config.SetForTesting(&cfg)
+	defer config.ResetForTesting()
+
+	assert.False(t, shouldAutoUpdate(&cmd.CLI{Search: "ngi"}))
+	assert.False(t, shouldAutoUpdate(&cmd.CLI{Page: []string{"tar"}}))
 }
