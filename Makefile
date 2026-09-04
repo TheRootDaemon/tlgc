@@ -4,10 +4,7 @@ PKGS_WITH_TESTS := $(shell go list -f '{{if .TestGoFiles}}{{.ImportPath}}{{end}}
 
 VERSION := $(shell git describe --tags --always 2>/dev/null || echo "dev")
 
-#
 # Build targets
-#
-
 .PHONY: build
 build:
 	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
@@ -25,10 +22,7 @@ install:
 		-ldflags="-s -w -X github.com/TheRootDaemon/tlgc/version.Version=$(VERSION)" \
 		.
 
-#
 # Development targets
-#
-
 .PHONY: run
 run: 
 	go run ./main.go
@@ -37,10 +31,7 @@ run:
 tidy:
 	go mod tidy
 
-#
 # Quality targets
-#
-
 .PHONY: check
 check: fmt lint sec test vet
 
@@ -81,10 +72,12 @@ test:
 vet:
 	go vet $(PKGS)
 
-#
-# Maintanence targets
-#
+# Documentation targets
+.PHONY: man
+man:
+	scdoc < tldr.md > tldr.1
 
+# Maintanence targets
 .PHONY: clean
 clean:
 	rm -rf bin coverage.out
