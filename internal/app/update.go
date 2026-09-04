@@ -5,6 +5,7 @@ import (
 
 	"github.com/TheRootDaemon/tlgc/cmd"
 	"github.com/TheRootDaemon/tlgc/internal/cache"
+	"github.com/TheRootDaemon/tlgc/internal/config"
 	"github.com/TheRootDaemon/tlgc/internal/upstream"
 	"github.com/TheRootDaemon/tlgc/logger"
 )
@@ -26,13 +27,20 @@ func (a *App) updateCache(cli *cmd.CLI) int {
 
 // shouldAutoUpdate reports whether a stale cache maybe updated
 // automatically for the current invocation.
+//
 // Automatic updates run only for page-serving operations
 // and are disabled in offline mode,
+// when cache.auto_update is disabled in the config,
 // and when explicit cache maintenance was requested.
 func shouldAutoUpdate(cli *cmd.CLI) bool {
 	if cli.Offline || cli.Update || cli.CleanCache {
 		return false
 	}
+
+	if !config.Cache().AutoUpdate {
+		return false
+	}
+
 	return (len(cli.Page) > 0 && !cli.Browse && !cli.Lint && !cli.Format) ||
 		cli.Info ||
 		cli.Browse ||
@@ -45,6 +53,11 @@ func shouldAutoUpdate(cli *cmd.CLI) bool {
 // It returns the error when the update fails.
 func (a *App) autoUpdate(cli *cmd.CLI) error {
 	c := cache.New()
+
+	if !c.NeedsUpdate(config.Cache().MaxAge) {
+		return nil
+	}
+
 	languages := a.resolveLanguages(cli.Languages)
 	client := upstream.New()
 

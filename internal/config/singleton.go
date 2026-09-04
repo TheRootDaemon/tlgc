@@ -76,3 +76,9 @@ func Output() OutputConfig {
 func ResetForTesting() {
 	currentConfig.Store(nil)
 }
+
+// SetForTesting replaces the global config singleton with cfg.
+// This function is only intended for use by tests.
+func SetForTesting(cfg *Config) {
+	currentConfig.Store(cfg)
+}
