@@ -12,7 +12,7 @@ build:
 		-trimpath \
 		-ldflags="-s -w -X github.com/TheRootDaemon/tlgc/version.Version=$(VERSION)" \
 		-o bin/tldr \
-		./main.go
+		./cmd/tldr
 
 .PHONY: install
 install:
@@ -20,12 +20,12 @@ install:
 	go install \
 		-trimpath \
 		-ldflags="-s -w -X github.com/TheRootDaemon/tlgc/version.Version=$(VERSION)" \
-		.
+		./cmd/tldr
 
 # Development targets
 .PHONY: run
 run: 
-	go run ./main.go
+	go run ./cmd/tldr
 
 .PHONY: tidy
 tidy:
