@@ -1,10 +1,48 @@
-# tlgc
+<div align="center">
+<h1>tlgc</h1>
 
-A tldr client written in Go.
+A [tldr](https://github.com/tldr-pages/tlgc) client written in Go.
+
+<p align="center">
+
+<a href="https://github.com/TheRootDaemon/tlgc/actions/workflows/code_quality.yml"><img src="https://img.shields.io/github/actions/workflow/status/TheRootDaemon/tlgc/code_quality.yml?branch=main&label=CI" alt="CI"></a>
+<a href="https://codecov.io/gh/TheRootDaemon/tlgc"><img src="https://codecov.io/gh/TheRootDaemon/tlgc/branch/main/graph/badge.svg" alt="Coverage"></a>
+<a href="https://github.com/TheRootDaemon/tlgc/releases"><img src="https://img.shields.io/github/v/release/TheRootDaemon/tlgc" alt="Release"></a>
+<a href="https://github.com/TheRootDaemon/tlgc/blob/main/LICENSE"><img src="https://img.shields.io/github/license/TheRootDaemon/tlgc" alt="License"></a>
+<a href="https://go.dev"><img src="https://img.shields.io/github/go-mod/go-version/TheRootDaemon/tlgc" alt="Go version"></a>
+
+</p>
+
+<p align="center">
+<img src="tldr.png" alt="tlgc — a tldr client written in Go" width="600">
+</p>
+</div>
+
+## Installation
+
+### Prebuilt binaries
+
+Download the archive for your platform from the [releases page](https://github.com/TheRootDaemon/tlgc/releases).
+
+### Using Go
+
+```sh
+# This just installs the binary.
+# Completions and the man page will not be installed this way.
+go install github.com/TheRootDaemon/tlgc/cmd/tldr@latest
+```
 
 ## Usage
 
-See `tldr --help` for all options.
+## CLI Usage
+
+See [`tldr.md`](./tldr.md) for cli documentation, it also serves as the man page.
+
+For a quick overview of all available options:
+
+```sh
+tldr --help
+```
 
 ## Configuration
 
