@@ -1,0 +1,62 @@
+# .goreleaser.yaml
+# yaml-language-server: $schema=https://goreleaser.com/static/schema.json
+
+version: 2
+
+project_name: tlgc
+
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - id: tldr
+    main: ./cmd/tldr/main.go
+    binary: tldr
+    env:
+      - CGO_ENABLED=0
+    ldflags:
+      - -s -w -X github.com/TheRootDaemon/tlgc/version.Version={{ .Version }}
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - amd64
+      - arm64
+
+archives:
+  - formats: [tar.gz]
+    # name template makes OS/Arch compatible with `uname`
+    name_template: >-
+      {{ .ProjectName }}_
+      {{- title .Os }}_
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else }}{{ .Arch }}{{ end }}
+    # use zip for windows archives
+    format_overrides:
+      - goos: windows
+        formats: [zip]
+    # ship license, man page, and shell completions with every archive
+    files:
+      - LICENSE
+      - tldr.1
+      - completions/*
+
+checksum:
+  name_template: checksums.txt
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+      - "^chore:"
+
+release:
+  footer: >-
+
+    ---
+
+    Released by [GoReleaser](https://github.com/goreleaser/goreleaser).
