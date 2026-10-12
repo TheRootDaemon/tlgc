@@ -9,7 +9,7 @@ import (
 // a bullet line for the description (prefixed with ExamplePrefix when ShowHyphens is set)
 // followed by the styled command text on the next line.
 // In compact mode the blank line between bullet and command is omitted.
-func (r *Renderer) renderExample(w io.Writer, ex Example) error {
+func (r *Renderer) renderExample(ex Example) error {
 	indent := strings.Repeat(" ", r.indent.Bullet)
 	desc := ex.Description
 
@@ -17,25 +17,25 @@ func (r *Renderer) renderExample(w io.Writer, ex Example) error {
 		desc = r.output.ExamplePrefix + desc
 	}
 
-	if err := r.renderBulletLine(w, desc, indent); err != nil {
+	if err := r.renderBulletLine(r.w, desc, indent); err != nil {
 		return err
 	}
 
 	if !r.output.Compact {
-		_, err := io.WriteString(w, "\n")
+		_, err := io.WriteString(r.w, "\n")
 		if err != nil {
 			return err
 		}
 	}
 
-	_, err := io.WriteString(w, "\n")
+	_, err := io.WriteString(r.w, "\n")
 	if err != nil {
 		return err
 	}
 
 	if ex.Command != "" {
 		segments := ParseCommand(ex.Command)
-		if err := r.renderCommand(w, segments); err != nil {
+		if err := r.renderCommand(r.w, segments); err != nil {
 			return err
 		}
 	}
@@ -48,16 +48,16 @@ func (r *Renderer) renderExample(w io.Writer, ex Example) error {
 // Each example is rendered using renderExample.
 // In non-compact mode, a blank line is inserted
 // between consecutive examples
-func (r *Renderer) renderExamples(w io.Writer, examples []Example) error {
-	for i, ex := range examples {
+func (r *Renderer) renderExamples(examples []Example) error {
+	for i, example := range examples {
 		if i > 0 && !r.output.Compact {
-			_, err := io.WriteString(w, "\n")
+			_, err := io.WriteString(r.w, "\n")
 			if err != nil {
 				return err
 			}
 		}
 
-		if err := r.renderExample(r.w, ex); err != nil {
+		if err := r.renderExample(example); err != nil {
 			return err
 		}
 	}

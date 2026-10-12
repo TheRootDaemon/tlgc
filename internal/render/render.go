@@ -121,7 +121,7 @@ func (r *Renderer) Render(platform string, p *Page) error {
 		return err
 	}
 
-	if err := r.renderExamples(r.w, p.Examples); err != nil {
+	if err := r.renderExamples(p.Examples); err != nil {
 		return err
 	}
 
