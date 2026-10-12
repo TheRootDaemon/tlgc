@@ -39,15 +39,16 @@ func TestRenderDescriptionLine(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			r := &Renderer{}
-
 			var buf strings.Builder
 			w := io.Writer(&buf)
+			r := &Renderer{
+				w: w,
+			}
 			if tt.writer != nil {
-				w = tt.writer
+				r.w = tt.writer
 			}
 
-			err := r.renderDescriptionLine(w, tt.text, tt.indent)
+			err := r.renderDescriptionLine(tt.text, tt.indent)
 
 			if tt.wantErr != "" {
 				assert.ErrorContains(t, err, tt.wantErr)
@@ -121,18 +122,19 @@ func TestRenderDescriptions(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			var buf strings.Builder
+			w := io.Writer(&buf)
 			r := &Renderer{
+				w:      w,
 				indent: config.IndentConfig{Description: 2},
 				output: config.OutputConfig{Compact: tt.compact},
 			}
 
-			var buf strings.Builder
-			w := io.Writer(&buf)
 			if tt.writer != nil {
-				w = tt.writer
+				r.w = tt.writer
 			}
 
-			err := r.renderDescriptions(w, tt.descs, tt.url)
+			err := r.renderDescriptions(tt.descs, tt.url)
 
 			if tt.wantErr != "" {
 				assert.ErrorContains(t, err, tt.wantErr)
@@ -188,7 +190,9 @@ func TestRenderDescriptionURL(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			var buf strings.Builder
+			w := io.Writer(&buf)
 			r := &Renderer{
+				w:        w,
 				useColor: tt.useColor,
 				style: config.StyleConfig{
 					Description: tt.descStyle,
@@ -197,12 +201,11 @@ func TestRenderDescriptionURL(t *testing.T) {
 				output: config.OutputConfig{LineLength: tt.lineLength},
 			}
 
-			w := io.Writer(&buf)
 			if tt.writer != nil {
-				w = tt.writer
+				r.w = tt.writer
 			}
 
-			err := r.renderDescriptionURL(w, tt.url, tt.indent)
+			err := r.renderDescriptionURL(tt.url, tt.indent)
 
 			if tt.wantErr != "" {
 				assert.ErrorContains(t, err, tt.wantErr)
@@ -251,15 +254,17 @@ func TestRenderBulletLine(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			r := &Renderer{}
-
 			var buf strings.Builder
 			w := io.Writer(&buf)
-			if tt.writer != nil {
-				w = tt.writer
+			r := &Renderer{
+				w: w,
 			}
 
-			err := r.renderBulletLine(w, tt.text, tt.indent)
+			if tt.writer != nil {
+				r.w = tt.writer
+			}
+
+			err := r.renderBulletLine(tt.text, tt.indent)
 
 			if tt.wantErr != "" {
 				assert.ErrorContains(t, err, tt.wantErr)

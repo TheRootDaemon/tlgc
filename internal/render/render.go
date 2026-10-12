@@ -117,7 +117,7 @@ func (r *Renderer) Render(platform string, p *Page) error {
 		return err
 	}
 
-	if err := r.renderDescriptions(r.w, p.Description, p.URL); err != nil {
+	if err := r.renderDescriptions(p.Description, p.URL); err != nil {
 		return err
 	}
 
