@@ -56,19 +56,20 @@ func TestRenderTitle(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			var buf strings.Builder
+			w := io.Writer(&buf)
 			r := &Renderer{
+				w:        w,
 				useColor: tt.useColor,
 				style:    config.StyleConfig{Title: tt.style},
 				indent:   config.IndentConfig{Title: tt.indent},
 			}
 
-			var buf strings.Builder
-			w := io.Writer(&buf)
 			if tt.writer != nil {
-				w = tt.writer
+				r.w = tt.writer
 			}
 
-			err := r.renderTitle(w, tt.title)
+			err := r.renderTitle(tt.title)
 
 			if tt.wantErr != "" {
 				assert.ErrorContains(t, err, tt.wantErr)

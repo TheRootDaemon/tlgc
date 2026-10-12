@@ -8,10 +8,10 @@ import (
 // renderTitle writes the page title,
 // styled with r.style.Title and
 // indented by r.indent.Title spaces.
-func (r *Renderer) renderTitle(w io.Writer, title string) error {
+func (r *Renderer) renderTitle(title string) error {
 	indent := strings.Repeat(" ", r.indent.Title)
 	_, err := io.WriteString(
-		w,
+		r.w,
 		r.applyStyle(
 			r.style.Title,
 			r.wrapText(title, indent),
@@ -39,7 +39,7 @@ func (r *Renderer) renderPageTitle(platform string, p *Page) error {
 		title = platform + "/" + title
 	}
 
-	if err := r.renderTitle(r.w, title); err != nil {
+	if err := r.renderTitle(title); err != nil {
 		return err
 	}
 

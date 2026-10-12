@@ -8,9 +8,9 @@ import (
 // renderDescriptionLine writes one description line,
 // styled with r.style.Description, indented,
 // and followed by a newline.
-func (r *Renderer) renderDescriptionLine(w io.Writer, text, indent string) error {
+func (r *Renderer) renderDescriptionLine(text, indent string) error {
 	if err := r.renderStyledInline(
-		w,
+		r.w,
 		text,
 		indent,
 		r.style.Description,
@@ -19,7 +19,7 @@ func (r *Renderer) renderDescriptionLine(w io.Writer, text, indent string) error
 		return err
 	}
 
-	_, err := io.WriteString(w, "\n")
+	_, err := io.WriteString(r.w, "\n")
 	return err
 }
 
@@ -27,7 +27,7 @@ func (r *Renderer) renderDescriptionLine(w io.Writer, text, indent string) error
 // followed by the "More information" URL (if set),
 // each indented by r.indent.Description.
 // Writes a trailing blank line after descriptions.
-func (r *Renderer) renderDescriptions(w io.Writer, descs []string, url string) error {
+func (r *Renderer) renderDescriptions(descs []string, url string) error {
 	if len(descs) == 0 && url == "" {
 		return nil
 	}
@@ -35,19 +35,19 @@ func (r *Renderer) renderDescriptions(w io.Writer, descs []string, url string) e
 	indent := strings.Repeat(" ", r.indent.Description)
 
 	for _, d := range descs {
-		if err := r.renderDescriptionLine(w, d, indent); err != nil {
+		if err := r.renderDescriptionLine(d, indent); err != nil {
 			return err
 		}
 	}
 
 	if url != "" {
-		if err := r.renderDescriptionURL(w, url, indent); err != nil {
+		if err := r.renderDescriptionURL(url, indent); err != nil {
 			return err
 		}
 	}
 
 	if !r.output.Compact {
-		_, err := io.WriteString(w, "\n")
+		_, err := io.WriteString(r.w, "\n")
 		return err
 	}
 
@@ -59,7 +59,7 @@ func (r *Renderer) renderDescriptions(w io.Writer, descs []string, url string) e
 // The "More information: " prefix and trailing "." use r.style.Description;
 // the URL itself uses r.style.URL.
 // The line is indented and wrapped via wrapText.
-func (r *Renderer) renderDescriptionURL(w io.Writer, url, indent string) error {
+func (r *Renderer) renderDescriptionURL(url, indent string) error {
 	var text strings.Builder
 	text.WriteString(
 		r.applyStyle(
@@ -83,7 +83,7 @@ func (r *Renderer) renderDescriptionURL(w io.Writer, url, indent string) error {
 	wrappedText := r.wrapText(text.String(), indent)
 
 	_, err := io.WriteString(
-		w,
+		r.w,
 		wrappedText+"\n",
 	)
 	return err
@@ -92,9 +92,9 @@ func (r *Renderer) renderDescriptionURL(w io.Writer, url, indent string) error {
 // renderBulletLine writes one bullet item line,
 // styled with r.style.Bullet and indented.
 // No trailing newline is added.
-func (r *Renderer) renderBulletLine(w io.Writer, text, indent string) error {
+func (r *Renderer) renderBulletLine(text, indent string) error {
 	return r.renderStyledInline(
-		w,
+		r.w,
 		text,
 		indent,
 		r.style.Bullet,
