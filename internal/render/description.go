@@ -10,7 +10,6 @@ import (
 // and followed by a newline.
 func (r *Renderer) renderDescriptionLine(text, indent string) error {
 	if err := r.renderStyledInline(
-		r.w,
 		text,
 		indent,
 		r.style.Description,
@@ -94,7 +93,6 @@ func (r *Renderer) renderDescriptionURL(url, indent string) error {
 // No trailing newline is added.
 func (r *Renderer) renderBulletLine(text, indent string) error {
 	return r.renderStyledInline(
-		r.w,
 		text,
 		indent,
 		r.style.Bullet,
