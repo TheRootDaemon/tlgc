@@ -35,7 +35,7 @@ func (r *Renderer) renderExample(example Example) error {
 
 	if example.Command != "" {
 		segments := ParseCommand(example.Command)
-		if err := r.renderCommand(r.w, segments); err != nil {
+		if err := r.renderCommand(segments); err != nil {
 			return err
 		}
 	}

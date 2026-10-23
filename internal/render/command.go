@@ -30,7 +30,7 @@ type mappedWord struct {
 // wraps the combined text to fit r.output.LineLength,
 // and renders each wrapped line with per-word
 // segment styling via renderCommandLine.
-func (r *Renderer) renderCommand(w io.Writer, segments []Segment) error {
+func (r *Renderer) renderCommand(segments []Segment) error {
 	mappedWords := mapWords(segments, r.output.OptionStyle)
 	if len(mappedWords) == 0 {
 		return nil
@@ -53,7 +53,6 @@ func (r *Renderer) renderCommand(w io.Writer, segments []Segment) error {
 		}
 
 		if err := r.renderCommandLine(
-			w,
 			words,
 			mappedWords,
 			segments,
@@ -76,14 +75,13 @@ func (r *Renderer) renderCommand(w io.Writer, segments []Segment) error {
 // whitespace-delimited field in the wrapped display text;
 // each sub-word is rendered with its own segment's style.
 func (r *Renderer) renderCommandLine(
-	w io.Writer,
 	words []string,
 	mappedWords []mappedWord,
 	segments []Segment,
 	indent string,
 	wordOffset *int,
 ) error {
-	_, err := io.WriteString(w, indent)
+	_, err := io.WriteString(r.w, indent)
 	if err != nil {
 		return err
 	}
@@ -106,7 +104,7 @@ func (r *Renderer) renderCommandLine(
 			mw := mappedWords[k]
 			seg := segments[mw.segmentIndex]
 			if _, err := io.WriteString(
-				w,
+				r.w,
 				r.applyStyle(
 					r.styleForSegment(&seg),
 					mw.text,
@@ -117,14 +115,14 @@ func (r *Renderer) renderCommandLine(
 		}
 
 		if j < len(words)-1 {
-			_, err := io.WriteString(w, " ")
+			_, err := io.WriteString(r.w, " ")
 			if err != nil {
 				return err
 			}
 		}
 	}
 
-	_, err = io.WriteString(w, "\n")
+	_, err = io.WriteString(r.w, "\n")
 	return err
 }
 

@@ -84,7 +84,9 @@ func TestRenderCommand(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			segments := ParseCommand(tt.raw)
 			var buf strings.Builder
-			err := tt.renderer.renderCommand(&buf, segments)
+			w := io.Writer(&buf)
+			tt.renderer.w = w
+			err := tt.renderer.renderCommand(segments)
 			assert.NoError(t, err)
 			assert.Equal(t, tt.want, buf.String())
 		})
@@ -94,7 +96,10 @@ func TestRenderCommand(t *testing.T) {
 func TestRenderCommand_Wrapping(t *testing.T) {
 	t.Parallel()
 
+	var buf strings.Builder
+	w := io.Writer(&buf)
 	r := &Renderer{
+		w:        w,
 		useColor: false,
 		output: config.OutputConfig{
 			OptionStyle: config.OptionStyleLong,
@@ -105,8 +110,7 @@ func TestRenderCommand_Wrapping(t *testing.T) {
 		},
 	}
 
-	var buf strings.Builder
-	err := r.renderCommand(&buf, ParseCommand("some very long command"))
+	err := r.renderCommand(ParseCommand("some very long command"))
 	assert.NoError(t, err)
 	assert.Equal(t, "    some very long\n    command\n", buf.String())
 }
@@ -114,7 +118,10 @@ func TestRenderCommand_Wrapping(t *testing.T) {
 func TestRenderCommand_ShortOption(t *testing.T) {
 	t.Parallel()
 
+	var buf strings.Builder
+	w := io.Writer(&buf)
 	r := &Renderer{
+		w:        w,
 		useColor: false,
 		output: config.OutputConfig{
 			OptionStyle: config.OptionStyleShort,
@@ -125,8 +132,7 @@ func TestRenderCommand_ShortOption(t *testing.T) {
 		},
 	}
 
-	var buf strings.Builder
-	err := r.renderCommand(&buf, ParseCommand("cmd {{[-s|--long]}}"))
+	err := r.renderCommand(ParseCommand("cmd {{[-s|--long]}}"))
 	assert.NoError(t, err)
 	assert.Equal(t, "    cmd -s\n", buf.String())
 }
@@ -134,7 +140,10 @@ func TestRenderCommand_ShortOption(t *testing.T) {
 func TestRenderCommand_CombinedOption(t *testing.T) {
 	t.Parallel()
 
+	var buf strings.Builder
+	w := io.Writer(&buf)
 	r := &Renderer{
+		w:        w,
 		useColor: false,
 		output: config.OutputConfig{
 			OptionStyle: config.OptionStyleCombined,
@@ -144,8 +153,8 @@ func TestRenderCommand_CombinedOption(t *testing.T) {
 			Example: 4,
 		},
 	}
-	var buf strings.Builder
-	err := r.renderCommand(&buf, ParseCommand("cmd {{[-s|--long]}}"))
+
+	err := r.renderCommand(ParseCommand("cmd {{[-s|--long]}}"))
 	assert.NoError(t, err)
 	assert.Equal(t, "    cmd [-s|--long]\n", buf.String())
 }
@@ -153,7 +162,10 @@ func TestRenderCommand_CombinedOption(t *testing.T) {
 func TestRenderCommand_Colorized(t *testing.T) {
 	t.Parallel()
 
+	var buf strings.Builder
+	w := io.Writer(&buf)
 	r := &Renderer{
+		w:        w,
 		useColor: true,
 		style:    config.DefaultStyleConfig(),
 		output: config.OutputConfig{
@@ -165,8 +177,7 @@ func TestRenderCommand_Colorized(t *testing.T) {
 		},
 	}
 
-	var buf strings.Builder
-	err := r.renderCommand(&buf, ParseCommand("echo hello"))
+	err := r.renderCommand(ParseCommand("echo hello"))
 	assert.NoError(t, err)
 	output := buf.String()
 	assert.Contains(t, output, "\x1b[36m")
@@ -179,6 +190,9 @@ func TestRenderCommand_WriteError(t *testing.T) {
 	t.Parallel()
 
 	r := &Renderer{
+		w: &errorWriter{
+			err: errors.New("write error"),
+		},
 		useColor: false,
 		output: config.OutputConfig{
 			OptionStyle: config.OptionStyleLong,
@@ -189,7 +203,7 @@ func TestRenderCommand_WriteError(t *testing.T) {
 		},
 	}
 
-	err := r.renderCommand(&errorWriter{err: errors.New("write error")}, ParseCommand("echo hi"))
+	err := r.renderCommand(ParseCommand("echo hi"))
 	assert.ErrorContains(t, err, "write error")
 }
 
@@ -273,12 +287,12 @@ func TestRenderCommandLine(t *testing.T) {
 
 			var buf strings.Builder
 			w := io.Writer(&buf)
+			r.w = w
 			if tt.writer != nil {
-				w = tt.writer
+				r.w = tt.writer
 			}
 
 			err := r.renderCommandLine(
-				w,
 				tt.words,
 				tt.mappedWords,
 				tt.segments,
