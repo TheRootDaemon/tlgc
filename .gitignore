@@ -29,6 +29,7 @@ logs
 # Environment files
 .env
 .env.*
+.envrc.local
 !.env.example
 
 # IDEs and editors
@@ -51,3 +52,9 @@ temp/
 # Go workspace
 go.work
 go.work.sum
+
+# Nix build outputs and garbage
+result
+result-*
+.direnv/
+.nix-*
