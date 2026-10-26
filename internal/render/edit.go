@@ -8,8 +8,8 @@ import (
 	"github.com/TheRootDaemon/tlgc/pathutil"
 )
 
-// renderEditLink writes the edit URL to w, with a trailing newline
-// unless output is in compact mode.
+// renderEditLink writes the edit URL to the configured [io.Writer],
+// with a trailing newline unless output is in compact mode.
 func (r *Renderer) renderEditLink(url string) error {
 	logger.Info("edit this page on GitHub")
 	_, err := io.WriteString(r.w, url)

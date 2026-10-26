@@ -43,7 +43,7 @@ func (r *Renderer) renderExample(example Example) error {
 	return nil
 }
 
-// renderExamples renders a sequence of examples to w.
+// renderExamples renders a sequence of examples to the configured [io.Writer].
 //
 // Each example is rendered using renderExample.
 // In non-compact mode, a blank line is inserted
