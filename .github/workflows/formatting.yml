@@ -1,0 +1,33 @@
+name: Formatting
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+
+jobs:
+  format:
+    name: format
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-go@v6
+        with:
+          go-version: "1.27"
+
+      - name: Setup gofumpt
+        run: go install mvdan.cc/gofumpt@latest
+
+      - name: Check formatting
+        run: |
+          unformatted=$(gofumpt -extra -l .)
+          if [ -n "$unformatted" ]; then
+            echo "Following files need formatting:"
+            echo "$unformatted"
+            exit 1
+          fi
