@@ -8,17 +8,17 @@ import (
 	"github.com/TheRootDaemon/tlgc/pathutil"
 )
 
-// renderEditLink writes the edit URL to w, with a trailing newline
-// unless output is in compact mode.
-func (r *Renderer) renderEditLink(w io.Writer, url string) error {
+// renderEditLink writes the edit URL to the configured [io.Writer],
+// with a trailing newline unless output is in compact mode.
+func (r *Renderer) renderEditLink(url string) error {
 	logger.Info("edit this page on GitHub")
-	_, err := io.WriteString(w, url)
+	_, err := io.WriteString(r.w, url)
 	if err != nil {
 		return err
 	}
 
 	if !r.output.Compact {
-		_, err := io.WriteString(w, "\n")
+		_, err := io.WriteString(r.w, "\n")
 		return err
 	}
 
@@ -37,7 +37,7 @@ func (r *Renderer) renderPageEditLink(p *Page) error {
 		return nil
 	}
 
-	return r.renderEditLink(r.w, url)
+	return r.renderEditLink(url)
 }
 
 // BuildViewURL returns the GitHub blob URL for a tldr page.

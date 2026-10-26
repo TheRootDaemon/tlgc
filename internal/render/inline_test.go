@@ -96,7 +96,10 @@ func TestRenderStyledInline(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			var buf strings.Builder
+			w := io.Writer(&buf)
 			r := &Renderer{
+				w:        w,
 				useColor: tt.useColor,
 				output:   config.OutputConfig{LineLength: tt.lineLength},
 				style: config.StyleConfig{
@@ -105,14 +108,11 @@ func TestRenderStyledInline(t *testing.T) {
 				},
 			}
 
-			var buf strings.Builder
-			w := io.Writer(&buf)
 			if tt.writer != nil {
-				w = tt.writer
+				r.w = tt.writer
 			}
 
 			err := r.renderStyledInline(
-				w,
 				tt.text,
 				tt.indent,
 				r.style.Description,
@@ -292,16 +292,16 @@ func TestRenderStyledLine(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			r := &Renderer{}
-
 			var buf strings.Builder
 			w := io.Writer(&buf)
+			r := &Renderer{
+				w: w,
+			}
 			if tt.writer != nil {
-				w = tt.writer
+				r.w = tt.writer
 			}
 
 			err := r.renderStyledLine(
-				w,
 				tt.line,
 				tt.segments,
 				config.OutputStyle{},

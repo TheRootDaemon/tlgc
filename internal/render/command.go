@@ -13,7 +13,7 @@ import (
 // so that the segment's style can be applied
 // during line-by-line rendering.
 //
-// spaceAfter reports whether a space originally
+// followedBySpace reports whether a space originally
 // followed this word in the source,
 // so commandText can reconstruct
 // the display string faithfully
@@ -24,13 +24,14 @@ type mappedWord struct {
 	text            string
 }
 
-// renderCommand writes a styled, wrapped command to w.
+// renderCommand writes a styled,
+// wrapped command to the configured [io.Writer].
 //
 // It decomposes segments into word-level mappings,
 // wraps the combined text to fit r.output.LineLength,
 // and renders each wrapped line with per-word
 // segment styling via renderCommandLine.
-func (r *Renderer) renderCommand(w io.Writer, segments []Segment) error {
+func (r *Renderer) renderCommand(segments []Segment) error {
 	mappedWords := mapWords(segments, r.output.OptionStyle)
 	if len(mappedWords) == 0 {
 		return nil
@@ -53,7 +54,6 @@ func (r *Renderer) renderCommand(w io.Writer, segments []Segment) error {
 		}
 
 		if err := r.renderCommandLine(
-			w,
 			words,
 			mappedWords,
 			segments,
@@ -72,18 +72,17 @@ func (r *Renderer) renderCommand(w io.Writer, segments []Segment) error {
 // wordOffset tracks the current position in mappedWords
 // across multi-line rendering.
 //
-// Consecutive mappedWords with spaceAfter=false form a single
+// Consecutive mappedWords with followedBySpace = false form a single
 // whitespace-delimited field in the wrapped display text;
 // each sub-word is rendered with its own segment's style.
 func (r *Renderer) renderCommandLine(
-	w io.Writer,
 	words []string,
 	mappedWords []mappedWord,
 	segments []Segment,
 	indent string,
 	wordOffset *int,
 ) error {
-	_, err := io.WriteString(w, indent)
+	_, err := io.WriteString(r.w, indent)
 	if err != nil {
 		return err
 	}
@@ -106,7 +105,7 @@ func (r *Renderer) renderCommandLine(
 			mw := mappedWords[k]
 			seg := segments[mw.segmentIndex]
 			if _, err := io.WriteString(
-				w,
+				r.w,
 				r.applyStyle(
 					r.styleForSegment(&seg),
 					mw.text,
@@ -117,14 +116,14 @@ func (r *Renderer) renderCommandLine(
 		}
 
 		if j < len(words)-1 {
-			_, err := io.WriteString(w, " ")
+			_, err := io.WriteString(r.w, " ")
 			if err != nil {
 				return err
 			}
 		}
 	}
 
-	_, err = io.WriteString(w, "\n")
+	_, err = io.WriteString(r.w, "\n")
 	return err
 }
 
@@ -165,7 +164,7 @@ func mapWords(segments []Segment, optionStyle config.OptionStyle) []mappedWord {
 // commandText joins the text fields of mapped words back
 // into a single space-separated string, suitable for text wrapping.
 // A space is inserted only where the original source had whitespace
-// (recorded in spaceAfter), so punctuation spacing is preserved
+// (recorded in followedBySpace), so punctuation spacing is preserved
 // faithfully without a hard-coded punctuation list.
 func commandText(words []mappedWord) string {
 	var b strings.Builder

@@ -45,17 +45,18 @@ func TestRenderEditLink(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			var buf strings.Builder
+			w := io.Writer(&buf)
 			r := &Renderer{
+				w:      w,
 				output: config.OutputConfig{Compact: tt.compact},
 			}
 
-			var buf strings.Builder
-			w := io.Writer(&buf)
 			if tt.writer != nil {
-				w = tt.writer
+				r.w = tt.writer
 			}
 
-			err := r.renderEditLink(w, tt.url)
+			err := r.renderEditLink(tt.url)
 
 			if tt.wantErr != "" {
 				assert.ErrorContains(t, err, tt.wantErr)

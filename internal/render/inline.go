@@ -23,7 +23,6 @@ type inlineSegment struct {
 // When no backticks are present,
 // it falls through to the single-segment fast path (applyStyle + wrapText).
 func (r *Renderer) renderStyledInline(
-	w io.Writer,
 	text,
 	indent string,
 	baseStyle,
@@ -32,7 +31,7 @@ func (r *Renderer) renderStyledInline(
 	segments := parseInline(text)
 	if len(segments) == 1 {
 		_, err := io.WriteString(
-			w,
+			r.w,
 			r.applyStyle(
 				baseStyle,
 				r.wrapText(text, indent),
@@ -45,14 +44,13 @@ func (r *Renderer) renderStyledInline(
 
 	for i, line := range wrappedLines {
 		if i > 0 {
-			_, err := io.WriteString(w, "\n")
+			_, err := io.WriteString(r.w, "\n")
 			if err != nil {
 				return err
 			}
 		}
 
 		if err := r.renderStyledLine(
-			w,
 			line,
 			segments,
 			baseStyle,
@@ -86,7 +84,6 @@ func (r *Renderer) wrapInlineSegments(
 // Segments are matched to the line text
 // by position to avoid false matches from repeated words.
 func (r *Renderer) renderStyledLine(
-	w io.Writer,
 	line string,
 	segments []inlineSegment,
 	baseStyle,
@@ -114,7 +111,7 @@ func (r *Renderer) renderStyledLine(
 			before := remaining[:pos]
 			remaining = remaining[pos:]
 			_, err := io.WriteString(
-				w,
+				r.w,
 				r.applyStyle(baseStyle, before),
 			)
 			if err != nil {
@@ -127,19 +124,19 @@ func (r *Renderer) renderStyledLine(
 		piece := remaining[:len(segment.text)]
 		remaining = remaining[len(segment.text):]
 		if segment.code {
-			_, err := io.WriteString(w, r.applyStyle(codeStyle, piece))
+			_, err := io.WriteString(r.w, r.applyStyle(codeStyle, piece))
 			if err != nil {
 				return err
 			}
 		} else {
-			_, err := io.WriteString(w, r.applyStyle(baseStyle, piece))
+			_, err := io.WriteString(r.w, r.applyStyle(baseStyle, piece))
 			if err != nil {
 				return err
 			}
 		}
 	}
 	if remaining != "" {
-		_, err := io.WriteString(w, r.applyStyle(baseStyle, remaining))
+		_, err := io.WriteString(r.w, r.applyStyle(baseStyle, remaining))
 		if err != nil {
 			return err
 		}

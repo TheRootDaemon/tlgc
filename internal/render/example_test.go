@@ -60,19 +60,20 @@ func TestRenderExample(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			var buf strings.Builder
+			w := io.Writer(&buf)
 			r := &Renderer{
+				w:        w,
 				useColor: false,
 				output:   tt.output,
 				indent:   tt.indent,
 			}
 
-			var buf strings.Builder
-			w := io.Writer(&buf)
 			if tt.writer != nil {
-				w = tt.writer
+				r.w = tt.writer
 			}
 
-			err := r.renderExample(w, tt.ex)
+			err := r.renderExample(tt.ex)
 
 			if tt.wantErr != "" {
 				assert.ErrorContains(t, err, tt.wantErr)
@@ -139,19 +140,18 @@ func TestRenderExamples(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			var buf strings.Builder
+			w := io.Writer(&buf)
 			r := &Renderer{
-				w:      &buf,
+				w:      w,
 				output: config.OutputConfig{Compact: tt.compact},
 				indent: tt.indent,
 			}
 
-			w := io.Writer(&buf)
 			if tt.writer != nil {
 				r.w = tt.writer
-				w = tt.writer
 			}
 
-			err := r.renderExamples(w, tt.examples)
+			err := r.renderExamples(tt.examples)
 
 			if tt.wantErr != "" {
 				assert.ErrorContains(t, err, tt.wantErr)
