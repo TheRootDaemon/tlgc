@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/TheRootDaemon/tlgc/cmd"
+	"github.com/TheRootDaemon/tlgc/exitcode"
 	"github.com/TheRootDaemon/tlgc/internal/config"
 	"github.com/TheRootDaemon/tlgc/locale"
 	"github.com/TheRootDaemon/tlgc/logger"
@@ -89,7 +90,8 @@ func New(opts ...Option) *App {
 // Otherwise the command is delegated
 // to dispatch, whose result becomes the exit code.
 //
-// It returns 0 on success and 1 on error.
+// It returns [exitcode.Success] on success,
+// or the corresponding error-specific exitcode on failure.
 func (a *App) Run(cli *cmd.CLI) int {
 	needsConfig := !cli.GenConfig && !cli.ConfigPath && !cli.ShowVersion && !cli.ShowHelp
 
@@ -103,7 +105,7 @@ func (a *App) Run(cli *cmd.CLI) int {
 	if shouldAutoUpdate(cli) {
 		if err := a.autoUpdate(cli); err != nil {
 			logger.Error("failed to update cache: %v", err)
-			return 1
+			return exitcode.CacheUpdateFailure
 		}
 	}
 
@@ -119,7 +121,8 @@ func (a *App) Run(cli *cmd.CLI) int {
 // win over the bare page-lookup that handles positional arguments in cli.Page.
 // When no case matches, the command is a no-op and returns 0.
 //
-// It returns 0 on success and 1 on error.
+// It returns [exitcode.Success] on success,
+// or the corresponding error-specific exitcode on failure.
 func (a *App) dispatch(cli *cmd.CLI) int {
 	switch {
 	case cli.Update:
@@ -153,7 +156,7 @@ func (a *App) dispatch(cli *cmd.CLI) int {
 	case len(cli.Page) > 0:
 		return a.lookupAndRenderPage(cli)
 	default:
-		return 0
+		return exitcode.Success
 	}
 }
 

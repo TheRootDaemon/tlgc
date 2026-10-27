@@ -7,4 +7,7 @@ const (
 
 	// InvalidArguments indicates that the command was invoked with invalid arguments.
 	InvalidArguments = 1
+
+	// CacheUpdateFailure indicates that updating the cache failed.
+	CacheUpdateFailure = 2
 )
