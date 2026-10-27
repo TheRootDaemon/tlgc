@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	"github.com/TheRootDaemon/tlgc/cmd"
+	"github.com/TheRootDaemon/tlgc/exitcode"
 	"github.com/TheRootDaemon/tlgc/internal/lint"
 	"github.com/TheRootDaemon/tlgc/logger"
 	"github.com/TheRootDaemon/tlgc/termcolor"
@@ -21,7 +22,7 @@ type lintViolation struct {
 // lintPages runs the linter over every page reachable
 // from the CLI paths and reports each violation to stderr.
 //
-// It returns 0 when every file passed without violations
+// It returns [exitcode.Success] when every file passed without violations
 // and 1 otherwise;
 // a failure to collect or open any file is logged and also yields 1.
 func (a *App) lintPages(cli *cmd.CLI) int {
@@ -56,7 +57,7 @@ func (a *App) lintPages(cli *cmd.CLI) int {
 	}
 
 	if failed {
-		return 1
+		return exitcode.LintFailure
 	}
 
 	return 0

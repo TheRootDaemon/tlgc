@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 
 	"github.com/TheRootDaemon/tlgc/cmd"
+	"github.com/TheRootDaemon/tlgc/exitcode"
 	"github.com/TheRootDaemon/tlgc/internal/lint"
 	"github.com/TheRootDaemon/tlgc/logger"
 	"github.com/TheRootDaemon/tlgc/termcolor"
@@ -16,8 +17,8 @@ import (
 // back to the source file, or to a single output file
 // depending on the flags.
 //
-// It returns 0 when every page formatted without lint errors and 1
-// otherwise.
+// It returns [exitcode.Success] when every page formatted without lint errors
+// and 1 otherwise.
 func (a *App) formatPages(cli *cmd.CLI) int {
 	files, err := collectFiles(cli.Page)
 	if err != nil {
@@ -51,7 +52,7 @@ func (a *App) formatPages(cli *cmd.CLI) int {
 	}
 
 	if failed {
-		return 1
+		return exitcode.LintFailure
 	}
 
 	return 0

@@ -3,11 +3,14 @@ package exitcode
 
 const (
 	// Success indicates that the command completed sucessfully.
-	Success = 0
+	Success int = iota
 
 	// InvalidArguments indicates that the command was invoked with invalid arguments.
-	InvalidArguments = 1
+	InvalidArguments
 
 	// CacheUpdateFailure indicates that updating the cache failed.
-	CacheUpdateFailure = 2
+	CacheUpdateFailure
+
+	// LintFailure indicates that the tldr page has lint error(s).
+	LintFailure
 )
