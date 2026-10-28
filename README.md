@@ -24,7 +24,56 @@ A [tldr](https://github.com/tldr-pages/tlgc) client written in Go.
 
 Download the archive for your platform from the [releases page](https://github.com/TheRootDaemon/tlgc/releases).
 
-### Using Go
+### Nix
+
+Install tlgc using Nix:
+
+```nix
+nix profile install github:TheRootDaemon/tlgc
+```
+
+Run tlgc without installing it (ephemeral):
+
+```nix
+nix run github:TheRootDaemon/tlgc -- --help
+```
+
+Use it in your existing flake:
+
+```nix
+{
+  inputs = {
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    tlgc.url = "github:TheRootDaemon/tlgc";
+  };
+
+  outputs = { nixpkgs, tlgc, ... }: {
+    nixosConfigurations.host = nixpkgs.lib.nixosSystem {
+      system = "x86_64-linux";
+
+      modules = [
+        ({ pkgs, ... }: {
+          environment.systemPackages = [
+            tlgc.packages.${pkgs.stdenv.hostPlatform.system}.default
+          ];
+        })
+      ];
+    };
+  };
+}
+```
+
+To use it along with your `home-manager`:
+
+```nix
+{ inputs, pkgs, ... }: {
+  home.packages = [
+    inputs.tlgc.packages.${pkgs.stdenv.hostPlatform.system}.default
+  ];
+}
+```
+
+### Go
 
 ```sh
 # This just installs the binary.
