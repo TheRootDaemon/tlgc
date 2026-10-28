@@ -3,32 +3,35 @@ package app
 import (
 	"fmt"
 
+	"github.com/TheRootDaemon/tlgc/exitcode"
 	"github.com/TheRootDaemon/tlgc/internal/config"
 	"github.com/TheRootDaemon/tlgc/logger"
 )
 
 // genConfig prints a default configuration file to stdout.
-// Returns 0 on success, 1 on error.
+// It returns [exitcode.Success] on success.
+// Other failures return [exitcode.Default].
 func (a *App) genConfig() int {
 	cfg, err := config.DefaultConfig()
 	if err != nil {
 		logger.Error("failed to generate config: %v", err)
-		return 1
+		return exitcode.Default
 	}
 
 	if _, err := fmt.Fprint(a.Stdout, cfg); err != nil {
 		logger.Error("%v", err)
-		return 1
+		return exitcode.Default
 	}
-	return 0
+	return exitcode.Success
 }
 
 // configPath prints the configuration file path to stdout.
-// Returns 0 on success.
+// It returns [exitcode.Success] on success.
+// Other failures return [exitcode.Default].
 func (a *App) configPath() int {
 	if _, err := fmt.Fprintln(a.Stdout, config.ConfigPath()); err != nil {
 		logger.Error("%v", err)
-		return 1
+		return exitcode.Default
 	}
-	return 0
+	return exitcode.Success
 }

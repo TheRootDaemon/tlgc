@@ -13,7 +13,8 @@ import (
 
 // updateCache downloads the latest tldr-pages
 // for the configured languages.
-// Returns [exitcode.Success] on success, [exitcode.CacheUpdateFailure] on error.
+// It returns [exitcode.Success] on success,
+// [exitcode.CacheUpdateFailure] on error.
 func (a *App) updateCache(cli *cmd.CLI) int {
 	c := cache.New()
 	languages := a.resolveLanguages(cli.Languages)
