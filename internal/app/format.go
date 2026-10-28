@@ -17,13 +17,14 @@ import (
 // back to the source file, or to a single output file
 // depending on the flags.
 //
-// It returns [exitcode.Success] when every page formatted without lint errors
-// and 1 otherwise.
+// It returns [exitcode.Success] when every page formatted without lint errors.
+// Lint violations return [exitcode.LintFailure].
+// Other failures return [exitcode.Default].
 func (a *App) formatPages(cli *cmd.CLI) int {
 	files, err := collectFiles(cli.Page)
 	if err != nil {
 		logger.Error("%v", err)
-		return 1
+		return exitcode.Default
 	}
 
 	if cli.Output != "" && len(files) != 1 {
@@ -31,7 +32,7 @@ func (a *App) formatPages(cli *cmd.CLI) int {
 			"flag %s requires a single file",
 			termcolor.Sprint("bold blue", "--output"),
 		)
-		return 1
+		return exitcode.Default
 	}
 
 	failed := false
@@ -55,7 +56,7 @@ func (a *App) formatPages(cli *cmd.CLI) int {
 		return exitcode.LintFailure
 	}
 
-	return 0
+	return exitcode.Success
 }
 
 // formatFile lints, reformats,

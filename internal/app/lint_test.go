@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/TheRootDaemon/tlgc/cmd"
+	"github.com/TheRootDaemon/tlgc/exitcode"
 	"github.com/TheRootDaemon/tlgc/internal/lint"
 	"github.com/stretchr/testify/assert"
 )
@@ -34,7 +35,7 @@ func TestLintPages(t *testing.T) {
 				path := writePage(t, t.TempDir(), "bad.md", "x tar\n> no\n")
 				return []string{path}, &cmd.CLI{}
 			},
-			wantCode:   1,
+			wantCode:   exitcode.LintFailure,
 			wantStderr: []string{"bad.md"},
 		},
 		{
@@ -53,7 +54,7 @@ func TestLintPages(t *testing.T) {
 				path := writePage(t, t.TempDir(), "page.txt", validPage)
 				return []string{path}, &cmd.CLI{}
 			},
-			wantCode:   1,
+			wantCode:   exitcode.LintFailure,
 			wantStderr: []string{"page.txt"},
 		},
 		{
@@ -62,14 +63,14 @@ func TestLintPages(t *testing.T) {
 				path := writePage(t, t.TempDir(), "bad.md", "x tar\n> no\n")
 				return []string{path}, &cmd.CLI{Ignore: []string{"TLDR106"}}
 			},
-			wantCode: 0,
+			wantCode: exitcode.Success,
 		},
 		{
 			name: "nonexistent_path_returns_one",
 			setup: func(t *testing.T) ([]string, *cmd.CLI) {
 				return []string{filepath.Join(t.TempDir(), "nope")}, &cmd.CLI{}
 			},
-			wantCode: 1,
+			wantCode: exitcode.Default,
 		},
 	}
 

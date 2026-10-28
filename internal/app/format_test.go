@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/TheRootDaemon/tlgc/cmd"
+	"github.com/TheRootDaemon/tlgc/exitcode"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -36,7 +37,7 @@ func TestFormatPages(t *testing.T) {
 				path := writePage(t, t.TempDir(), "bad.md", "x tar\n> no\n")
 				return []string{path}, &cmd.CLI{}
 			},
-			wantCode:   1,
+			wantCode:   exitcode.LintFailure,
 			wantStderr: []string{"bad.md"},
 			check: func(t *testing.T, _ string, _ *cmd.CLI, stdout string) {
 				assert.NotEmpty(t, stdout)
@@ -49,7 +50,7 @@ func TestFormatPages(t *testing.T) {
 				path := writePage(t, t.TempDir(), "bad.md", "x tar\n> no\n")
 				return []string{path}, &cmd.CLI{InPlace: true}
 			},
-			wantCode: 1,
+			wantCode: exitcode.LintFailure,
 			check: func(t *testing.T, path string, _ *cmd.CLI, _ string) {
 				got, err := os.ReadFile(path)
 				require.NoError(t, err)
@@ -98,7 +99,7 @@ func TestFormatPages(t *testing.T) {
 				p2 := writePage(t, dir, "b.md", validPage)
 				return []string{p1, p2}, &cmd.CLI{Output: filepath.Join(dir, "out.md")}
 			},
-			wantCode: 1,
+			wantCode: exitcode.Default,
 		},
 		{
 			name:       "unparseable_content_refrains",
@@ -107,7 +108,7 @@ func TestFormatPages(t *testing.T) {
 				path := writePage(t, t.TempDir(), "tar.md", "   \n")
 				return []string{path}, &cmd.CLI{}
 			},
-			wantCode:   1,
+			wantCode:   exitcode.LintFailure,
 			wantStderr: []string{"refraining from formatting"},
 			check: func(t *testing.T, path string, _ *cmd.CLI, _ string) {
 				got, err := os.ReadFile(path)
