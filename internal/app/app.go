@@ -86,19 +86,19 @@ func New(opts ...Option) *App {
 // (printing help, the version, or config-file paths).
 //
 // A configuration load failure is logged
-// and turns into an exit code of 1.
+// and turns into [exitcode.ConfigParseFailure].
 // Otherwise the command is delegated
 // to dispatch, whose result becomes the exit code.
 //
-// It returns [exitcode.Success] on success,
-// or the corresponding error-specific exitcode on failure.
+// It returns [exitcode.Success] on success.
+// Other failures return the corresponding [exitcode] value.
 func (a *App) Run(cli *cmd.CLI) int {
 	needsConfig := !cli.GenConfig && !cli.ConfigPath && !cli.ShowVersion && !cli.ShowHelp
 
 	if needsConfig {
 		if err := config.Initialize(); err != nil {
 			logger.Error("failed to load config: %v", err)
-			return 1
+			return exitcode.ConfigParseFailure
 		}
 	}
 
@@ -121,8 +121,8 @@ func (a *App) Run(cli *cmd.CLI) int {
 // win over the bare page-lookup that handles positional arguments in cli.Page.
 // When no case matches, the command is a no-op and returns 0.
 //
-// It returns [exitcode.Success] on success,
-// or the corresponding error-specific exitcode on failure.
+// It returns [exitcode.Success] on success.
+// Other failures return the corresponding [exitcode] value.
 func (a *App) dispatch(cli *cmd.CLI) int {
 	switch {
 	case cli.Update:
