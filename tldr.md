@@ -191,13 +191,28 @@ _NO_COLOR_
 When set (any value), disables colored output.
 Equivalent to _--color never_.
 
-# EXIT STATUS
+# EXIT CODES
 
 0
-Success.
+(Success) Command completed successfully.
 
 1
-An error occurred (invalid arguments, cache failure, config error, page not found, etc.).
+(InvalidArguments) Invalid command-line arguments.
+
+2
+(Default) An unspecified error occurred usually IO, file and other errors.
+
+3
+(CacheUpdateFailure) Failed to update the cache.
+
+4
+(LintFailure) Lint or formatting violations were found.
+
+5
+(ConfigParseFailure) Failed to parse the configuration file.
+
+6
+(PageNotFound) The requested tldr page was not found.
 
 # EXAMPLES
 

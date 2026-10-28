@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/TheRootDaemon/tlgc/exitcode"
 	"github.com/TheRootDaemon/tlgc/format"
 	"github.com/TheRootDaemon/tlgc/internal/cache"
 	"github.com/TheRootDaemon/tlgc/logger"
@@ -12,36 +13,37 @@ import (
 
 // cacheInfo prints detailed cache metadata including directory,
 // age, auto-update status, mirror, platforms, and per-language breakdown.
-// Returns 0 on success, 1 on error.
+// It returns [exitcode.Success] on success.
+// Other failures return [exitcode.Default].
 func (a *App) cacheInfo() int {
 	c := cache.New()
 	info, err := c.Info()
 	if err != nil {
 		logger.Error("failed to get cache info: %v", err)
-		return 1
+		return exitcode.Default
 	}
 
 	if err := a.printCacheHeader(info); err != nil {
 		logger.Error("%v", err)
-		return 1
+		return exitcode.Default
 	}
 
 	if err := a.printAutoUpdate(info); err != nil {
 		logger.Error("%v", err)
-		return 1
+		return exitcode.Default
 	}
 
 	if err := a.printMirror(info); err != nil {
 		logger.Error("%v", err)
-		return 1
+		return exitcode.Default
 	}
 
 	if err := a.printLanguages(info); err != nil {
 		logger.Error("%v", err)
-		return 1
+		return exitcode.Default
 	}
 
-	return 0
+	return exitcode.Success
 }
 
 // printCacheHeader prints the cache directory and last update time.

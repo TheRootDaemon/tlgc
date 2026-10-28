@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/TheRootDaemon/tlgc/cmd"
+	"github.com/TheRootDaemon/tlgc/exitcode"
 	"github.com/TheRootDaemon/tlgc/internal/cache"
 	"github.com/TheRootDaemon/tlgc/internal/config"
 	"github.com/TheRootDaemon/tlgc/internal/upstream"
@@ -12,7 +13,8 @@ import (
 
 // updateCache downloads the latest tldr-pages
 // for the configured languages.
-// Returns 0 on success, 1 on error.
+// It returns [exitcode.Success] on success,
+// [exitcode.CacheUpdateFailure] on error.
 func (a *App) updateCache(cli *cmd.CLI) int {
 	c := cache.New()
 	languages := a.resolveLanguages(cli.Languages)
@@ -20,9 +22,10 @@ func (a *App) updateCache(cli *cmd.CLI) int {
 
 	if err := c.Update(context.Background(), languages, client); err != nil {
 		logger.Error("failed to update cache: %v", err)
-		return 1
+		return exitcode.CacheUpdateFailure
 	}
-	return 0
+
+	return exitcode.Success
 }
 
 // shouldAutoUpdate reports whether a stale cache maybe updated

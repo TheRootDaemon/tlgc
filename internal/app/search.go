@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/TheRootDaemon/tlgc/cmd"
+	"github.com/TheRootDaemon/tlgc/exitcode"
 	"github.com/TheRootDaemon/tlgc/internal/cache"
 	"github.com/TheRootDaemon/tlgc/logger"
 	"github.com/TheRootDaemon/tlgc/platform"
@@ -12,7 +13,8 @@ import (
 )
 
 // searchPages searches cached pages for the given query.
-// Returns 0 on success, 1 on error.
+// It returns [exitcode.Success] on success.
+// Other failures return [exitcode.Default].
 func (a *App) searchPages(cli *cmd.CLI) int {
 	c := cache.New()
 	p := cli.Platform
@@ -24,15 +26,15 @@ func (a *App) searchPages(cli *cmd.CLI) int {
 	results, err := c.Search(cli.Search, p, languages)
 	if err != nil {
 		logger.Error("search failed: %v", err)
-		return 1
+		return exitcode.Default
 	}
 
 	if err := a.printSearchResults(results, cli.Search); err != nil {
 		logger.Error("%v", err)
-		return 1
+		return exitcode.Default
 	}
 
-	return 0
+	return exitcode.Success
 }
 
 // printSearchResults renders the search results as a table,

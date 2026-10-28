@@ -5,7 +5,7 @@
 .nh
 .ad l
 .\" Begin generated content:
-.TH "TLGC" "1" "2026\-09\-04"
+.TH "TLGC" "1" "2026\-10\-28"
 .PP
 .SH NAME
 .PP
@@ -203,13 +203,28 @@ both the full locale and the bare language code are tried.\&
 When set (any value), disables colored output.\&
 Equivalent to \fI\-\-color never\fR.\&
 .PP
-.SH EXIT STATUS
+.SH EXIT CODES
 .PP
 0
-Success.\&
+(Success) Command completed successfully.\&
 .PP
 1
-An error occurred (invalid arguments, cache failure, config error, page not found, etc.\&).\&
+(InvalidArguments) Invalid command\-line arguments.\&
+.PP
+2
+(Default) An unspecified error occurred usually IO, file and other errors.\&
+.PP
+3
+(CacheUpdateFailure) Failed to update the cache.\&
+.PP
+4
+(LintFailure) Lint or formatting violations were found.\&
+.PP
+5
+(ConfigParseFailure) Failed to parse the configuration file.\&
+.PP
+6
+(PageNotFound) The requested tldr page was not found.\&
 .PP
 .SH EXAMPLES
 .PP

@@ -8,6 +8,7 @@ import (
 
 	"github.com/TheRootDaemon/tlgc/browser"
 	"github.com/TheRootDaemon/tlgc/cmd"
+	"github.com/TheRootDaemon/tlgc/exitcode"
 	"github.com/TheRootDaemon/tlgc/internal/cache"
 	"github.com/TheRootDaemon/tlgc/internal/config"
 	"github.com/TheRootDaemon/tlgc/internal/render"
@@ -17,7 +18,8 @@ import (
 )
 
 // lookupAndRenderPage finds a page by name and renders it to the terminal.
-// Returns 0 on success, 1 on error.
+// It returns [exitcode.Success] on success.
+// Other failures return the corresponding [exitcode] value.
 func (a *App) lookupAndRenderPage(cli *cmd.CLI) int {
 	p := a.resolvePlatform(cli.Platform)
 	langs := a.resolveLanguages(cli.Languages)
@@ -27,7 +29,7 @@ func (a *App) lookupAndRenderPage(cli *cmd.CLI) int {
 	results, err := c.Find(query, p, langs)
 	if err != nil {
 		logger.Error("failed to find page: %v", err)
-		return 1
+		return exitcode.Default
 	}
 
 	pagePath, renderPlatform, err := a.selectPage(
@@ -37,7 +39,10 @@ func (a *App) lookupAndRenderPage(cli *cmd.CLI) int {
 	)
 	if err != nil {
 		logger.Error("%v", err)
-		return 1
+		if strings.Contains(err.Error(), "page not found") {
+			return exitcode.PageNotFound
+		}
+		return exitcode.Default
 	}
 
 	page, err := loadPage(pagePath)
@@ -55,7 +60,8 @@ func (a *App) lookupAndRenderPage(cli *cmd.CLI) int {
 
 // browsePage looks up a page and opens it in the default web browser.
 // It does not render the page content to the terminal.
-// Returns 0 on success, 1 on error.
+// It returns [exitcode.Success] on success.
+// Other failures return the corresponding [exitcode] value.
 func (a *App) browsePage(cli *cmd.CLI) int {
 	p := a.resolvePlatform(cli.Platform)
 	langs := a.resolveLanguages(cli.Languages)
@@ -65,13 +71,16 @@ func (a *App) browsePage(cli *cmd.CLI) int {
 	results, err := c.Find(query, p, langs)
 	if err != nil {
 		logger.Error("failed to find page: %v", err)
-		return 1
+		return exitcode.Default
 	}
 
 	pagePath, _, err := a.selectPage(results, query, p)
 	if err != nil {
 		logger.Error("%v", err)
-		return 1
+		if strings.Contains(err.Error(), "page not found") {
+			return exitcode.PageNotFound
+		}
+		return exitcode.Default
 	}
 
 	url := render.BuildViewURL(pagePath)
@@ -90,19 +99,20 @@ func (a *App) browsePage(cli *cmd.CLI) int {
 
 // renderLocalFile reads a local tldr markdown file, validates it,
 // and renders it to the terminal.
-// Returns 0 on success, 1 on error.
+// It returns [exitcode.Success] on success.
+// Other failures return [exitcode.Default].
 func (a *App) renderLocalFile(cli *cmd.CLI) int {
 	page, err := loadPage(cli.Render)
 	if err != nil {
 		logger.Error("%v", err)
-		return 1
+		return exitcode.Default
 	}
 
 	if err := a.renderPage(cli, "", page); err != nil {
 		logger.Error("failed to render: %v", err)
-		return 1
+		return exitcode.Default
 	}
-	return 0
+	return exitcode.Success
 }
 
 // renderPage renders a parsed TLDR page
