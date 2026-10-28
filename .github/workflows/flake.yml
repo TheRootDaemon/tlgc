@@ -1,0 +1,27 @@
+name: Flake checks
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+
+jobs:
+  flake-check:
+    name: nix flake check
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: DeterminateSystems/nix-installer-action@v21
+
+      - uses: DeterminateSystems/magic-nix-cache-action@v13
+
+      - name: Check flake
+        run: nix flake check --all-systems
+
+      - name: Build package
+        run: nix build .#default --print-build-logs
