@@ -14,7 +14,7 @@ A [tldr](https://github.com/tldr-pages/tlgc) client written in Go.
 </p>
 
 <p align="center">
-<img src="tldr.png" alt="tlgc — a tldr client written in Go" width="600">
+<img src="tldr.png" alt="tlgc — a tldr client written in Go" width="100%">
 </p>
 </div>
 
@@ -331,3 +331,12 @@ Modifiers:
 | TLDR110 | Command example should not be empty.                                                         |
 | TLDR111 | File name should not contain any Windows-forbidden character.                                |
 | TLDR112 | Terms `stdin`, `stdout`, `stderr`, and `regex` should be lowercase and wrapped in backticks. |
+
+## Acknowledgements
+
+`tlgc` would not exist if not for the following projects and the people behind those projects:
+
+- [tldr-pages](https://github.com/tldr-pages)
+- [tldr-lint](https://github.com/tldr-pages/tldr-lint)
+- [tlrc](https://github.com/tldr-pages/tlrc)
+- [tldr-python-client](https://github.com/tldr-pages/tldr-python-client)
