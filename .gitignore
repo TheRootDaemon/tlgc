@@ -58,3 +58,9 @@ result
 result-*
 .direnv/
 .nix-*
+
+# Archlinux build artifacts
+/pkg/
+/src/
+*.pkg.tar.*
+*.tar.gz

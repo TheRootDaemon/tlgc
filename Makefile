@@ -80,4 +80,28 @@ man:
 # Maintanence targets
 .PHONY: clean
 clean:
-	rm -rf bin coverage.out
+	rm -rf \
+		bin coverage.out result result-* tldr .SRCINFO \
+		pkg/ src/ *.pkg.tar.* *.pkg.tar.zst *.tar.gz \
+		*.log *.sig *-debug* .goreleaser-dist dist/
+
+# Release targets
+.PHONY: pkgsums
+pkgsums:
+	updpkgsums
+
+.PHONY: pkgbuild
+pkgbuild:
+	makepkg --syncdeps --cleanbuild
+
+.PHONY: nixbuild
+nix-build:
+	nix build
+
+.PHONY: nixcheck
+nix-check:
+	nix flake check
+
+.PHONY: nixupdate
+nix-update:
+	nix flake update
