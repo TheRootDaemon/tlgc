@@ -24,6 +24,14 @@ A [tldr](https://github.com/tldr-pages/tlgc) client written in Go.
 
 Download the archive for your platform from the [releases page](https://github.com/TheRootDaemon/tlgc/releases).
 
+### Homebrew
+
+Install `tlgc` by adding a tap:
+
+```sh
+brew tap therootdaemon/tlgc && brew install tlgc
+```
+
 ### Nix
 
 Install tlgc using Nix:
